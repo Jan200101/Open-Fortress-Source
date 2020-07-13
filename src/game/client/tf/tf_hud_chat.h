@@ -51,8 +51,7 @@ public:
 	virtual void	Init( void );
 	virtual void	Reset( void );
 	int				GetChatInputOffset( void );
-	void			CreateChatLines( void );
-
+	
 	virtual bool	ShouldDraw( void );
 
 	virtual Color	GetTextColorForClient( TextColor colorNum, int clientIndex );

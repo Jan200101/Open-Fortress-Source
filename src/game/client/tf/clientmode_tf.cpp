@@ -48,9 +48,6 @@
 #include "glow_outline_effect.h"
 #include "of_discordrpc.h"
 
-#if defined( _X360 )
-#include "tf_clientscoreboard.h"
-#endif
 
 ConVar default_fov( "default_fov", "90", FCVAR_CHEAT );
 ConVar fov_desired( "fov_desired", "90", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets the base field-of-view.", true, 65.0, true, 130.0 );
@@ -141,10 +138,6 @@ ClientModeTFNormal::ClientModeTFNormal()
 	m_pMenuSpyDisguise = NULL;
 	m_pGameUI = NULL;
 	m_pFreezePanel = NULL;
-
-#if defined( _X360 )
-	m_pScoreboard = NULL;
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -382,7 +375,7 @@ void ClientModeTFNormal::FireGameEvent( IGameEvent *event )
 	BaseClass::FireGameEvent( event );
 }
 
-
+// Why is this overrided?
 void ClientModeTFNormal::PostRenderVGui()
 {
 }
@@ -400,18 +393,6 @@ bool ClientModeTFNormal::CreateMove( float flInputSampleTime, CUserCmd *cmd )
 //-----------------------------------------------------------------------------
 int	ClientModeTFNormal::HudElementKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
 {
-	// Let scoreboard handle input first because on X360 we need gamertags and
-	// gamercards accessible at all times when gamertag is visible.
-#if defined( _X360 )
-	if ( m_pScoreboard )
-	{
-		if ( !m_pScoreboard->HudElementKeyInput( down, keynum, pszCurrentBinding ) )
-		{
-			return 0;
-		}
-	}
-#endif
-
 	// check for hud menus
 	if ( m_pMenuEngyBuild )
 	{
@@ -450,17 +431,5 @@ int	ClientModeTFNormal::HudElementKeyInput( int down, ButtonCode_t keynum, const
 //-----------------------------------------------------------------------------
 int ClientModeTFNormal::HandleSpectatorKeyInput( int down, ButtonCode_t keynum, const char *pszCurrentBinding )
 {
-#if defined( _X360 )
-	// On X360 when we have scoreboard up in spectator menu we cannot
-	// steal any input because gamertags must be selectable and gamercards
-	// must be accessible.
-	// We cannot rely on any keybindings in this case since user could have
-	// remapped everything.
-	if ( m_pScoreboard && m_pScoreboard->IsVisible() )
-	{
-		return 1;
-	}
-#endif
-
 	return BaseClass::HandleSpectatorKeyInput( down, keynum, pszCurrentBinding );
 }

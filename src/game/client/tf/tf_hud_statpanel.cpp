@@ -10,7 +10,6 @@
 
 #include "iclientmode.h"
 #include <vgui/ILocalize.h>
-#include "tf/tf_steamstats.h"
 #include "fmtstr.h"
 #include "tf_statsummary.h"
 #include "hud_macros.h"
@@ -209,55 +208,7 @@ void CTFStatPanel::Init()
 //-----------------------------------------------------------------------------
 void CTFStatPanel::UpdateStats( int iMsgType )
 {
-	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
-	if ( !pPlayer )
-		return;
-
-	// don't count stats if cheats on, commentary mode, etc
-	if ( !g_AchievementMgrTF.CheckAchievementsEnabled() )
-		return;
-
-	ClassStats_t &classStats = GetClassStats( m_iClassCurrentLife );
-	
-	if ( iMsgType == STATMSG_PLAYERDEATH || iMsgType == STATMSG_PLAYERRESPAWN )
-	{
-		// if the player just died, accumulate current life into total and check for maxs and records
-		classStats.AccumulateRound( m_RoundStatsCurrentLife );
-		classStats.accumulated.m_iStat[TFSTAT_MAXSENTRYKILLS] = 0;	// sentry kills is a max value rather than a count, meaningless to accumulate
-		CalcMaxsAndRecords();
-
-		// reset current life stats
-		m_iClassCurrentLife = TF_CLASS_UNDEFINED;
-		m_iTeamCurrentLife = TEAM_UNASSIGNED;
-		m_RoundStatsCurrentLife.Reset();
-	}
-	
-	m_bStatsChanged = true;
-
-	if ( TFGameRules() && !TFGameRules()->IsDMGamemode() )
-	{
-		if ( m_statRecord > TFSTAT_UNDEFINED )
-		{
-			bool bAlive = ( iMsgType != STATMSG_PLAYERDEATH );
-			if ( !bAlive || ( gpGlobals->curtime - m_flTimeLastSpawn < 3.0 ) )
-			{
-				// show the panel now if dead or very recently spawned
-				vgui::ivgui()->AddTickSignal( GetVPanel(), 1000 );
-				ShowStatPanel( m_iCurStatClass, m_iCurStatTeam, m_iCurStatValue, m_statRecord, m_recordBreakType, bAlive );
-				m_flTimeHide = gpGlobals->curtime + ( bAlive ? 12.0f : 20.0f );
-				m_statRecord = TFSTAT_UNDEFINED;
-			}
-		}
-	}
-
-	IGameEvent * event = gameeventmanager->CreateEvent( "player_stats_updated" );
-	if ( event )
-	{
-		event->SetBool( "forceupload", false );
-		gameeventmanager->FireEventClientSide( event );
-	}
-
-	UpdateStatSummaryPanel();
+	return;
 }
 
 //-----------------------------------------------------------------------------
@@ -698,17 +649,7 @@ bool CTFStatPanel::ShouldDraw( void )
 // Purpose: called when the local player object is being destroyed
 //-----------------------------------------------------------------------------
 void CTFStatPanel::OnLocalPlayerRemove( C_TFPlayer *pPlayer )
-{
-	// this handles the case of map change/server shutdown while player is still alive -- accumulate values for this life.
-	if ( pPlayer->IsAlive() && g_AchievementMgrTF.CheckAchievementsEnabled() )
-	{
-		m_RoundStatsCurrentLife.m_iStat[TFSTAT_PLAYTIME] = gpGlobals->curtime - m_flTimeCurrentLifeStart;
-		ClassStats_t &classStats = GetClassStats( m_iClassCurrentLife );
-		classStats.AccumulateRound( m_RoundStatsCurrentLife );
-		classStats.accumulated.m_iStat[TFSTAT_MAXSENTRYKILLS] = 0;	// sentry kills is a max value rather than a count, meaningless to accumulate
-		m_bStatsChanged = true;
-	}
-}
+{}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -728,7 +669,6 @@ void CTFStatPanel::ResetStats( void )
 	ClearStatsInMemory();
 
 	WriteStats();
-	g_TFSteamStats.UploadStats();
 }
 
 //-----------------------------------------------------------------------------
