@@ -1,18 +1,22 @@
-//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ============
-//
-// Purpose: 
-//
+//========= Copyright © 1996-2002, Valve LLC, All rights reserved. ====================
+// Purpose: Controls the HUD bits for damage/healing, including hitsounds.
 // $NoKeywords: $
-//=============================================================================
+//=====================================================================================
 
 #include "cbase.h"
+#include "hud.h"
 #include "hudelement.h"
 #include "c_tf_player.h"
 #include "iclientmode.h"
+#include "ienginevgui.h"
+#include <vgui/ILocalize.h>
 #include <vgui/ISurface.h>
+#include <vgui/IVGui.h>
 #include <vgui_controls/EditablePanel.h>
+#include <vgui_controls/ProgressBar.h>
 #include "engine/IEngineSound.h"
 #include <vgui_controls/AnimationController.h>
+#include "iclientmode.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -40,7 +44,7 @@ typedef struct
 #define NUM_ACCOUNT_DELTA_ITEMS 10
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Class for the panel
 //-----------------------------------------------------------------------------
 class CDamageAccountPanel : public CHudElement, public EditablePanel
 {
@@ -60,7 +64,8 @@ public:
 	void			PlayHitSound( int iAmount, bool bKill );
 
 private:
-
+	int HitCounter;
+	int KillCounter;
 	float m_flLastHitSound;
 
 	int iAccountDeltaHead;
@@ -79,7 +84,6 @@ private:
 	CPanelAnimationVar( vgui::HFont, m_hDeltaItemFont, "delta_item_font", "Default" );
 	CPanelAnimationVar( vgui::HFont, m_hDeltaItemFontBig, "delta_item_font_big", "Default" );
 };
-
 DECLARE_HUDELEMENT( CDamageAccountPanel );
 
 ConVar hud_combattext( "hud_combattext", "1", FCVAR_ARCHIVE, "Display damage done as text over your target" );
@@ -87,7 +91,14 @@ ConVar hud_combattext_batching( "hud_combattext_batching", "1", FCVAR_ARCHIVE, "
 ConVar hud_combattext_batching_window( "hud_combattext_batching_window", "0.2", FCVAR_ARCHIVE, "Maximum delay between damage events in order to batch numbers." );
 
 ConVar tf_dingalingaling( "tf_dingalingaling", "1", FCVAR_ARCHIVE, "If set to 1, play a sound everytime you injure an enemy. The sound can be customized by replacing the 'tf/sound/ui/hitsound.wav' file." );
-ConVar tf_dingalingaling_effect( "tf_dingalingaling_effect", "0", FCVAR_ARCHIVE, "Which Dingalingaling sound is used" );
+ConVar tf_dingalingaling_effect( "tf_dingalingaling_effect", "0", FCVAR_ARCHIVE, "Which Dingalingaling sound is used." );
+
+ConVar tf_dingalingaling_reset_on_kill( "tf_dingalingaling_resetonkill", "1", FCVAR_ARCHIVE, "When using 2+ hitsounds, if the hitsounds should go back to the initial one on kill" );
+ConVar tf_dingalingaling_hitsound_num( "tf_dingalingaling_hitsound_num", "1", FCVAR_ARCHIVE, "Number of hitsounds used, should be located in tf/sound/ui/hitsound-n.wav where n is the number beginning at 1." );
+ConVar tf_dingalingaling_killsound_num( "tf_dingalingaling_killsound_num", "1", FCVAR_ARCHIVE, "Number of killsounds used, should be located in tf/sound/ui/killsound-n.wav where n is the number beginning at 1." );
+ConVar tf_dingalingaling_hitsound_random( "tf_dingalingaling_hitsound_random", "0", FCVAR_ARCHIVE, "If set to 1, the order in which the hitsounds are played (if there is multiple) will be random." );
+ConVar tf_dingalingaling_killsound_random("tf_dingalingaling_killsound_random", "0", FCVAR_ARCHIVE, "If set to 1, the order in which the killsounds are played (if there is multiple) will be random." );
+
 ConVar tf_dingaling_volume( "tf_dingaling_volume", "0.75", FCVAR_ARCHIVE, "Desired volume of the hit sound.", true, 0.0, true, 1.0 );
 ConVar tf_dingaling_pitchmindmg( "tf_dingaling_pitchmindmg", "100", FCVAR_ARCHIVE, "Desired pitch of the hit sound when a minimal damage hit (<= 10 health) is done.", true, 1, true, 255 );
 ConVar tf_dingaling_pitchmaxdmg( "tf_dingaling_pitchmaxdmg", "100", FCVAR_ARCHIVE, "Desired pitch of the hit sound when a maximum damage hit (>= 150 health) is done.", true, 1, true, 255 );
@@ -104,7 +115,7 @@ ConVar hud_combattext_green( "hud_combattext_green", "0", FCVAR_ARCHIVE, "Green 
 ConVar hud_combattext_blue( "hud_combattext_blue", "0", FCVAR_ARCHIVE, "Blue modifier for color of damage indicators", true, 0, true, 255 );
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: init
 //-----------------------------------------------------------------------------
 CDamageAccountPanel::CDamageAccountPanel( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "CDamageAccountPanel" )
 {
@@ -129,7 +140,7 @@ CDamageAccountPanel::CDamageAccountPanel( const char *pElementName ) : CHudEleme
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Are we being healed or hurt?
 //-----------------------------------------------------------------------------
 void CDamageAccountPanel::FireGameEvent( IGameEvent *event )
 {
@@ -150,7 +161,7 @@ void CDamageAccountPanel::FireGameEvent( IGameEvent *event )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Apply scheme settings for HUD
 //-----------------------------------------------------------------------------
 void CDamageAccountPanel::ApplySchemeSettings( IScheme *pScheme )
 {
@@ -171,14 +182,15 @@ void CDamageAccountPanel::LevelInit( void )
 	{
 		m_AccountDeltaItems[i].m_flDieTime = 0.0f;
 	}
-
+	HitCounter = 0;
+	KillCounter = 0;
 	m_flLastHitSound = 0.0f;
-
+	
 	CHudElement::LevelInit();
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Only draw if we're alive
 //-----------------------------------------------------------------------------
 bool CDamageAccountPanel::ShouldDraw( void )
 {
@@ -193,7 +205,7 @@ bool CDamageAccountPanel::ShouldDraw( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose: Handles the damage event
 //-----------------------------------------------------------------------------
 void CDamageAccountPanel::OnDamaged( IGameEvent *event )
 {
@@ -313,7 +325,7 @@ void CDamageAccountPanel::OnDamaged( IGameEvent *event )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Healing other players.
 //-----------------------------------------------------------------------------
 void CDamageAccountPanel::OnHealed( IGameEvent *event )
 {
@@ -370,7 +382,7 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Play a hitsound if we hit a player, and a killsound if we killed them
 //-----------------------------------------------------------------------------
 void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 {
@@ -382,9 +394,11 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 	}
 
 	EmitSound_t params;
-
+	char buf[24]; // 7/8 digs for hitsounds should be enough, right?
 	if ( bKill )
 	{
+		if (tf_dingalingaling_reset_on_kill.GetInt() == 1)
+			HitCounter = 0;
 		if ( tf_dingalingaling_last_effect.GetInt() == 0 )
 			params.m_pSoundName = "Player.KillSoundDefaultDing";
 		else if (tf_dingalingaling_last_effect.GetInt() == 1)
@@ -406,10 +420,21 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 		else if ( tf_dingalingaling_last_effect.GetInt() == 9 )
 			params.m_pSoundName = "Player.KillSoundSquasher";
 		else if ( tf_dingalingaling_last_effect.GetInt() == 10 )
-			params.m_pSoundName = "ui/killsound_custom.wav";
-
-		params.m_flVolume = tf_dingaling_lasthit_volume.GetFloat();
-
+			params.m_pSoundName = "ui/killsound.wav";
+		if (tf_dingalingaling_killsound_num.GetInt() != 1 ){ 
+			int KillSound_num = tf_dingalingaling_killsound_num.GetInt();
+			if (tf_dingalingaling_killsound_random.GetInt() == 1)
+				KillCounter = RandomInt(1,KillSound_num+1);
+			if (KillCounter >= KillSound_num) {
+                KillCounter = 0;
+                params.m_pSoundName = "ui/killsound.wav";
+            }else{
+                KillCounter++;
+                V_snprintf( buf, sizeof(buf), "ui/killsound-%d.wav", KillCounter );
+                params.m_pSoundName = buf;    
+            }
+		} 
+		params.m_flVolume = tf_dingaling_lasthit_volume.GetFloat();		
 		float flPitchMin = tf_dingaling_lasthit_pitchmindmg.GetFloat();
 		float flPitchMax = tf_dingaling_lasthit_pitchmaxdmg.GetFloat();
 		params.m_nPitch = RemapValClamped( (float)iAmount, 10, 150, flPitchMin, flPitchMax );
@@ -437,10 +462,21 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 		else if ( tf_dingalingaling_effect.GetInt() == 9 )
 			params.m_pSoundName = "Player.HitSoundSquasher";
 		else if ( tf_dingalingaling_effect.GetInt() == 10 )
-			params.m_pSoundName = "ui/hitsound_custom.wav";
-
+			params.m_pSoundName = "ui/hitsound.wav";
+		if (tf_dingalingaling_hitsound_num.GetInt() != 1){ 	
+			int HitSound_num = tf_dingalingaling_hitsound_num.GetInt();
+			if (tf_dingalingaling_hitsound_random.GetInt() == 1)
+				HitCounter = RandomInt(1,HitSound_num+1);
+			if (HitCounter >= HitSound_num) {
+                HitCounter = 0;
+                params.m_pSoundName = "ui/hitsound.wav";
+            } else{
+                HitCounter++;
+                V_snprintf( buf, sizeof(buf), "ui/hitsound-%d.wav", HitCounter );
+                params.m_pSoundName = buf;    
+            }
+		}
 		params.m_flVolume = tf_dingaling_volume.GetFloat();
-
 		float flPitchMin = tf_dingaling_pitchmindmg.GetFloat();
 		float flPitchMax = tf_dingaling_pitchmaxdmg.GetFloat();
 		params.m_nPitch = RemapValClamped( (float)iAmount, 10, 150, flPitchMin, flPitchMax );
