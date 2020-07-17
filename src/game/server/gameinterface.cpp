@@ -1303,23 +1303,23 @@ void CServerGameDLL::GameFrame( bool simulating )
 		g_pGameRules->EndGameFrame();
 	}
 
-	if ( trace_report.GetBool() )
-	{
-		int total = 0, totals[3];
-		for ( int i = 0; i < 3; i++ )
-		{
-			totals[i] = enginetrace->GetStatByIndex( i, true );
-			if ( totals[i] > 0 )
-			{
-				total += totals[i];
-			}
-		}
+	//if ( trace_report.GetBool() )
+	//{
+		//int total = 0, totals[3];
+		//for ( int i = 0; i < 3; i++ )
+		//{
+			//totals[i] = enginetrace->GetStatByIndex( i, true );
+			//if ( totals[i] > 0 )
+			//{
+				//total += totals[i];
+			//}
+		//}
 
-		if ( total )
-		{
-			Msg("Trace: %d, contents %d, enumerate %d\n", totals[0], totals[1], totals[2] );
-		}
-	}
+		//if ( total )
+		//{
+			//Msg("Trace: %d, contents %d, enumerate %d\n", totals[0], totals[1], totals[2] );
+		//}
+	//}
 
 	// Any entities that detect network state changes on a timer do it here.
 	g_NetworkPropertyEventMgr.FireEvents();

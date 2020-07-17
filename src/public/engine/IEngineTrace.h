@@ -168,10 +168,6 @@ public:
 	// Convert a handle entity to a collideable.  Useful inside enumer
 	virtual ICollideable *GetCollideable( IHandleEntity *pEntity ) = 0;
 
-	// HACKHACK: Temp for performance measurments
-	virtual int GetStatByIndex( int index, bool bClear ) = 0;
-
-
 	//finds brushes in an AABB, prone to some false positives
 	virtual void GetBrushesInAABB( const Vector &vMins, const Vector &vMaxs, CUtlVector<int> *pOutput, int iContentsMask = 0xFFFFFFFF ) = 0;
 

@@ -2933,8 +2933,9 @@ void PrintBSPFileSizes (void)
 
 	totalmemory += GlobUsage( "pakfile",		GetPakFile()->EstimateSize(), 0 );
 	// HACKHACK: Set physics limit at 4MB, in reality this is totally dynamic
-	totalmemory += GlobUsage( "physics",		g_PhysCollideSize, 4*1024*1024 );
-	totalmemory += GlobUsage( "physics terrain",		g_PhysDispSize, 1*1024*1024 );
+	// upping this won't hurt?
+	totalmemory += GlobUsage( "physics",		g_PhysCollideSize, 16*1024*1024 );
+	totalmemory += GlobUsage( "physics terrain",		g_PhysDispSize, 16*1024*1024 );
 
 	Msg( "\nLevel flags = %x\n", g_LevelFlags );
 
