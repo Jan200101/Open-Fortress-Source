@@ -381,9 +381,9 @@ void CDamageAccountPanel::OnHealed( IGameEvent *event )
 	pDelta->bCrit = false;
 }
 
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 // Purpose: Play a hitsound if we hit a player, and a killsound if we killed them
-//-----------------------------------------------------------------------------
+//-------------------------------------------------------------------------------
 void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 {
 	if ( !bKill )
@@ -394,10 +394,10 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 	}
 
 	EmitSound_t params;
-	char buf[24]; // 7/8 digs for hitsounds should be enough, right?
+	char buf[24];
 	if ( bKill )
 	{
-		if (tf_dingalingaling_reset_on_kill.GetInt() == 1)
+		if ( tf_dingalingaling_reset_on_kill.GetInt() == 1 )
 			HitCounter = 0;
 		if ( tf_dingalingaling_last_effect.GetInt() == 0 )
 			params.m_pSoundName = "Player.KillSoundDefaultDing";
@@ -421,14 +421,18 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 			params.m_pSoundName = "Player.KillSoundSquasher";
 		else if ( tf_dingalingaling_last_effect.GetInt() == 10 )
 			params.m_pSoundName = "ui/killsound.wav";
-		if (tf_dingalingaling_killsound_num.GetInt() != 1 ){ 
+		if ( tf_dingalingaling_killsound_num.GetInt() != 1 )
+		{ 
 			int KillSound_num = tf_dingalingaling_killsound_num.GetInt();
-			if (tf_dingalingaling_killsound_random.GetInt() == 1)
+			if ( tf_dingalingaling_killsound_random.GetInt() == 1 )
 				KillCounter = RandomInt(1,KillSound_num+1);
-			if (KillCounter >= KillSound_num) {
+			if ( KillCounter >= KillSound_num )
+			{
                 KillCounter = 0;
-                params.m_pSoundName = "ui/killsound.wav";
-            }else{
+                params.m_pSoundName = "ui/killsound.wav"; //maintain compatibility with current custom hitsounds
+            }
+            else
+            {
                 KillCounter++;
                 V_snprintf( buf, sizeof(buf), "ui/killsound-%d.wav", KillCounter );
                 params.m_pSoundName = buf;    
@@ -463,14 +467,18 @@ void CDamageAccountPanel::PlayHitSound( int iAmount, bool bKill )
 			params.m_pSoundName = "Player.HitSoundSquasher";
 		else if ( tf_dingalingaling_effect.GetInt() == 10 )
 			params.m_pSoundName = "ui/hitsound.wav";
-		if (tf_dingalingaling_hitsound_num.GetInt() != 1){ 	
+		if ( tf_dingalingaling_hitsound_num.GetInt() != 1 )
+		{ 	
 			int HitSound_num = tf_dingalingaling_hitsound_num.GetInt();
-			if (tf_dingalingaling_hitsound_random.GetInt() == 1)
+			if ( tf_dingalingaling_hitsound_random.GetInt() == 1 )
 				HitCounter = RandomInt(1,HitSound_num+1);
-			if (HitCounter >= HitSound_num) {
+			if ( HitCounter >= HitSound_num )
+			{
                 HitCounter = 0;
                 params.m_pSoundName = "ui/hitsound.wav";
-            } else{
+            } 
+            else
+            {
                 HitCounter++;
                 V_snprintf( buf, sizeof(buf), "ui/hitsound-%d.wav", HitCounter );
                 params.m_pSoundName = buf;    
