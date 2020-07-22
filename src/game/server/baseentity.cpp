@@ -303,6 +303,10 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CBaseEntity, DT_BaseEntity )
 	SendPropInt		(SENDINFO(m_bAnimatedEveryTick),		1, SPROP_UNSIGNED ),
 	SendPropBool( SENDINFO( m_bAlternateSorting )),
 
+#ifdef OF_DLL
+	SendPropString( SENDINFO( m_szKillIcon ) ),
+#endif
+	
 #ifdef TF_DLL
 	SendPropArray3( SENDINFO_ARRAY3(m_nModelIndexOverrides), SendPropInt( SENDINFO_ARRAY(m_nModelIndexOverrides), SP_MODEL_INDEX_BITS, 0 ) ),
 #endif
@@ -366,7 +370,7 @@ CBaseEntity::CBaseEntity( bool bServerOnly )
 	m_iParentAttachment = 0;
 	CollisionProp()->Init( this );
 	NetworkProp()->Init( this );
-
+	
 	// NOTE: THIS MUST APPEAR BEFORE ANY SetMoveType() or SetNextThink() calls
 	AddEFlags( EFL_NO_THINK_FUNCTION | EFL_NO_GAME_PHYSICS_SIMULATION | EFL_USE_PARTITION_WHEN_NOT_SOLID );
 
@@ -394,6 +398,8 @@ CBaseEntity::CBaseEntity( bool bServerOnly )
 	m_bDynamicModelAllowed = false;
 	m_bDynamicModelPending = false;
 	m_bDynamicModelSetBounds = false;
+	
+	m_szKillIcon.GetForModify()[0] = '\0';
 
 	SetMoveType( MOVETYPE_NONE );
 	SetOwnerEntity( NULL );
@@ -618,7 +624,12 @@ void CBaseEntity::SetClassname( const char *className )
 {
 	m_iClassname = AllocPooledString( className );
 }
-
+#ifdef OF_DLL
+void CBaseEntity::SetKillIcon( const char *killIcon )
+{
+	Q_strncpy( m_szKillIcon.GetForModify(), killIcon, 64 );
+}
+#endif
 void CBaseEntity::SetModelIndex( int index )
 {
 	if ( IsDynamicModelIndex( index ) && !(GetBaseAnimating() && m_bDynamicModelAllowed) )
@@ -1806,6 +1817,9 @@ END_DATADESC()
 BEGIN_DATADESC_NO_BASE( CBaseEntity )
 
 	DEFINE_KEYFIELD( m_iClassname, FIELD_STRING, "classname" ),
+#ifdef OF_DLL
+	DEFINE_KEYFIELD( m_szKillIcon, FIELD_STRING, "killicon" ),
+#endif
 	DEFINE_GLOBAL_KEYFIELD( m_iGlobalname, FIELD_STRING, "globalname" ),
 	DEFINE_KEYFIELD( m_iParent, FIELD_STRING, "parentname" ),
 

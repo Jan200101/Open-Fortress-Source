@@ -164,6 +164,7 @@ void CTFHudDeathNotice::Init( void )
 	ListenForGameEvent( "teamplay_point_captured" );
 	ListenForGameEvent( "teamplay_capture_blocked" );
 	ListenForGameEvent( "teamplay_flag_event" );
+	ListenForGameEvent( "add_powerup_timer" );
 }
 
 //-----------------------------------------------------------------------------
@@ -695,10 +696,86 @@ void CTFHudDeathNotice::FireGameEvent( IGameEvent *event )
 		const char *szPlayerName = g_PR->GetPlayerName( iPlayerIndex );
 		Q_strncpy( m_DeathNotices[iMsg].Killer.szName, szPlayerName, ARRAYSIZE( m_DeathNotices[iMsg].Killer.szName ) );
 		m_DeathNotices[iMsg].Killer.iTeam = g_PR->GetTeam( iPlayerIndex );
+		m_DeathNotices[iMsg].Victim.iTeam = g_PR->GetTeam( iPlayerIndex );
+		
 		if ( iLocalPlayerIndex == iPlayerIndex )
 			m_DeathNotices[iMsg].bLocalPlayerInvolved = true;
 	}
+	else if ( FStrEq( "add_powerup_timer", pszEventName ) )
+	{
+		const char *pszMsgKey = NULL;
+		const char *pszMsgIcon = NULL;
+		int iCond = event->GetInt( "cond" );
+		switch ( iCond )
+		{
+			case TF_COND_CRITBOOSTED:
+			case TF_COND_CRIT_POWERUP:
+				pszMsgKey = "#Msg_PickedUpCrit";
+				pszMsgIcon = "d_powerup_crit";
+			break;
+			case TF_COND_STEALTHED:
+			case TF_COND_INVIS_POWERUP:
+				pszMsgKey = "#Msg_PickedUpInvis";
+				pszMsgIcon = "d_powerup_invis";
+			break;
+			case TF_COND_SHIELD:
+				pszMsgKey = "#Msg_PickedUpShield";
+				pszMsgIcon = "d_powerup_shield";
+			break;
+			case TF_COND_INVULNERABLE:
+				pszMsgKey = "#Msg_PickedUpInvun";
+				pszMsgIcon = "d_powerup_invun";
+			break;
+			case TF_COND_HASTE:
+				pszMsgKey = "#Msg_PickedUpHaste";
+				pszMsgIcon = "d_powerup_haste";
+			break;
+			case TF_COND_BERSERK:
+				pszMsgKey = "#Msg_PickedUpBerserk";
+				pszMsgIcon = "d_powerup_berserk";
+			break;
+			case TF_COND_JAUGGERNAUGHT:
+				pszMsgKey = "#Msg_PickedUpBerserk"; // Change me
+				pszMsgIcon = "d_powerup_berserk";
+			break;
+			default:		
+				pszMsgKey = "#Msg_PickedUpGeneric";
+				pszMsgIcon = "d_powerup_generic";
+			break;
+		}
 
+		Q_strncpy( m_DeathNotices[iMsg].szIcon, pszMsgIcon, ARRAYSIZE( m_DeathNotices[iMsg].szIcon ) );
+		
+		wchar_t *pwzEventText = g_pVGuiLocalize->Find( pszMsgKey );
+		Assert( pwzEventText );
+		if ( pwzEventText )
+		{
+			V_wcsncpy( m_DeathNotices[iMsg].wzInfoText, pwzEventText, sizeof( m_DeathNotices[iMsg].wzInfoText ) );
+		}
+		else
+		{
+			V_memset( m_DeathNotices[iMsg].wzInfoText, 0, sizeof( m_DeathNotices[iMsg].wzInfoText ) );
+		}
+
+		int iPlayerIndex = event->GetInt( "player" );
+		const char *szPlayerName = g_PR->GetPlayerName( iPlayerIndex );
+		Q_strncpy( m_DeathNotices[iMsg].Killer.szName, szPlayerName, ARRAYSIZE( m_DeathNotices[iMsg].Killer.szName ) );
+		
+		m_DeathNotices[iMsg].Killer.iPlayerID = engine->GetPlayerForUserID( event->GetInt( "player" ) );
+		
+		double backGroundColorLuminance = Luminance(m_DeathNotices[iMsg].bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor);
+		
+		C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
+		
+		if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iPlayerIndex)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat())
+			m_DeathNotices[iMsg].Killer.iColor = tf_PR->GetPlayerColor(iPlayerIndex);
+		else
+			m_DeathNotices[iMsg].Killer.iColor = !m_DeathNotices[iMsg].bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor;
+		
+		m_DeathNotices[iMsg].Killer.iTeam = g_PR->GetTeam( iPlayerIndex );
+		if ( iLocalPlayerIndex == iPlayerIndex )
+			m_DeathNotices[iMsg].bLocalPlayerInvolved = true;
+	}
 	OnGameEvent( event, iMsg );
 
 	if ( !m_DeathNotices[iMsg].iconDeath && m_DeathNotices[iMsg].szIcon )
@@ -1085,6 +1162,20 @@ void CTFHudDeathNotice::AddAdditionalMsg( int iKillerID, int iVictimID, const ch
 	{
 		msg2.bLocalPlayerInvolved = true;
 	}
+	
+	double backGroundColorLuminance = Luminance(msg2.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor);
+
+	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
+	if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iKillerID)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat())
+		msg2.Killer.iColor = tf_PR->GetPlayerColor(iKillerID);
+	else
+		msg2.Killer.iColor = !msg2.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor;
+
+	if(LuminanceContrast(Luminance(tf_PR->GetPlayerColor(iVictimID)), backGroundColorLuminance) > of_killfeed_color_threshold.GetFloat())
+		msg2.Victim.iColor = tf_PR->GetPlayerColor(iVictimID);
+	else
+		msg2.Victim.iColor = !msg2.bLocalPlayerInvolved ? m_clrLocalBGColor : m_clrBaseBGColor;
+
 }
 
 //-----------------------------------------------------------------------------

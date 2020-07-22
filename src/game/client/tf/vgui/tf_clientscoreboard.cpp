@@ -469,7 +469,7 @@ void CTFClientScoreBoardDialog::UpdatePlayerList()
 			pKeyValues->SetInt( "score", score );
 
 			// can only see class information if we're on the same team
-			if ( !AreEnemyTeams( g_PR->GetTeam( playerIndex ), localteam ) && !( localteam == TEAM_UNASSIGNED ) )
+			if( localteam == TF_TEAM_MERCENARY || ( !AreEnemyTeams( g_PR->GetTeam( playerIndex ), localteam ) && !( localteam == TEAM_UNASSIGNED ) ) )
 			{
 				// class name
 				if( g_PR->IsConnected( playerIndex ) )

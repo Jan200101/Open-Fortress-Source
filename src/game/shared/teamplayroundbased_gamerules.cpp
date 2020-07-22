@@ -532,7 +532,6 @@ void CTeamplayRoundBasedRules::AddTeamRespawnWaveTime( int iTeam, float flValue 
 //-----------------------------------------------------------------------------
 void CTeamplayRoundBasedRules::BroadcastSound( int iTeam, const char *sound, bool bAnnouncer, int iAdditionalSoundFlags, int iExcludePlayers )
 {
-	DevMsg("Sound broadcasted: %d %s %d %d\n", iTeam, sound, bAnnouncer, iExcludePlayers);
 	for (int i = TEAM_UNASSIGNED; i < TF_TEAM_COUNT; i++)
 	{
 		IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_broadcast_audio" );

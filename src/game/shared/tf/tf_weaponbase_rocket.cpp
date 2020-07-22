@@ -495,6 +495,7 @@ void CTFBaseRocket::Explode( trace_t *pTrace, CBaseEntity *pOther )
 				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );
 				pBomb->SetCritical( m_bCritical );
 				pBomb->SetLauncher(GetOriginalLauncher());
+				pBomb->SetKillIcon( UTIL_VarArgs( "%s_bomblet", GetKillIcon()[0] != '\0'  ? GetKillIcon() : GetClassname() ) );
 			}		
 		}
 #endif

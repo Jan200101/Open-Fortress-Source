@@ -146,12 +146,14 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 
 	bool bSuccess = true;
 
-	// akimbo pickups have pewished
-#if 0
+	// akimbo pickups have NOT pewished
 	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_MERCENARY ) ) // If the weapon is a pistol and we already own a pistol, give us the akimbos
+	{
 		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
-#endif
-
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( "tf_weapon_pistol_akimbo" );
+		pszWeaponName = g_aWeaponNames[TF_WEAPON_PISTOL_AKIMBO];
+		pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+	}
 	// don't allow multiple pistols to be picked up at the same time
 	if ( WeaponID == TF_WEAPON_PISTOL || WeaponID == TF_WEAPON_PISTOL_SCOUT )
 	{
@@ -221,8 +223,11 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 			if ( m_iReserveAmmo > -1 )
 				pGivenWeapon->m_iReserveAmmo = m_iReserveAmmo;
 			if ( m_iClip > -1 )
+			{
 				pGivenWeapon->m_iClip1 = m_iClip;
-
+				if( WeaponID == TF_WEAPON_PISTOL_AKIMBO )
+					pGivenWeapon->m_iClip1 *= 2;
+			}
 			if ( pTFPlayer->IsFakeClient() )
 			{
 				CTFBot *actor = ToTFBot( pTFPlayer );

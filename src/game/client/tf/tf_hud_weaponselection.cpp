@@ -29,6 +29,8 @@ ConVar tf_weapon_select_demo_time( "tf_weapon_select_demo_time", "0.5", FCVAR_CL
 ConVar of_hide_weapon_selection( "of_hide_weapon_selection", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "When enabled, makes the weapon selection hidden after selecting a weapon." );
 ConVar of_weaponswitch_flat( "of_weaponswitch_flat", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "When enabled, makes numkeys switch to slot in respect to available weapons." );
 
+extern ConVar cl_drawhud;
+
 //-----------------------------------------------------------------------------
 // Purpose: tf weapon selection hud element
 //-----------------------------------------------------------------------------
@@ -40,6 +42,13 @@ public:
 	CHudWeaponSelection(const char *pElementName );
 
 	virtual bool ShouldDraw();
+	virtual bool IsVisible() 
+	{ 
+		if( !cl_drawhud.GetBool() )
+			return false;
+
+		return BaseClass::IsVisible(); 
+	}
 	virtual void OnWeaponPickup( CTFWeaponBase *pWeapon );
 	virtual void SelectWeapon();
 
@@ -223,6 +232,7 @@ void CHudWeaponSelection::SelectWeapon( void )
 	if ( !GetSelectedWeapon()->CanBeSelected() )
 	{
 		player->EmitSound( "Player.DenyWeaponSelection" );
+		
 	}
 	else
 	{
@@ -912,9 +922,12 @@ CTFWeaponBase *CHudWeaponSelection::FindNextWeaponInWeaponSelection(int iCurrent
 				// see if this weapon is closer than the current lowest
 				if ( weaponSlot < iLowestNextSlot || (weaponSlot == iLowestNextSlot && weaponPosition < iLowestNextPosition) )
 				{
-					iLowestNextSlot = weaponSlot;
-					iLowestNextPosition = weaponPosition;
-					pNextWeapon = pWeapon;
+					if( of_hide_weapon_selection.GetBool() || hud_fastswitch.GetInt() != HUDTYPE_FASTSWITCH || pWeapon->CanBeSelected() )
+					{
+						iLowestNextSlot = weaponSlot;
+						iLowestNextPosition = weaponPosition;
+						pNextWeapon = pWeapon;
+					}
 				}
 			}
 		}
@@ -953,9 +966,12 @@ CTFWeaponBase *CHudWeaponSelection::FindPrevWeaponInWeaponSelection(int iCurrent
 				// see if this weapon is closer than the current lowest
 				if ( weaponSlot > iLowestPrevSlot || (weaponSlot == iLowestPrevSlot && weaponPosition > iLowestPrevPosition) )
 				{
-					iLowestPrevSlot = weaponSlot;
-					iLowestPrevPosition = weaponPosition;
-					pPrevWeapon = pWeapon;
+					if( of_hide_weapon_selection.GetBool() || hud_fastswitch.GetInt() != HUDTYPE_FASTSWITCH || pWeapon->CanBeSelected() )
+					{
+						iLowestPrevSlot = weaponSlot;
+						iLowestPrevPosition = weaponPosition;
+						pPrevWeapon = pWeapon;
+					}
 				}
 			}
 		}

@@ -24,6 +24,7 @@ DECLARE_BUILD_FACTORY(DMModelPanel);
 //-----------------------------------------------------------------------------
 DMModelPanel::DMModelPanel(Panel *parent, const char *panelName) : BaseClass(parent, panelName) 
 {
+	iWeaponAnim = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -32,6 +33,7 @@ DMModelPanel::DMModelPanel(Panel *parent, const char *panelName) : BaseClass(par
 void DMModelPanel::ApplySettings( KeyValues *inResourceData )
 {
 	BaseClass::ApplySettings(inResourceData);
+	SetWeaponModel("models/weapons/w_models/w_supershotgun.mdl", 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -42,6 +44,28 @@ void DMModelPanel::ApplySchemeSettings(IScheme *pScheme)
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	SetLoadoutCosmetics();
+	KeyValues *pWeapons = GetLoadout()->FindKey("Weapons");
+	if( pWeapons )
+	{
+		KeyValues *pMercenary = pWeapons->FindKey("mercenary");
+		if( pMercenary )
+		{
+			int i = 1;
+			while( i < 3 )
+			{
+				KeyValues *pWeapon = GetWeaponFromSchema( pMercenary->GetString( VarArgs("%d", i) ) );
+				if( pWeapon )
+				{
+					if( pWeapon->GetInt( "loadout_anim", -1 ) != -1 )
+					{
+						SetWeaponModel( pWeapon->FindKey( "WeaponData" )->GetString( "playermodel" ), pWeapon->GetInt( "loadout_anim" ) );
+						break;
+					}
+				}
+				i++;
+			}
+		}
+	}
 
 	SetPaintBackgroundEnabled(true);
 
@@ -100,7 +124,7 @@ void DMModelPanel::PaintBackground()
 			SetBodygroup(i, 0);
 		}
 		// Set the animation.
-		SetMergeMDL( "models/weapons/w_models/w_supershotgun.mdl", NULL, 2 );
+		SetMergeMDL( szWeaponModel, NULL, 2 );
 		for( int i = 0; i < m_iCosmetics.Count(); i++ )
 		{
 			KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
@@ -125,6 +149,7 @@ void DMModelPanel::PaintBackground()
 			}
 		}
 		Update();
+		SetModelAnim( iWeaponAnim );
 		
 		m_bUpdateCosmetics = false;
 	}
@@ -155,6 +180,14 @@ void DMModelPanel::SetCosmetic(int iCosmeticID, bool bSelected)
 			}
 		}
 	}
+	m_bUpdateCosmetics = true;
+}
+
+void DMModelPanel::SetWeaponModel( const char *szWeapon, int iAnim )
+{
+	Q_strncpy(szWeaponModel, szWeapon, sizeof(szWeaponModel));
+	SetModelAnim( iAnim );
+	iWeaponAnim = iAnim;
 	m_bUpdateCosmetics = true;
 }
 

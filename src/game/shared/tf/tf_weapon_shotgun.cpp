@@ -378,9 +378,24 @@ void CTFEternalShotgun::SecondaryAttack()
 
 	//Obligatory for MP so the sound can be played
 	CDisablePredictionFiltering disabler;
-	WeaponSound(SINGLE);
+	WeaponSound(SPECIAL2);
 
-	SendWeaponAnim(ACT_VM_PRIMARYATTACK);
+	SendWeaponAnim(ACT_VM_SECONDARYATTACK);
+	
+#ifdef CLIENT_DLL
+	if ( ShouldDrawUsingViewModel() )
+	{
+#endif
+		CBaseViewModel *vm =pOwner->GetViewModel();
+			
+		if ( vm != NULL )
+		{
+			vm->SetPoseParameter( "reel_direction", -1 );
+		}
+#ifdef CLIENT_DLL
+	}
+#endif
+	
 	pPlayer->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM_GESTURE, ACT_GRAPPLE_FIRE_START);
 
 	pPlayer->SetMuzzleFlashTime(gpGlobals->curtime + 0.5);
@@ -432,6 +447,24 @@ void CTFEternalShotgun::SecondaryAttack()
 
 void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 {
+#ifdef CLIENT_DLL
+	if ( ShouldDrawUsingViewModel() )
+	{
+#endif
+		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+		if ( pOwner != NULL )	
+		{
+			CBaseViewModel *vm =pOwner->GetViewModel();
+			
+			if ( vm != NULL )
+			{
+				vm->SetPoseParameter( "reel_direction", 1 );
+			}
+		}
+#ifdef CLIENT_DLL
+	}
+#endif
+
 	//Set hook owner player pointer
 	pPlayer->m_Shared.SetHook(pHook);
 
@@ -463,6 +496,24 @@ void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 
 void CTFEternalShotgun::RemoveHook(void)
 {
+#ifdef CLIENT_DLL
+	if ( ShouldDrawUsingViewModel() )
+	{
+#endif
+		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+		if ( pOwner != NULL )	
+		{
+			CBaseViewModel *vm =pOwner->GetViewModel();
+			
+			if ( vm != NULL )
+			{
+				vm->SetPoseParameter( "reel_direction", 0 );
+			}
+		}
+#ifdef CLIENT_DLL
+	}
+#endif
+
 	CTFPlayer *pHook = ToTFPlayer(GetHookEntity());
 
 	if (pHook)

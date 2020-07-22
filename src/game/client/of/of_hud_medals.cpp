@@ -8,12 +8,12 @@
 #include "tf_gamerules.h"
 #include "c_tf_player.h"
 #include "of_hud_medals.h"
+#include "vgui_controls/AnimationController.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 #define MEDAL_TIME 2.5f
-#define MEDAL_SIZE 128
 
 ConVar of_show_medals("of_show_medals", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
 
@@ -61,7 +61,7 @@ CTFHudMedals::CTFHudMedals(const char *pElementName) : CHudElement(pElementName)
 	
 	died = 0;
 	drawTime = 0;
-	for (int i = 0; i <= DENIED; i++)
+	for (int i = 0; i < MEDAL_COUNT; i++)
 		medals_counter[i] = 0;
 	medalsQueue.Purge();
 }
@@ -84,7 +84,7 @@ void CTFHudMedals::Reset(void)
 
 	died = 0;
 	drawTime = 0;
-	for (int i = 0; i <= DENIED; i++)
+	for (int i = 0; i < MEDAL_COUNT; i++)
 		medals_counter[i] = 0;
 	medalsQueue.Purge();
 }
@@ -108,9 +108,8 @@ void CTFHudMedals::OnThink(void)
 		m_pMedalImage->SetImage(medalsQueue[0].medal_name);
 		m_pMedalImage->SetVisible(true);
 		drawTime = gpGlobals->curtime + MEDAL_TIME;
+		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "MedalAnim");
 	}
-
-	m_pMedalImage->SetPos((GetWide() - MEDAL_SIZE) / 2, MEDAL_SIZE);
 
 	if (gpGlobals->curtime <= drawTime)
 		return;

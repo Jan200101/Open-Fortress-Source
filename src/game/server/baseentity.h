@@ -677,6 +677,10 @@ public:
 	// classname access
 	void		SetClassname( const char *className );
 	const char* GetClassname();
+#ifdef OF_DLL
+	void		SetKillIcon( const char *killIcon );
+	const char* GetKillIcon();
+#endif
 
 	// Debug Overlays
 	void		 EntityText( int text_offset, const char *text, float flDuration, int r = 255, int g = 255, int b = 255, int a = 255 );
@@ -790,6 +794,9 @@ public:
 	// was pev->rendermode
 	CNetworkVar( unsigned char, m_nRenderMode );
 	CNetworkVar( short, m_nModelIndex );
+#ifdef OF_DLL
+	CNetworkString( m_szKillIcon, 64 );
+#endif
 	
 #ifdef TF_DLL
 	CNetworkArray( int, m_nModelIndexOverrides, MAX_VISION_MODES ); // used to override the base model index on the client if necessary
@@ -1964,8 +1971,12 @@ inline const char* CBaseEntity::GetClassname()
 {
 	return STRING(m_iClassname);
 }
-
-
+#ifdef OF_DLL
+inline const char* CBaseEntity::GetKillIcon()
+{
+	return m_szKillIcon;
+}
+#endif
 inline bool CBaseEntity::ClassMatches( string_t nameStr )
 {
 	if ( IDENT_STRINGS(m_iClassname, nameStr ) )

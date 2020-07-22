@@ -650,6 +650,7 @@ CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
 		pProjectile->SetLauncher( this );
+		pProjectile->SetKillIcon( GetClassname() );
 	}
 	return pProjectile;
 
@@ -701,7 +702,9 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
 		pProjectile->SetLauncher( this );
+		pProjectile->SetKillIcon( GetClassname() );
 	}
+	
 	return pProjectile;
 
 #endif
@@ -770,6 +773,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 #ifdef GAME_DLL
 		pProjectile->SetDamage( GetProjectileDamage() );
 #endif
+		pProjectile->SetKillIcon( GetClassname() );
 	}
 	
 	return pProjectile;
@@ -820,6 +824,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetLauncher( this );
+		pProjectile->SetKillIcon( GetClassname() );
 	}
 	return pProjectile;
 
@@ -871,6 +876,7 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteD
 	{
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetLauncher( this );
+		pProjectile->SetKillIcon( GetClassname() );
 	}
 
 	return pProjectile;
@@ -915,6 +921,7 @@ CBaseEntity *CTFWeaponBaseGun::FireTripmine( CTFPlayer *pPlayer )
 			{
 				pProjectile->SetDamageRadius(GetDamageRadius());
 				pProjectile->SetDamage(GetDamage());
+				pProjectile->SetKillIcon( GetClassname() );
 			}
 		}
 	}
@@ -961,6 +968,7 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetDamage( GetProjectileDamage() );
 		pProjectile->SetLauncher( this );
+		pProjectile->SetKillIcon( GetClassname() );
 	}
 	return pProjectile;
 

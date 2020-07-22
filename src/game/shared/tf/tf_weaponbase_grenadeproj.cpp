@@ -376,6 +376,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 				pBomb->SetDetonateTimerLength( pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f ) );
 				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );
 				pBomb->SetCritical( m_bCritical );
+				pBomb->SetKillIcon( UTIL_VarArgs( "%s_bomblet", GetKillIcon()[0] != '\0'  ? GetKillIcon() : GetClassname() ) );
 			}		
 		}
 #endif

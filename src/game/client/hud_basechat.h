@@ -214,8 +214,9 @@ private:
 
 	int m_iFlag;
 };
-
-
+#ifdef OF_CLIENT_DLL
+extern ConVar cl_drawhud;
+#endif
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -249,7 +250,15 @@ public:
 	virtual void	StartMessageMode( int iMessageModeType );
 	virtual void	StopMessageMode( void );
 	void			Send( void );
+#ifdef OF_CLIENT_DLL
+	virtual bool IsVisible() 
+	{ 
+		if( !cl_drawhud.GetBool() && !GetMessageMode() )
+			return false;
 
+		return BaseClass::IsVisible(); 
+	}
+#endif
 	MESSAGE_FUNC( OnChatEntrySend, "ChatEntrySend" );
 	MESSAGE_FUNC( OnChatEntryStopMessageMode, "ChatEntryStopMessageMode" );
 

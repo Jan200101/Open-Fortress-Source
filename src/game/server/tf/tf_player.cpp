@@ -1336,11 +1336,11 @@ void CTFPlayer::UpdateCosmetics()
 			int iCosmeticCount = random->RandomInt( 0, 5 );
 			int iMaxCosNum = GetItemsGame() ? GetItemsGame()->GetInt("cosmetic_count", 5 ) : 5;
 			for( int i = 0; i < iCosmeticCount; i++ )
-			{
+			{	
 				if( !i )
-					Q_snprintf( szDesired, sizeof(szDesired), "%d", random->RandomInt( 0, iMaxCosNum ));
+					Q_snprintf( szDesired, sizeof(szDesired), "%d", random->RandomInt( 0, iMaxCosNum ) );
 				else
-					Q_snprintf( szDesired, sizeof(szDesired), "%s %d", szDesired, random->RandomInt( 0, iMaxCosNum ));
+					Q_snprintf( szDesired, sizeof(szDesired), "%s %d", szDesired, random->RandomInt( 0, iMaxCosNum ) );
 			}
 		}
 		
@@ -1621,10 +1621,13 @@ void CTFPlayer::GiveDefaultItems()
 			ManageRocketArenaWeapons( pData );
 		else if ( TFGameRules()->IsMutator( ARSENAL ) )
 			ManageArsenalWeapons( pData );
-		else if ( of_threewave.GetBool() )
-			Manage3WaveWeapons( pData );
+		else if ( TFGameRules()->IsMutator( ETERNAL ) )
+			ManageEternalWeapons( pData );
 		else
 			ManageRegularWeapons( pData );
+		
+		if ( of_threewave.GetBool() )
+			Manage3WaveWeapons( pData );
 	}
 
 	if ( !m_Shared.IsZombie() )
@@ -2118,7 +2121,7 @@ void CTFPlayer::ManageClanArenaWeapons(TFPlayerClassData_t *pData)
 		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_supershotgun");
 		if (pWeapon)
 			pWeapon->DefaultTouch(this);
-		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun_mercenary");
+		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_shotgun");
 		if (pWeapon)
 			pWeapon->DefaultTouch(this);
 		pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_nailgun");
@@ -2272,21 +2275,19 @@ void CTFPlayer::ManageArsenalWeapons(TFPlayerClassData_t *pData)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayer::Manage3WaveWeapons(TFPlayerClassData_t *pData)
+void CTFPlayer::ManageEternalWeapons(TFPlayerClassData_t *pData)
 {
 	StripWeapons();
 	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon(0);
 
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_crowbar");
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_chainsaw");
 	if (pWeapon)
 		pWeapon->DefaultTouch(this);
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_pistol_mercenary");
+
+	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_eternalshotgun");
 	if (pWeapon)
 		pWeapon->DefaultTouch(this);
-	pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_grapple");
-	if (pWeapon)
-		pWeapon->DefaultTouch(this);
-	
+
 	for (int iWeapon = 0; iWeapon < GetCarriedWeapons() + 5; ++iWeapon)
 	{
 		if (GetActiveWeapon() != NULL) break;
@@ -2297,6 +2298,16 @@ void CTFPlayer::Manage3WaveWeapons(TFPlayerClassData_t *pData)
 			Weapon_SetLast(Weapon_GetSlot(iWeapon++));
 		}
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::Manage3WaveWeapons(TFPlayerClassData_t *pData)
+{
+	CTFWeaponBase *pWeapon = (CTFWeaponBase *)GiveNamedItem("tf_weapon_grapple");
+	if (pWeapon)
+		pWeapon->DefaultTouch(this);
 }
 
 bool CTFPlayer::ManageRandomizerWeapons( TFPlayerClassData_t *pData )
@@ -2884,10 +2895,10 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 	if ( TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN ) )
 		return;
 
-	//add player to the duel queue if it's not in it
+	//add player to the duel queue if they're not in it
 	if (TFGameRules()->IsDuelGamemode() && TFGameRules()->GetDuelQueuePos(this) == -1)
 	{
-		//Msg("player with index %d was placed in the queue for the first time\n", entindex());
+		Msg("player %s with index %d was placed in the queue for the first time\n", GetPlayerName(), entindex());
 		TFGameRules()->PlaceIntoDuelQueue(this);
 	}
 
@@ -4441,17 +4452,15 @@ bool CTFPlayer::DropCurrentWeapon( void )
 	int Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 	int ReserveAmmo = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	
-// akimbo pickups have pewished
-#if 0
+// akimbo pickups have NOT pewished
 	if ( m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-		DropWeapon( pTFPistol, true, false, Clip / 2, ReserveAmmo );
+		DropWeapon( pTFPistol, true, false, (float)Clip / 2.0f, ReserveAmmo );
 		pTFPistol = NULL;
 		UTIL_Remove ( m_Shared.GetActiveTFWeapon() );
 	}
 	else
-#endif
 	{
 		DropWeapon( m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
 		UTIL_Remove ( m_Shared.GetActiveTFWeapon() );
@@ -5749,28 +5758,24 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
-	int Clip = -1;
-	int Reserve = -1;
+	int Clip = -2;
+	int Reserve = -2;
 
 	if( !of_fullammo.GetBool() || (m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop) )
 	{
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	}
-	// akimbo pickups have pewished	
-#if 0
+	// akimbo pickups have NOT pewished	
 	if ( m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-		DropWeapon( pTFPistol, false, false, Clip / 2, Reserve );
-		DropWeapon( pTFPistol, false, false, Clip / 2, Reserve );
+		DropWeapon( pTFPistol, false, false, (float)Clip / 2.0f, Reserve );
+		DropWeapon( pTFPistol, false, false, (float)Clip / 2.0f, Reserve );
 		pTFPistol = NULL;
 	}
 	else if ( m_Shared.GetActiveTFWeapon() && !m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
 		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false ,Clip, Reserve );	
-#endif
-	if ( m_Shared.GetActiveTFWeapon() && !m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
-		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false ,Clip, Reserve );
 	
 	Clip = -1;
 	Reserve = -1;
@@ -6395,17 +6400,15 @@ void CC_DropWeapon( void )
 	int Clip = pPlayer->m_Shared.GetActiveTFWeapon()->m_iClip1;
 	int ReserveAmmo = pPlayer->m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	
-	// akimbo pickups have pewished
-#if 0
+	// akimbo pickups have NOT pewished
 	if ( pPlayer->m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-		pPlayer->DropWeapon( pTFPistol, true, false, Clip / 2, ReserveAmmo );
+		pPlayer->DropWeapon( pTFPistol, true, false, (float)Clip / 2.0f, ReserveAmmo );
 		pTFPistol = NULL;
 		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
 	}
 	else
-#endif
 	{
 		pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
 		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
@@ -6888,8 +6891,7 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
 		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
 	}
-	// akimbo pickups have pewished
-#if 0
+	// akimbo pickups have NOT pewished
 	if ( m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
@@ -6898,9 +6900,8 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 		pTFPistol = NULL;
 	}
 	else
-#endif
+		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false, Clip, Reserve );
 
-	DropWeapon( m_Shared.GetActiveTFWeapon(), false, false, Clip, Reserve );
 	TeamFortress_RemoveEverythingFromWorld();
 	RemoveAllWeapons();
 }

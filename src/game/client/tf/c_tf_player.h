@@ -328,6 +328,7 @@ private:
 	float				m_flHealerChargeLevel;
 	int					m_iOldHealth;
 	bool				m_bOldJumping;
+	int					m_nOldBody;
 
 	CNetworkVar( int, m_iPlayerModelIndex );
 

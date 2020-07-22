@@ -561,7 +561,9 @@ const char *GetMapDisplayName( const char *mapName )
 		 !Q_strncmp( szTempName, "ad_", 3 ) ||
 		 !Q_strncmp( szTempName, "gg_", 3 ) ||
 		 !Q_strncmp( szTempName, "pl_", 3 ) ||
-		 !Q_strncmp( szTempName, "dm_", 3 ) )
+		 !Q_strncmp( szTempName, "de_", 3 ) ||
+		 !Q_strncmp( szTempName, "cs_", 3 ) ||
+		 !Q_strncmp( szTempName, "dm_", 3 ))
 	{
 		pszSrc = szTempName + 3;
 	}
@@ -628,9 +630,17 @@ const char *GetMapType(const char *mapName)
 		{
 			return "#Gametype_SD";
 		}
-		else if (!Q_strnicmp(mapName, "dm_", 3))
+		else if (!Q_strnicmp(mapName, "cs_", 3) || !Q_strnicmp(mapName, "de_", 3))
+		{
+			return "#Gametype_DE";
+		}
+		else if (!Q_strnicmp(mapName, "dm_", 3) || !Q_strnicmp(mapName, "duel_", 5))
 		{
 			return "#Gametype_DM";
+		}
+		if(!Q_strnicmp(mapName, "mctf_", 5))
+		{
+			return "#Gametype_MCTF";
 		}
 		else
 		{

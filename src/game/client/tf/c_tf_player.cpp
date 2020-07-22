@@ -2759,6 +2759,7 @@ void C_TFPlayer::OnPreDataChanged( DataUpdateType_t updateType )
 	BaseClass::OnPreDataChanged( updateType );
 
 	m_iOldHealth = m_iHealth;
+	m_nOldBody = m_nBody;
 	m_iOldPlayerClass = m_PlayerClass.GetClassIndex();
 	m_iOldState = m_Shared.GetCond();
 	m_iOldSpawnCounter = m_iSpawnCounter;
@@ -2785,7 +2786,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 	// C_BaseEntity assumes we're networking the entity's angles, so pretend that it
 	// networked the same value we already have.
 	SetNetworkAngles( GetLocalAngles() );
-	
+
 	BaseClass::OnDataChanged( updateType );
 
 	if ( updateType == DATA_UPDATE_CREATED )
@@ -2821,6 +2822,11 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 	bool bJustSpawned = false;
 
+	if( m_nBody != m_nOldBody )
+	{
+		m_bUpdateCosmetics = true;
+	}
+	
 	if ( m_iOldSpawnCounter != m_iSpawnCounter )
 	{
 		ClientPlayerRespawn();
@@ -3412,15 +3418,22 @@ void C_TFPlayer::UpdateWearables( void )
 			DevWarning("UpdateWearables: Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
 			continue;
 		}
+
+		
 		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
 		if( pBodygroups )
 		{
+			if( m_Shared.IsZombie() )
+				continue;
+
 			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
 			{
 				int m_Bodygroup = FindBodygroupByName( sub->GetName() );
 
 				if ( m_Bodygroup >= 0 )
+				{
 					SetBodygroup( m_Bodygroup, sub->GetInt() );
+				}
 			}
 		}
 

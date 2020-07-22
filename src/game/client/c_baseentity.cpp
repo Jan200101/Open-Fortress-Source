@@ -474,7 +474,9 @@ BEGIN_RECV_TABLE_NOBASE(C_BaseEntity, DT_BaseEntity)
 	RecvPropInt		( RECVINFO( m_bSimulatedEveryTick ), 0, RecvProxy_InterpolationAmountChanged ),
 	RecvPropInt		( RECVINFO( m_bAnimatedEveryTick ), 0, RecvProxy_InterpolationAmountChanged ),
 	RecvPropBool	( RECVINFO( m_bAlternateSorting ) ),
-
+#ifdef OF_CLIENT_DLL
+	RecvPropString( RECVINFO( m_szKillIcon ) ),
+#endif
 #ifdef TF_CLIENT_DLL
 	RecvPropArray3( RECVINFO_ARRAY(m_nModelIndexOverrides),	RecvPropInt( RECVINFO(m_nModelIndexOverrides[0]) ) ),
 #endif
@@ -920,7 +922,9 @@ C_BaseEntity::C_BaseEntity() :
 	m_bSimulatedEveryTick = false;
 	m_bAnimatedEveryTick = false;
 	m_pPhysicsObject = NULL;
-
+#ifdef OF_CLIENT_DLL
+	m_szKillIcon.GetForModify()[0] = '\0';
+#endif
 #ifdef _DEBUG
 	m_vecAbsOrigin = vec3_origin;
 	m_angAbsRotation = vec3_angle;
@@ -4796,6 +4800,13 @@ const char *C_BaseEntity::GetClassname( void )
 	return outstr;
 }
 
+#ifdef OF_CLIENT_DLL
+const char *C_BaseEntity::GetKillIcon( void )
+{
+	return m_szKillIcon;
+}
+#endif
+
 const char *C_BaseEntity::GetDebugName( void )
 {
 	return GetClassname();
@@ -6068,6 +6079,12 @@ void C_BaseEntity::SetClassname( const char *className )
 	m_iClassname = MAKE_STRING( className );
 }
 
+#ifdef OF_CLIENT_DLL
+void C_BaseEntity::SetKillIcon( const char *killIcon )
+{
+	Q_strncpy( m_szKillIcon.GetForModify(), killIcon, 64 );
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Restores the current object from disk, by iterating through the objects

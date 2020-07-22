@@ -117,7 +117,7 @@ ConVar of_disable_healthkits		("of_disable_healthkits", "0", FCVAR_NOTIFY | FCVA
 ConVar of_disable_ammopacks			("of_disable_ammopacks", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Ammopacks." );
 ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game\n 7 : Arsenal",
-							true, 0, true, 7 );
+							true, 0, true, 8 );
 
 /*	List of mutators:
 	0: Disabled
@@ -196,6 +196,8 @@ ConVar of_randomizer ( "of_randomizer", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 ConVar of_randomizer_setting( "of_randomizer_setting", "TF2", FCVAR_REPLICATED | FCVAR_NOTIFY, \
 					"Sets which Config randomizer pulls its weapons from.");
 
+ConVar of_votenearend ( "of_votenearend", "1", FCVAR_REPLICATED | FCVAR_NOTIFY );
+					
 #ifdef GAME_DLL
 void ValidateCapturesPerRound( IConVar *pConVar, const char *oldValue, float flOldValue )
 {
@@ -356,7 +358,7 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFGameRulesProxy, DT_TFGameRulesProxy )
 
 BEGIN_NETWORK_TABLE_NOBASE( CDuelQueue, DT_DuelQueue )
 #ifdef CLIENT_DLL
-	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hDuelQueue ), 32, RecvPropInt(NULL, 0, sizeof(int)) ),
+	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_hDuelQueue ), 32, RecvPropInt( NULL, 0, sizeof(int) ) ),
 #else
 	SendPropUtlVector( SENDINFO_UTLVECTOR( m_hDuelQueue ), 32, SendPropInt( NULL, 0, sizeof(int) ) ),
 #endif
@@ -375,13 +377,9 @@ void CDuelQueue::OnPreDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 void CDuelQueue::OnDataChanged( DataUpdateType_t updateType )
 {
-	if ( updateType == DATA_UPDATE_CREATED )
-	{
-	}
-
-	if ( updateType == DATA_UPDATE_CREATED )
-	{
-	}
+	IGameEvent *event = gameeventmanager->CreateEvent( "duel_refresh" );
+	if ( event )
+		gameeventmanager->FireEvent( event );
 }
 #endif
 
@@ -419,7 +417,7 @@ void CDuelQueue::OnDataChanged( DataUpdateType_t updateType )
 	
 	
 	BEGIN_RECV_TABLE( CTFGameRulesProxy, DT_TFGameRulesProxy )
-		RecvPropDataTable( "duelqueue_data", 0, 0, &REFERENCE_RECV_TABLE( DT_DuelQueue ), RecvProxy_DuelQueue ),
+		RecvPropDataTable( "duelqueue_data", 	0, 0, &REFERENCE_RECV_TABLE( DT_DuelQueue ), 	RecvProxy_DuelQueue ),
 		RecvPropDataTable( "tf_gamerules_data", 0, 0, &REFERENCE_RECV_TABLE( DT_TFGameRules ), RecvProxy_TFGameRules )
 	END_RECV_TABLE()
 #else
@@ -440,8 +438,8 @@ void CDuelQueue::OnDataChanged( DataUpdateType_t updateType )
 	}
 
 	BEGIN_SEND_TABLE( CTFGameRulesProxy, DT_TFGameRulesProxy )
-		SendPropDataTable( "tf_gamerules_data", 0, &REFERENCE_SEND_TABLE( DT_TFGameRules ), SendProxy_TFGameRules ),
-		SendPropDataTable( "duelqueue_data", 0, &REFERENCE_SEND_TABLE( DT_DuelQueue ), SendProxy_DuelQueue )
+		SendPropDataTable( "duelqueue_data", 	0, &REFERENCE_SEND_TABLE( DT_DuelQueue ), 	SendProxy_DuelQueue ),
+		SendPropDataTable( "tf_gamerules_data", 0, &REFERENCE_SEND_TABLE( DT_TFGameRules ), SendProxy_TFGameRules )
 	END_SEND_TABLE()
 #endif
 
@@ -1533,17 +1531,39 @@ int CDuelQueue::GetDuelQueuePos(CBaseEntity *pPlayer)
 	return m_hDuelQueue.Find(pPlayer->entindex());
 }
 
+int CDuelQueue::GetDuelQueuePos( int iIndex )
+{
+	return m_hDuelQueue.Find(iIndex);
+}
+
 CTFPlayer *CDuelQueue::GetDueler(int index)
 {
 	if( index >= m_hDuelQueue.Count() )
 		return NULL;
 
-	return ToTFPlayer( UTIL_PlayerByIndex (m_hDuelQueue[index] ) );
+	return ToTFPlayer( UTIL_PlayerByIndex( m_hDuelQueue[index] ) );
 }
+
+int CDuelQueue::GetIndex( int index )
+{
+	if( index >= m_hDuelQueue.Count() )
+		return -1;
+
+	return m_hDuelQueue[index];
+}
+
 #ifdef GAME_DLL
 void CDuelQueue::PlaceIntoDuelQueue(CBaseEntity *pPlayer)
 {
+	IGameEvent *event = gameeventmanager->CreateEvent( "duel_enterqueue" );
+	if ( event )
+	{
+		event->SetInt( "playerid", pPlayer->entindex() );
+		gameeventmanager->FireEvent( event );
+	}
+
 	m_hDuelQueue.AddToTail(pPlayer->entindex());
+	NetworkStateChanged();
 	//Msg("player with index %d was placed in queue position %d\n", pPlayer->entindex(), GetDuelQueuePos(pPlayer));
 }
 
@@ -1554,6 +1574,8 @@ void CDuelQueue::RemoveFromDuelQueue(CBaseEntity *pPlayer)
 		//Msg("player with index %d was removed from the queue\n", pPlayer->entindex());
 		m_hDuelQueue.FindAndRemove(pPlayer->entindex());
 		ResetDuelerWins(pPlayer);
+
+		NetworkStateChanged();
 	}
 }
 
@@ -1617,6 +1639,8 @@ void CTFGameRules::RemoveFromDuelQueue(CBasePlayer *pPlayer)
 
 void CTFGameRules::DuelRageQuit( CTFPlayer *pRager )
 {
+	if( !pRager )
+		return;
 	//reset frag count of the rager to make sure player who hasn't left wins even if it has a lower frag count
 	pRager->ResetFragCount();
 	//conclude match
@@ -1659,6 +1683,19 @@ void CTFGameRules::ProgressDuelQueues(CTFPlayer *pWinner, CTFPlayer *pLoser, boo
 		g_pDuelQueue.PlaceIntoDuelQueue(pWinner);
 	}
 
+	IGameEvent *event = gameeventmanager->CreateEvent( "duel_nextplayer" );
+	if ( event )
+	{
+		event->SetInt( "playerid", OFDuelQueue()->GetIndex(0) );
+		gameeventmanager->FireEvent( event );
+	}
+
+	event = gameeventmanager->CreateEvent( "duel_nextplayer" );
+	if( event )
+	{
+		event->SetInt( "playerid", OFDuelQueue()->GetIndex(1) );
+		gameeventmanager->FireEvent( event );
+	}
 	//Msg("queue has progressed, winner now has positon %d and loser position %d\n", GetDuelQueuePos(pWinner), GetDuelQueuePos(pLoser));
 }
 #endif
@@ -2853,6 +2890,11 @@ void CTFGameRules::SetupMutator( void )
 		case ARSENAL:
 			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Arsenal mutator config file\n");
 			engine->ServerCommand("exec config_default_mutator_arsenal.cfg \n");
+			engine->ServerExecute();
+			break;
+		case ETERNAL:
+			ConColorMsg(Color(123, 176, 130, 255), "[TFGameRules] Executing server Eternal mutator config file\n");
+			engine->ServerCommand("exec config_default_mutator_eternal.cfg \n");
 			engine->ServerExecute();
 			break;
 	}
@@ -4918,7 +4960,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					GoToIntermission();
 				}
 				// one of our teams is at 80% of the fragcount, start voting for next map
-				if ( !m_bStartedVote && ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= ( (float)iFragLimit * 0.8 ) ||
+				if ( of_votenearend.GetBool() && !m_bStartedVote && ( TFTeamMgr()->GetTeam(TF_TEAM_RED)->GetScore() >= ( (float)iFragLimit * 0.8 ) ||
 					( TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ( (float)iFragLimit * 0.8 ) ) ) 
 					&& !TFGameRules()->IsInWaitingForPlayers() )
 				{
@@ -5093,6 +5135,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		{
 			killer_weapon_name = pWeapon->GetClassname();
 
+			if( pWeapon->GetKillIcon()[0] != '\0' )
+				killer_weapon_name = pWeapon->GetKillIcon();
+			
 			if (weaponType != NULL && WeaponID_IsMeleeWeapon(pWeapon->GetWeaponID()))
 				*weaponType = 1;
 		}
@@ -5101,6 +5146,9 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 	{
 		killer_weapon_name = STRING( pInflictor->m_iClassname );
 
+		if( pInflictor->GetKillIcon()[0] != '\0' )
+			killer_weapon_name = pInflictor->GetKillIcon();
+		
 		if (weaponType != NULL && IsExplosiveProjectile(killer_weapon_name))
 			*weaponType = 2; //explosive projectile
 	}

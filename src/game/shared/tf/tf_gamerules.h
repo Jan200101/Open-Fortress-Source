@@ -54,13 +54,14 @@ extern ConVar tf_particles_disable_weather;
 enum
 {
 	NO_MUTATOR = 0,
-	INSTAGIB, 	// 1
+	INSTAGIB, 			// 1
 	INSTAGIB_NO_MELEE, // 2
 	CLAN_ARENA, 	// 3
 	UNHOLY_TRINITY, // 4
 	ROCKET_ARENA, 	// 5
 	GUN_GAME, 		// 6
 	ARSENAL, 		// 7
+	ETERNAL, 		// 8
 };
 
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy
@@ -131,7 +132,11 @@ public:
 	virtual bool Init();
 
 	int		GetDuelQueuePos(CBaseEntity *pPlayer);
+	int		GetDuelQueuePos( int iIndex );
 	CTFPlayer *GetDueler(int index);
+	
+	int			GetDuelerCount(){ return m_hDuelQueue.Count(); };
+	int			GetIndex( int index );
 #ifdef GAME_DLL
 	void 	PlaceIntoDuelQueue(CBaseEntity *pPlayer);
 	void	RemoveFromDuelQueue(CBaseEntity *pPlayer);

@@ -12,6 +12,7 @@
 #include <convar.h>
 #include "vgui_controls/AnimationController.h"
 #include "filesystem.h"
+#include "activitylist.h"
 
 #include "tier0/dbg.h"
 
@@ -431,7 +432,7 @@ void DMLoadout::ApplySettings( KeyValues *inResourceData )
 						if( !Q_stricmp(pMercenary->GetString(VarArgs("%d", i+1 ) ), GetItemSchema()->GetWeapon(y)->GetName()) )
 						{
 							pTemp->SetSelected(true);
-							
+
 							switch( i )
 							{
 								case 0:
@@ -543,7 +544,21 @@ void DMLoadout::SelectWeapon( int iSlot, const char *szWeapon, bool bChangeSelec
 		{
 			KeyValues *pWeapon = GetWeaponFromSchema(szWeapon);
 			if( pWeapon )
+			{
 				pImage->SetImage( pWeapon->GetString("backpack_icon", "..\backpack\blocked") );
+				KeyValues *pKey = pWeapon->FindKey( "WeaponData" );
+				if( pKey )
+				{
+					GetClassModel()->SetWeaponModel( pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl"), pWeapon->GetInt("loadout_anim", 0) );
+					CBaseModFrame* mainMenu = CBaseModPanel::GetSingleton().GetWindow(WT_MAINMENU);
+
+					vgui::DMModelPanel* pClassModel = dynamic_cast<vgui::DMModelPanel*>(mainMenu->FindChildByName("classmodelpanel"));
+					if( pClassModel )
+					{
+						pClassModel->SetWeaponModel( pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl"), pWeapon->GetInt("loadout_anim", 0) );
+					}
+				}
+			}
 		}
 	}
 	
