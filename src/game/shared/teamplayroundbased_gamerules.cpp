@@ -997,8 +997,8 @@ void CTeamplayRoundBasedRules::CheckWaitingForPlayers( void )
 	if( m_bInWaitingForPlayers )
 	{
 #ifdef OF_DLL
-		//there is no match if there is only 1 player
-		if (CountActivePlayers() < 2)
+		//there is no duel if there is only 1 dueler
+		if (TFGameRules()->IsDuelGamemode() && CountActivePlayers() < 2)
 		{
 			SetInWaitingForPlayers(false);
 			State_Transition( GR_STATE_PREGAME );
@@ -1488,7 +1488,9 @@ void CTeamplayRoundBasedRules::State_Think_PREGAME( void )
 	if ( IsInCommentaryMode() )
 		return;
 #ifdef OF_DLL
-	if (CountActivePlayers() > 1 || (IsInArenaMode() == true && m_flWaitingForPlayersTimeEnds == 0.0f))
+	int iActivePlayers = CountActivePlayers();
+	bool bEnoughPlayers = TFGameRules()->IsDuelGamemode() ? iActivePlayers > 1 : iActivePlayers > 0;
+	if ( bEnoughPlayers || ( IsInArenaMode() == true && m_flWaitingForPlayersTimeEnds == 0.0f ) )
 #else
 	if( CountActivePlayers() > 0 || (IsInArenaMode() == true && m_flWaitingForPlayersTimeEnds == 0.0f) )
 #endif
@@ -1557,7 +1559,9 @@ void CTeamplayRoundBasedRules::State_Enter_PREROUND( void )
 	if ( IsInArenaMode() == true )
 	{
 #ifdef OF_DLL
-		if ( CountActivePlayers() > 1 )
+		int iActivePlayers = CountActivePlayers();
+		bool bEnoughPlayers = TFGameRules()->IsDuelGamemode() ? iActivePlayers > 1 : iActivePlayers > 0;
+		if ( bEnoughPlayers )
 #else
 		if ( CountActivePlayers() > 0 )
 #endif
@@ -1848,7 +1852,9 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 {
 	//if we don't find any active players, return to GR_STATE_PREGAME
 #ifdef OF_DLL
-	if( CountActivePlayers() < 2 )
+	int iActivePlayers = CountActivePlayers();
+	bool bEnoughPlayers = TFGameRules()->IsDuelGamemode() ? iActivePlayers > 1 : iActivePlayers > 0;
+	if ( !bEnoughPlayers )
 #else
 	if( CountActivePlayers() <= 0 )
 #endif
@@ -2386,7 +2392,9 @@ void CTeamplayRoundBasedRules::State_Think_STALEMATE( void )
 {
 	//if we don't find any active players, return to GR_STATE_PREGAME
 #ifdef OF_DLL
-	if (CountActivePlayers() < 2 && IsInArenaMode() == false)
+	int iActivePlayers = CountActivePlayers();
+	bool bEnoughPlayers = TFGameRules()->IsDuelGamemode() ? iActivePlayers > 1 : iActivePlayers > 0;
+	if ( !bEnoughPlayers && IsInArenaMode() == false)
 #else
 	if (CountActivePlayers() <= 0 && IsInArenaMode() == false)
 #endif

@@ -2731,11 +2731,25 @@ void CTFGameRules::SetupOnRoundStart( void )
 		}
 	}	
 
-	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) || !of_powerups.GetBool() )
+	bool bIsDuel = IsDuelGamemode();
+	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) || !of_powerups.GetBool() || bIsDuel )
 	{
 		for ( int i = 0; i < ICondPowerupAutoList::AutoList().Count(); ++i )
 		{
 			CCondPowerup *pPowerup = static_cast< CCondPowerup* >( ICondPowerupAutoList::AutoList()[ i ] );
+
+			//if it's duel leave mega health and duel shield on the field
+			if( bIsDuel )
+			{
+				if( pPowerup->GetPowerupSize() == POWERUP_MEGA )
+					continue;
+
+				//SHIELD_DUEL is just to make sure the powerup is removed on all modes except duel
+				//but it functions just like the regular shield powerup
+				if( pPowerup->m_iCondition == TF_COND_SHIELD_DUEL )
+					continue;
+			}
+
 			pPowerup->SetDisabled( true );
 		}
 	}
@@ -2744,7 +2758,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 		for ( int i = 0; i < ICondPowerupAutoList::AutoList().Count(); ++i )
 		{
 			CCondPowerup *pPowerup = static_cast< CCondPowerup* >( ICondPowerupAutoList::AutoList()[ i ] );
-			pPowerup->SetDisabled( false );
+			pPowerup->SetDisabled( pPowerup->m_iCondition == TF_COND_SHIELD_DUEL ? true : false ); //duel only shield powerup removed in all other gamemodes
 		}
 	}	
 
@@ -4885,10 +4899,8 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 	}
 
 	// if not killed by  suicide or killed by world, see if the scorer had an assister, and if so give the assister credit
-	if ( ( pVictim != pScorer ) && pKiller )
-	{
+	if ( pVictim != pScorer && pKiller )
 		pAssister = GetAssister( pVictim, pScorer, pInflictor );
-	}	
 
 	//find the area the player is in and see if his death causes a block
 	CTriggerAreaCapture *pArea = dynamic_cast<CTriggerAreaCapture *>(gEntList.FindEntityByClassname( NULL, "trigger_capture_area" ) );
@@ -5395,6 +5407,12 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 				}
 
 				event->SetBool("kamikaze", Kamikaze);
+			}
+			else
+			{
+				//Only needed for Duel mode. Without this if there is only one dueler
+				//on the map and it suicides it gets denied medal
+				event->SetInt("victim_pupkills", -1);
 			}
 
 			//first blood
