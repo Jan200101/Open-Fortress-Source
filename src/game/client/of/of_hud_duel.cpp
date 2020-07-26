@@ -419,16 +419,12 @@ void CTFDuelAnnouncement::CheckAnnounce()
 	
 	m_bAnnouncePlayers = false;
 	
-	DevMsg("Round Start\n");
-	
 	iFirstPlayer = OFDuelQueue()->GetIndex(0  DUEL_ADJUSTMENT );
 	iSecondPlayer = OFDuelQueue()->GetIndex(1 DUEL_ADJUSTMENT );
 
 	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "DuelTheFuckers");
 	pFirstPanel->SetDialogVariable( "PlayerOne", tf_PR ? tf_PR->GetPlayerName( iFirstPlayer ) : "" );
 	pSecondPanel->SetDialogVariable( "PlayerTwo", tf_PR ? tf_PR->GetPlayerName( iSecondPlayer ) : "" );
-	DevMsg("Player one %s\n", tf_PR ? tf_PR->GetPlayerName( iFirstPlayer ) : "" );
-	DevMsg("Player two %s\n", tf_PR ? tf_PR->GetPlayerName( iSecondPlayer ) : "" );
 	for( int i = 0; i < 2; i++ )
 	{
 		int iPlayer = i ? iSecondPlayer : iFirstPlayer;
