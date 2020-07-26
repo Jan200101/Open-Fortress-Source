@@ -2867,7 +2867,7 @@ void DoImageSpaceMotionBlur( const CViewSetup &view, int x, int y, int w, int h 
 #endif	
 	{
 		return;
-	}
+}
 
 	//======================================================================================================//
 	// Get these convars here to make it easier to remove them later and to default each client differently //
