@@ -118,7 +118,7 @@ ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_
 ConVar of_disable_healthkits		("of_disable_healthkits", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Healthkits." );
 ConVar of_disable_ammopacks			("of_disable_ammopacks", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Ammopacks." );
 ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
-							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game\n 7 : Arsenal",
+							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game\n 7 : Arsenal\n 8 : Eternal Shotguns",
 							true, 0, true, 8 );
 
 /*	List of mutators:

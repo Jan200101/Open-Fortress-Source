@@ -62,6 +62,8 @@ enum
 	GUN_GAME, 		// 6
 	ARSENAL, 		// 7
 	ETERNAL, 		// 8
+	
+	OF_MUTATOR_COUNT,
 };
 
 class CTFGameRulesProxy : public CTeamplayRoundBasedRulesProxy

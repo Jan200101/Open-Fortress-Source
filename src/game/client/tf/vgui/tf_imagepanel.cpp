@@ -50,8 +50,8 @@ void CTFImagePanel::ApplySettings( KeyValues *inResourceData )
 	BaseClass::ApplySettings( inResourceData );
 
 	inResourceData->SetInt("zpos", -1);
-	inResourceData->SetString("fieldName", "compensate");
 	pCompensate->ApplySettings( inResourceData );
+	pCompensate->SetName("compensate");
 	pCompensate->SetVisible(false);
 	pCompensate->SetPos(0,0);
 	
