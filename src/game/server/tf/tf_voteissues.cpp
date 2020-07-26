@@ -480,7 +480,7 @@ bool CChangeMutatorIssue::CanCallVote( int nEntIndex, const char *pszDetails, vo
 {
 	int iMutator = ( atoi( m_szDetailsString ) );
 
-	if ( iMutator < NO_MUTATOR || iMutator > GUN_GAME )
+	if ( iMutator < NO_MUTATOR || iMutator >= OF_MUTATOR_COUNT )
 	{
 		nFailCode = VOTE_FAILED_MUTATOR_INVALID;
 		nTime = m_flNextCallTime - gpGlobals->curtime;
