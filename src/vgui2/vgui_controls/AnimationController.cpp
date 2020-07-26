@@ -72,8 +72,6 @@ AnimationController::AnimationController(Panel *parent) : BaseClass(parent, NULL
 
 	m_sModelPos = g_ScriptSymbols.AddString( "model_pos" );
 	m_sModelAng = g_ScriptSymbols.AddString( "model_ang" );
-	
-	m_sResetAnim = g_ScriptSymbols.AddString( "model_reset_anim" );
 
 	m_flCurrentTime = 0.0f;
 }
@@ -649,6 +647,14 @@ bool AnimationController::ParseScriptFile(char *pMem, int length)
 				pMem = ParseFile(pMem, token, NULL);
 				animCmd.cmdData.runEvent.timeDelay = (float)atof(token);
 			}
+			else if ( !stricmp( token, "model_reset_anim" ))
+			{
+				animCmd.commandType = CMD_RESET_MODEL_ANIM;
+				pMem = ParseFile(pMem, token, NULL);
+				animCmd.cmdData.runEvent.event = g_ScriptSymbols.AddString(token);
+				pMem = ParseFile(pMem, token, NULL);
+				animCmd.cmdData.runEvent.timeDelay = (float)atof(token);
+			}
 			else
 			{
 				Warning("Couldn't parse script sequence '%s': expected <anim command>, found '%s'\n", g_ScriptSymbols.String(seq.name), token);
@@ -784,6 +790,14 @@ void AnimationController::UpdatePostedMessages(bool bRunToCompletion)
 			break;
 		case CMD_SETSTRING:
 			RunCmd_SetString( msg );
+			break;
+		case CMD_RESET_MODEL_ANIM:
+			{
+				AnimContModelPanel* pPanel = dynamic_cast<AnimContModelPanel*>(msg.parent.Get()->FindChildByName(g_ScriptSymbols.String(msg.variable)));
+				if ( pPanel )
+					pPanel->ResetAnim();
+
+			}
 			break;
 		}
 	}
@@ -1517,15 +1531,7 @@ AnimationController::Value_t AnimationController::GetValue(ActiveAnimation_t& an
 			val.b = y;
 			val.c = z;
 		}
-	}	
-	else if ( var == m_sResetAnim )
-	{
-		AnimContModelPanel *pPanel = dynamic_cast<AnimContModelPanel*>(panel);
-		if( pPanel )
-		{
-			pPanel->ResetAnim();
-		}
-	}	
+	}
 	else if (var == m_sSize)
 	{
 		int w, t;

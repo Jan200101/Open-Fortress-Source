@@ -545,10 +545,8 @@ void CTeamplayRoundBasedRules::BroadcastSound( int iTeam, const char *sound, boo
 			event->SetInt("exclude_players", iExcludePlayers);
 			event->SetBool( "announcer", bAnnouncer );
 #ifdef OF_DLL
-			DevMsg("Serverside broadcast\n");
 			gameeventmanager->FireEvent( event );
 #else
-			DevMsg("Clientside broadcast\n");
 			gameeventmanager->FireEventClientSide( event );
 #endif
 			if ( iTeam != TEAM_UNASSIGNED )

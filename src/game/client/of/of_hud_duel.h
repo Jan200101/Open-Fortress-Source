@@ -10,6 +10,8 @@
 #include <vgui_controls/EditablePanel.h>
 
 class C_TFPlayer;
+class CModelPanel;
+class CTFImagePanel;
 
 class CTFDuelRank : public vgui::EditablePanel
 {
@@ -29,6 +31,7 @@ private:
 	char szPlayerName[32];
 	
 	CAvatarImagePanel	*m_pAvatar;
+	CTFImagePanel		*m_pImage;
 };
 
 class CTFDuelList : public vgui::EditablePanel
@@ -69,6 +72,42 @@ private:
 	
 	bool		m_bIsInQueue;
 	bool		m_bIsNext;
+	
+//	vgui::EditablePanel *pLabelYou;
+//	CExLabel			*pLabelUpNext;
+};
+
+class CTFDuelAnnouncement : public vgui::EditablePanel, public CHudElement
+{
+	DECLARE_CLASS_SIMPLE( CTFDuelAnnouncement, vgui::EditablePanel );
+
+	CTFDuelAnnouncement( const char *pElementName );
+
+	virtual bool ShouldDraw();
+	virtual void FireGameEvent( IGameEvent *event );
+
+	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
+	
+	virtual void CheckAnnounce( void );
+private:
+	CModelPanel *pFirstModel;
+	CModelPanel *pSecondModel;
+	
+	CTFImagePanel *pFirstBG;
+	CTFImagePanel *pFirstExBG;
+	CTFImagePanel *pSecondBG;
+	CTFImagePanel *pSecondExBG;
+	
+	C_TFPlayer *m_pPlayer1;
+	C_TFPlayer *m_pPlayer2;
+	
+	vgui::EditablePanel *pFirstPanel;
+	vgui::EditablePanel *pSecondPanel;
+	
+	int			iFirstPlayer;
+	int			iSecondPlayer;
+	
+	bool 		m_bAnnouncePlayers;
 	
 //	vgui::EditablePanel *pLabelYou;
 //	CExLabel			*pLabelUpNext;

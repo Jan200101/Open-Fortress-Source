@@ -2164,7 +2164,21 @@ public:
 		
 		if ( !pC_BaseEntity )
 		{
-
+			if( GetMaterial() )
+			{
+				bool bSuccess;
+				IMaterialVar *m_pPlayerIndexVar = GetMaterial()->FindVar( "$playerindex", &bSuccess );
+				if( m_pPlayerIndexVar && bSuccess && m_pPlayerIndexVar->GetIntValue() > -1 )
+				{
+					C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
+					if( tf_PR )
+					{
+						Vector vecColor = tf_PR->GetPlayerColorVector(m_pPlayerIndexVar->GetIntValue());
+						m_pResult->SetVecValue( vecColor.x, vecColor.y, vecColor.z );
+						return;
+					}
+				}
+			}
 			float r = floorf( of_color_r.GetFloat() ) / 255.0f;
 			float g = floorf( of_color_g.GetFloat() ) / 255.0f;
 			float b = floorf( of_color_b.GetFloat() ) / 255.0f;

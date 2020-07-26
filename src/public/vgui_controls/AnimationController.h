@@ -104,6 +104,7 @@ private:
 		CMD_RUNEVENTCHILD,
 		CMD_FIRECOMMAND,
 		CMD_SETVISIBLE,
+		CMD_RESET_MODEL_ANIM,
 	};
 
 	enum RelativeAlignment

@@ -2897,12 +2897,16 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 	// civ can't change teams
 	if ( TFGameRules()->IsESCGamemode() && IsPlayerClass( TF_CLASS_CIVILIAN ) )
 		return;
+	
+	bool bJoinedDuel = false;
 
 	//add player to the duel queue if they're not in it
-	if (TFGameRules()->IsDuelGamemode() && TFGameRules()->GetDuelQueuePos(this) == -1)
+	if(TFGameRules()->IsDuelGamemode() && TFGameRules()->GetDuelQueuePos(this) == -1)
 	{
 		Msg("player %s with index %d was placed in the queue for the first time\n", GetPlayerName(), entindex());
 		TFGameRules()->PlaceIntoDuelQueue(this);
+		bJoinedDuel = true;
+		UpdatePlayerColor();
 	}
 
 	//force spectating if player is not one of the two duelers
@@ -2918,7 +2922,24 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 		else 
 		{
 			if ( !TFGameRules()->IsAllClassEnabled() ) 
+			{
 				SetDesiredPlayerClassIndex(TF_CLASS_MERCENARY);
+				if( bJoinedDuel )
+				{
+					UpdateCosmetics(); //
+					int iModifiers = 0;
+			
+					if ( m_Shared.IsZombie() )
+						iModifiers |= (1<<TF_CLASSMOD_ZOMBIE);
+			
+					if ( IsRetroModeOn() )
+						iModifiers |= (1<<TF_CLASSMOD_TFC);
+					int iDesiredClass = GetDesiredPlayerClassIndex();
+
+					if ( GetPlayerClass()->GetClassIndex() != iDesiredClass )
+						GetPlayerClass()->Init( iDesiredClass, iModifiers );
+				}
+			}
 			else
 				ShowViewPortPanel( PANEL_CLASS );
 			
@@ -3455,7 +3476,21 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 		// Bots frequently encountered this problem
 		if ( m_iHealth > 0 )
 			ForceRespawn();
+		if( TFGameRules()->IsDuelGamemode() )
+		{
+			UpdateCosmetics(); //
+			int iModifiers = 0;
+	
+			if ( m_Shared.IsZombie() )
+				iModifiers |= (1<<TF_CLASSMOD_ZOMBIE);
+	
+			if ( IsRetroModeOn() )
+				iModifiers |= (1<<TF_CLASSMOD_TFC);
+			int iDesiredClass = GetDesiredPlayerClassIndex();
 
+			if ( GetPlayerClass()->GetClassIndex() != iDesiredClass )
+				GetPlayerClass()->Init( iDesiredClass, iModifiers );
+		}
 		return;
 	}
 
@@ -3486,6 +3521,21 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 	{
 		CommitSuicide( false, true );
 	}
+	if( TFGameRules()->IsDuelGamemode() )
+	{
+		UpdateCosmetics(); //
+		int iModifiers = 0;
+
+		if ( m_Shared.IsZombie() )
+			iModifiers |= (1<<TF_CLASSMOD_ZOMBIE);
+
+		if ( IsRetroModeOn() )
+			iModifiers |= (1<<TF_CLASSMOD_TFC);
+		int iDesiredClass = GetDesiredPlayerClassIndex();
+
+		if ( GetPlayerClass()->GetClassIndex() != iDesiredClass )
+			GetPlayerClass()->Init( iDesiredClass, iModifiers );
+	}	
 }
 
 //-----------------------------------------------------------------------------

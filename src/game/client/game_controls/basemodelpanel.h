@@ -257,6 +257,9 @@ public:
 	virtual void ParseModelInfo( KeyValues *inResourceData );
 
 	void		ClearAttachedModelInfos( void );
+#ifdef OF_CLIENT_DLL
+	void		ClearBodygroupInfos( void );
+#endif	
 
 	void		CalculateFrameDistance( void );
 	void		ZoomToFrameDistance( void );

@@ -288,6 +288,7 @@ void CModelPanel::SwapModel( const char *pszName, const char *pszAttached )
 #endif
 
 	ClearAttachedModelInfos();
+	ClearBodygroupInfos();
 
 	if ( pszAttached )
 	{
@@ -406,6 +407,18 @@ void CModelPanel::ClearAttachedModelInfos( void )
 	}
 }
 
+#ifdef OF_CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CModelPanel::ClearBodygroupInfos( void )
+{
+	if ( m_pModelInfo )
+	{
+		m_pModelInfo->m_Bodygroups.PurgeAndDeleteElements();
+	}
+}
+#endif
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -429,8 +442,8 @@ void CModelPanel::PurgeAttachedModels()
 		{
 			m_AttachedModels[i]->Remove();
 		}
-		m_AttachedModels.Remove( i );
-	}	
+	}
+	m_AttachedModels.Purge();
 }
 
 //-----------------------------------------------------------------------------

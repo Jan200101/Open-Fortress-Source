@@ -79,7 +79,7 @@ void CTFWinPanel::FireGameEvent(IGameEvent * event)
 	//Should it draw or not
 	int iWinningTeam = event->GetInt("winning_team");
 
-	if (Q_strcmp("teamplay_win_panel", event->GetName()) || iWinningTeam == TF_TEAM_MERCENARY)
+	if( Q_strcmp("teamplay_win_panel", event->GetName()) || iWinningTeam == TF_TEAM_MERCENARY)
 	{
 		SetVisible(false);
 		return;
@@ -425,7 +425,11 @@ extern ConVar mp_bonusroundtime;
 void CTFWinPanelDM::FireGameEvent(IGameEvent *event)
 {
 	//Only draw for Mercenary deathmatch
-	if (Q_strcmp("teamplay_win_panel", event->GetName()) || event->GetInt("winning_team") != TF_TEAM_MERCENARY)
+	if( Q_strcmp("teamplay_win_panel", event->GetName()) ||
+	event->GetInt("winning_team") != TF_TEAM_MERCENARY ||
+	!TFGameRules()->IsDMGamemode() ||
+	TFGameRules()->IsTeamplay() ||
+	TFGameRules()->IsDuelGamemode())
 	{
 		SetVisible(false);
 		return;
