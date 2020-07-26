@@ -459,6 +459,12 @@ const char *CChangeMutatorIssue::GetDetailsString( void )
 		case GUN_GAME:
 			return "#TF_vote_mutator_gungame";
 			break;
+		case ARSENAL:
+			return "#TF_vote_mutator_arsenal";
+			break;
+		case ETERNAL:
+			return "#TF_vote_mutator_eternal";
+			break;
 	}
 
 	return m_szDetailsString;
