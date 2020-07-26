@@ -15,6 +15,7 @@
 #include "hudelement.h"
 #include "tf_hud_playerstatus.h"
 #include "clientscoreboarddialog.h"
+#include "of_hud_medals.h"
 
 //-----------------------------------------------------------------------------
 // Purpose: displays the MapInfo menu
@@ -51,8 +52,10 @@ private:
 	void UpdatePlayerList();
 	void UpdateSpectatorList();
 	void UpdatePlayerDetails();
-	void ClearPlayerDetails();
+	void ClearPlayerDetails(bool dmNoDetails);
 	bool ShouldShowAsSpectator( int iPlayerIndex );
+
+	void FormatMedalName(char *medalName);
 	
 	virtual void FireGameEvent( IGameEvent *event );
 

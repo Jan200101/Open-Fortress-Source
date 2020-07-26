@@ -4737,22 +4737,6 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	{
 		m_Shared.NoteLastDamageTime( m_lastDamageAmount );
 	}
-
-	// if this is our own rocket and we are in midair, scale down the damage
-	if ( info.GetAttacker() == this && GetGroundEntity() == NULL )
-	{
-		CTFWeaponBase *pWeapon = (CTFWeaponBase *)( info.GetWeapon() );
-
-		// this is kinda lame...
-		if ( pWeapon
-			&& ( pWeapon->GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER 
-			|| pWeapon->GetWeaponID() == TF_WEAPON_ROCKETLAUNCHER_DM 
-			|| pWeapon->GetWeaponID() == TF_WEAPON_DYNAMITE_BUNDLE ) )
-		{
-			float flDamage = info.GetDamage() * tf_damagescale_self_soldier.GetFloat();
-			info.SetDamage( flDamage );
-		}
-	}
 	
 	// Save damage force for ragdolls.
 	m_vecTotalBulletForce = info.GetDamageForce();
@@ -4767,13 +4751,14 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	CBaseEntity *pAttacker = info.GetAttacker();
 
+	bool bIsAlly = false;
+
 	// If we're invulnerable, force ourselves to only take damage events only, so we still get pushed
 	if ( m_Shared.InCondUber() )
 	{
 		bool bAllowDamage = false;
 
-		// in deathmatch, ubers need to be destroyed on spawning players
-		// same for func_croc
+		// in deathmatch, ubers needs to be destroyed on spawning players, same for func_croc
 		if ( info.GetDamageCustom() == TF_DMG_CUSTOM_TELEFRAG || info.GetDamageCustom() == TF_DMG_CUSTOM_CROC )
 			bAllowDamage = true;
 
@@ -4797,10 +4782,12 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 		if ( !bAllowDamage )
 		{
-			// NOTE: Deliberately skip base player OnTakeDamage, because we don't want all the stuff it does re: suit voice
-			CBaseCombatCharacter::OnTakeDamage( info );
+			//if no damage just apply knockback, if attack coming from ally only do so under certain circumstances
+			bIsAlly = pAttacker && pAttacker != this && pAttacker->IsPlayer() && pAttacker->GetTeamNumber() != TF_TEAM_MERCENARY && pAttacker->GetTeamNumber() == GetTeamNumber();
 
-			// Burn sounds are handled in ConditionThink()
+			ApplyDamageKnockback( info, bIsAlly && !of_teamplay_knockback.GetBool() );
+
+			// Even if not taking damage complain about burining
 			if ( !(bitsDamage & DMG_BURN ) )
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 
@@ -4831,6 +4818,15 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CTFPlayer *pTFAttacker = ToTFPlayer(pAttacker);
 	CTFWeaponBase *pWeapon = pTFAttacker ? pTFAttacker->GetActiveTFWeapon() : NULL;
 	int iWeaponID = pWeapon ? pWeapon->GetWeaponID() : 0;
+
+	// if this is our own rocket and we are in midair, scale down the damage
+	if ( info.GetAttacker() == this && !GetGroundEntity() &&
+		(iWeaponID == TF_WEAPON_ROCKETLAUNCHER || iWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM || iWeaponID == TF_WEAPON_DYNAMITE_BUNDLE) )
+	{
+		float flDamage = info.GetDamage() * tf_damagescale_self_soldier.GetFloat();
+		info.SetDamage(flDamage);
+	}
+	
 	bool bIsPlayer = pAttacker && pAttacker->IsPlayer();
 
 	// If we're not damaging ourselves, apply randomness
@@ -4851,7 +4847,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 				flDamage = info.GetDamage() * TF_DAMAGE_CRIT_MULTIPLIER;
 
 			// Show the attacker, unless the target is a disguised spy
-			if (bIsPlayer && !m_Shared.InCond(TF_COND_DISGUISED))
+			if ( bIsPlayer && !m_Shared.InCond(TF_COND_DISGUISED) )
 			{
 				CEffectData	data;
 				data.m_nHitBox = GetParticleSystemIndex( "crit_text" );
@@ -5018,9 +5014,10 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	// No view punch sounds with teamplay knockback enabled but no friendlyfire
 	bool bNoPunchSound = of_teamplay_knockback.GetBool() && !friendlyfire.GetBool();
-	bool bAlly = pAttacker && pAttacker != this && pAttacker->IsPlayer() && pAttacker->GetTeamNumber() != TF_TEAM_MERCENARY && pAttacker->GetTeamNumber() == GetTeamNumber();
+	if (!bIsAlly)
+		bIsAlly = pAttacker && pAttacker != this && pAttacker->IsPlayer() && pAttacker->GetTeamNumber() != TF_TEAM_MERCENARY && pAttacker->GetTeamNumber() == GetTeamNumber();
 
-	if ( !bNoPunchSound || ( bNoPunchSound && !bAlly ) )
+	if ( !bNoPunchSound || ( bNoPunchSound && !bIsAlly ) )
 	{
 		// Display any effect associate with this damage type
 		DamageEffect( info.GetDamage(), bitsDamage );
@@ -5232,7 +5229,7 @@ void CTFPlayer::CommitSuicide( bool bExplode /* = false */, bool bForce /*= fals
 int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 {
 	CBaseEntity *pAttacker = info.GetAttacker();
-	bool bIsAlly = pAttacker && pAttacker->GetTeamNumber() == GetTeamNumber() && pAttacker->GetTeamNumber() != TF_TEAM_MERCENARY;
+	bool bIsAlly = pAttacker && pAttacker != this && pAttacker->IsPlayer() && pAttacker->GetTeamNumber() != TF_TEAM_MERCENARY && pAttacker->GetTeamNumber() == GetTeamNumber();
 
 	// Apply knockback, but not if it's coming for an ally and friendly knockback is off
 	Vector vecDir;
@@ -5246,9 +5243,8 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 
 	// Apply a damage force unless player is protected from that damage
 	bool bNoFriendlyFire = bIsAlly && !friendlyfire.GetBool();
-	bool bUber = m_Shared.InCondUber();
 	float flScaledDamage = 0.f;
-	if ( m_takedamage != DAMAGE_EVENTS_ONLY && !bUber && !bNoFriendlyFire )
+	if ( m_takedamage != DAMAGE_EVENTS_ONLY && !bNoFriendlyFire )
 	{
 		// Start burning if we took ignition damage
 		bIgniting = ( ( info.GetDamageType() & DMG_IGNITE ) && ( GetWaterLevel() < WL_Waist ) );
@@ -5323,7 +5319,7 @@ int CTFPlayer::OnTakeDamage_Alive( const CTakeDamageInfo &info )
 	}
 
 	//No bleeding while invul or disguised.
-	bool bBleed = !m_Shared.InCond(TF_COND_DISGUISED) && !bUber;
+	bool bBleed = !m_Shared.InCond(TF_COND_DISGUISED);
 	if ( bBleed && pAttacker->IsPlayer() )
 	{
 		CTFWeaponBase *pWeapon = ToTFPlayer( pAttacker )->GetActiveTFWeapon();
@@ -5445,16 +5441,6 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			if ( pTFVictim != pTFAttacker )
 				pTFVictim->GotKilled();
-			
-			/* undone, now it's executed in the new medaling system
-			if ( pTFVictim != pTFAttacker && pTFAttacker->last_kill > ( gpGlobals->curtime - 2.0f ) && TeamplayRoundBasedRules() && TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() )
-			{
-				TeamplayRoundBasedRules()->BroadcastSoundFFA( pTFAttacker->entindex(), "Excellent" ); // 2 kills in 2 seconds
-				pTFAttacker->last_kill = 0; // reset it so that it doesnt play multiple times if we kill for example 3 enemies within 2 seconds
-			}
-			else
-				pTFAttacker->last_kill = gpGlobals->curtime;
-			*/
 		}
 		
 		// Custom death handlers

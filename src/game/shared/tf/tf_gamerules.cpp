@@ -5296,67 +5296,67 @@ void CTFGameRules::DeathNotice(CBasePlayer *pVictim, const CTakeDamageInfo &info
 		//medals, only activate after warmup
 		if (!IsInWaitingForPlayers() && State_Get() > GR_STATE_PREGAME)
 		{
-			if(pScorer)
-			{
-				//streaks
-				CTFPlayer *pTFPlayerScorer = ToTFPlayer(pScorer);
-				event->SetInt("killer_pupkills", pTFPlayerScorer->m_iPowerupKills);
-				event->SetInt("killer_kspree", pTFPlayerScorer->m_iSpreeKills);
-				event->SetInt("ex_streak", pTFPlayerScorer->m_iEXKills);
-			}
-
-			bool bSuicide = pVictim == pKiller;
-
-			//more streaks
-			event->SetInt("victim_pupkills", !pTFPlayerVictim->m_bHadPowerup || bSuicide ? -1 : pTFPlayerVictim->m_iPowerupKills);
-			event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
-
-			//Humiliation
-			event->SetBool("humiliation", weaponType == 1 ? true : false);
-			
-			if(weaponType == 2) //inflictor is an explosive projectile
-			{
-				//***************************
-				//Midair
-				bool MidAirTime = pTFPlayerVictim->m_fAirStartTime && gpGlobals->curtime >= pTFPlayerVictim->m_fAirStartTime + (g_pMoveData->m_vecVelocity[2] >= 0.f ? 0.4f : 0.8f);
-				event->SetBool("midair", MidAirTime ? true : false);
-
-				//***************************
-				//Kamikaze
+			//kamikaze setup
+			if (weaponType == 2)
 				m_InflictorsArray[pVictim->entindex()] = pInflictor;
-				bool Kamikaze = false;
+			bool Kamikaze = false;
 
-				if(!bSuicide) //evaluating death of the victim
+			//suicide
+			if (pVictim == pKiller)
+			{
+				//Kamikaze pt.1
+				//kiler killed itself with something that might have caused the death of a player
+				//who died before it, we need to scout through the array to see if we find a match
+				for (int i = 1; i <= gpGlobals->maxClients; i++)
 				{
+					if (!m_InflictorsArray[i] || i == pKiller->entindex()) //ignore the index of the killer, it's a suicide of course it will match
+						continue;
+
+					if (pInflictor == m_InflictorsArray[i])
+					{
+						Kamikaze = true;
+						m_InflictorsArray[pVictim->entindex()] = NULL;
+						m_InflictorsArray[i] = NULL;
+						break;
+					}
+				}
+			}
+			else
+			{
+				if (pScorer)
+				{
+					//streaks
+					CTFPlayer *pTFPlayerScorer = ToTFPlayer(pScorer);
+					event->SetInt("killer_pupkills", pTFPlayerScorer->m_iPowerupKills);
+					event->SetInt("killer_kspree", pTFPlayerScorer->m_iSpreeKills);
+					event->SetInt("ex_streak", pTFPlayerScorer->m_iEXKills);
+				}
+
+				//more streaks
+				event->SetInt("victim_pupkills", !pTFPlayerVictim->m_bHadPowerup ? -1 : pTFPlayerVictim->m_iPowerupKills);
+				event->SetInt("victim_kspree", pTFPlayerVictim->m_iSpreeKills);
+
+				//Humiliation
+				event->SetBool("humiliation", weaponType == 1 ? true : false);
+
+				if (weaponType == 2) //inflictor is an explosive projectile
+				{
+					//Midair
+					bool MidAirTime = pTFPlayerVictim->m_fAirStartTime && gpGlobals->curtime >= pTFPlayerVictim->m_fAirStartTime + (g_pMoveData->m_vecVelocity[2] >= 0.f ? 0.4f : 0.8f);
+					event->SetBool("midair", MidAirTime ? true : false);
+
+					//Kamikaze pt.2
 					//scorer was killed by the same inflictor of the victim
 					Kamikaze = m_InflictorsArray[pKiller->entindex()] && pInflictor == m_InflictorsArray[pKiller->entindex()];
-					if(Kamikaze)
+					if (Kamikaze)
 					{
 						m_InflictorsArray[pKiller->entindex()] = NULL;
 						m_InflictorsArray[pVictim->entindex()] = NULL;
 					}
 				}
-				else //evaluating death of the suicidal killer
-				{
-					//kiler killed itself with something that might have caused the death of a player
-					//who died before it, we need to scout through the array to see if we find a match
-					for(int i = 1; i <= gpGlobals->maxClients; i++)
-					{
-						if(!m_InflictorsArray[i] || i == pKiller->entindex()) //ignore the index of the killer, it's a suicide of course it will match
-							continue;
-
-						if(pInflictor == m_InflictorsArray[i])
-						{
-							Kamikaze = true;
-							m_InflictorsArray[pVictim->entindex()] = NULL;
-							m_InflictorsArray[i] = NULL;
-							break;
-						}
-					}
-				}
-
-				event->SetBool("kamikaze", Kamikaze);
 			}
+
+			event->SetBool("kamikaze", Kamikaze);
 
 			//first blood
 			if(!m_bFirstBlood && pVictim != pKiller) //only award first blood if it's not a suicide kill

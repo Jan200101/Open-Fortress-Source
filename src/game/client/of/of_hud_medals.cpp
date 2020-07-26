@@ -23,7 +23,9 @@ DECLARE_HUDELEMENT(CTFHudMedals);
 // Purpose: medal info
 //-----------------------------------------------------------------------------
 
-const char *CTFHudMedals::medalNames[DENIED + 1] =
+int g_medalsCounter[DENIED + 1] = { 0 };
+
+const char *medalNames[DENIED + 1] =
 { "FirstBlood", "Perfect",		"Impressive", "Perforated", "Humiliation", "Kamikaze", "Midair",		  "Headshot",	 "Excellent",	 "MultiKill", "UltraKill",
   "HolyShit",	"KillingSpree",	"Rampage",	  "Dominating", "Unstoppable", "GodLike",  "PowerupMassacre", "ShowStopper", "PartyBreaker", "Denied"				   };
 
@@ -45,7 +47,7 @@ void CTFHudMedals::ApplySchemeSettings(IScheme *pScheme)
 	LoadControlSettings("Resource/UI/HudMedals.res");
 }
 
-CTFHudMedals::CTFHudMedals(const char *pElementName) : CHudElement(pElementName), BaseClass(NULL, "HudMedals")
+CTFHudMedals::CTFHudMedals(const char *pElementName) : CHudElement(pElementName), EditablePanel(NULL, "HudMedals")
 {
 	Panel *pParent = g_pClientMode->GetViewport();
 	SetParent(pParent);
@@ -59,11 +61,11 @@ CTFHudMedals::CTFHudMedals(const char *pElementName) : CHudElement(pElementName)
 
 	m_pMedalImage->SetVisible(false);
 	
-	died = 0;
-	drawTime = 0;
-	for (int i = 0; i < MEDAL_COUNT; i++)
-		medals_counter[i] = 0;
-	medalsQueue.Purge();
+
+	bDied = 0;
+	flDrawTime = 0;
+	for (int i = 0; i <= DENIED; i++)
+		g_medalsCounter[i] = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -81,13 +83,16 @@ bool CTFHudMedals::ShouldDraw(void)
 
 void CTFHudMedals::Reset(void)
 {
-	m_pMedalImage->SetVisible(false);
+	if ( TFGameRules() && TFGameRules()->State_Get() < GR_STATE_RND_RUNNING &&  medalsQueue.Size() )
+	{
+		m_pMedalImage->SetVisible(false);
 
-	died = 0;
-	drawTime = 0;
-	for (int i = 0; i < MEDAL_COUNT; i++)
-		medals_counter[i] = 0;
-	medalsQueue.Purge();
+		bDied = 0;
+		flDrawTime = 0;
+		for (int i = 0; i <= DENIED; i++)
+			g_medalsCounter[i] = 0;
+		medalsQueue.Purge();
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -100,24 +105,24 @@ void CTFHudMedals::OnThink(void)
 		return;
 
 	//Initialize the time frame medal should be drawn
-	if (!drawTime)
+	if (!flDrawTime)
 	{
 		// if things crash here, uncomment the line below
 		// if( TFGameRules() )
-		TFGameRules()->BroadcastSound( TEAM_UNASSIGNED, medalsQueue[0].medal_sound );
+		TFGameRules()->BroadcastSound(TEAM_UNASSIGNED, medalsQueue[0].medal_sound);
 
 		m_pMedalImage->SetImage(medalsQueue[0].medal_name);
 		m_pMedalImage->SetVisible(true);
-		drawTime = gpGlobals->curtime + MEDAL_TIME;
+		flDrawTime = gpGlobals->curtime + MEDAL_TIME;
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "MedalAnim");
 	}
-
-	if (gpGlobals->curtime <= drawTime)
+	
+	if (gpGlobals->curtime <= flDrawTime)
 		return;
 
 	//Remove medal
 	medalsQueue.Remove(0);
-	drawTime = 0;
+	flDrawTime = 0;
 	if (!medalsQueue.Size())
 		m_pMedalImage->SetVisible(false);
 }
@@ -128,7 +133,7 @@ void CTFHudMedals::OnThink(void)
 
 void CTFHudMedals::FireGameEvent(IGameEvent *event)
 {
-	if (!event || TFGameRules()->IsInWaitingForPlayers() || TFGameRules()->State_Get() <= GR_STATE_PREGAME)
+	if (!event || TFGameRules()->State_Get() < GR_STATE_RND_RUNNING)
 		return;
 
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -141,7 +146,7 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 
 	if (!Q_strcmp("teamplay_win_panel", eventname)) //perfect
 	{
-		if (event->GetInt("player_1") == pPlayer->entindex() && !died)
+		if (event->GetInt("player_1") == pPlayer->entindex() && !bDied)
 			AddMedal(PERFECT);
 
 		medalsQueue.Purge(); //no medals shown after match is over
@@ -158,12 +163,22 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 	}
 	else if (!Q_strcmp("player_death", eventname))
 	{
+		bool bKilled = event->GetInt("userid") == pIndex;
+
+		//you were killed
+		if (bKilled)
+			bDied = true;
+
 		//you killed
 		if (event->GetInt("attacker") == pIndex)
 		{
 			//Kamikaze
 			if (event->GetBool("kamikaze"))
 				AddMedal(KAMIKAZE);
+
+			//It's a suicide, all other medals should not be evaluated
+			if (bKilled)
+				return;
 			
 			//Midair
 			if (event->GetBool("midair"))
@@ -226,10 +241,6 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 			else
 				AddMedal(DENIED);
 		}
-
-		//you were killed
-		if (event->GetInt("userid") == pIndex)
-			died = true;
 	}
 }
 
@@ -241,13 +252,5 @@ void CTFHudMedals::AddMedal(int medalIndex)
 	if (of_show_medals.GetBool())
 		medalsQueue.AddToTail({ medalPaths[medalIndex], medalNames[medalIndex] });
 
-	medals_counter[medalIndex] = medalIndex < 2 ? 1 : medals_counter[medalIndex] + 1;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: return earned medals to be drawn by the parent menu
-//-----------------------------------------------------------------------------
-int CTFHudMedals::GetMedalCount(int medalIndex)
-{
-	return medals_counter[medalIndex];
+	g_medalsCounter[medalIndex]++;
 }

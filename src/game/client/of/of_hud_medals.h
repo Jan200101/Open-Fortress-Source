@@ -9,8 +9,6 @@
 
 using namespace vgui;
 
-#define TF_MAX_FILENAME_LENGTH	128
-
 //-----------------------------------------------------------------------------
 // Purpose:  Displays Deathmatch Medals
 //-----------------------------------------------------------------------------
@@ -19,13 +17,16 @@ enum { FIRSTBLOOD,	PERFECT,		IMPRESSIVE,		PERFORATED,		HUMILIATION,	KAMIKAZE,	MI
 	   HOLYSHIT,	KILLINGSPREE,	RAMPAGE,		DOMINATING,		UNSTOPPABLE,	GODLIKE,	POWERUPMASSACRE,	SHOWSTOPPER,	PARTYBREAKER,	DENIED,					
 	   MEDAL_COUNT };
 
+//these two are needed in the scoreboard to display medals count
+extern int g_medalsCounter[DENIED + 1];
+extern const char *medalNames[DENIED + 1];
+
 class CTFHudMedals : public CHudElement, public EditablePanel
 {
 	DECLARE_CLASS_SIMPLE(CTFHudMedals, EditablePanel);
 
 public:
 
-	static const char *medalNames[DENIED + 1];
 	static const char *medalPaths[DENIED + 1];
 
 	CTFHudMedals(const char *pElementName);
@@ -34,11 +35,17 @@ public:
 	virtual void FireGameEvent(IGameEvent *event);
 	virtual void Reset();
 	virtual bool ShouldDraw(void);
-	virtual int GetMedalCount(int medalIndex);
 
 protected:
 
-	float	drawTime;
+	virtual void OnThink(void);
+
+private:
+
+	virtual void AddMedal(int medalIndex);
+
+	bool bDied;
+	float flDrawTime;
 
 	struct  medal_info
 	{
@@ -47,14 +54,6 @@ protected:
 	};
 	CUtlVector<medal_info> medalsQueue;
 
-	virtual void AddMedal(int medalIndex);
-	virtual void OnThink(void);
-
-private:
-
-	bool died;
-	int medals_counter[DENIED + 1];
-	
 	ImagePanel *m_pMedalImage;
 };
 
