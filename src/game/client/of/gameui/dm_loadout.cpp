@@ -547,15 +547,18 @@ void DMLoadout::SelectWeapon( int iSlot, const char *szWeapon, bool bChangeSelec
 			{
 				pImage->SetImage( pWeapon->GetString("backpack_icon", "..\backpack\blocked") );
 				KeyValues *pKey = pWeapon->FindKey( "WeaponData" );
-				if( pKey )
+				if (pKey)
 				{
-					GetClassModel()->SetWeaponModel( pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl"), pWeapon->GetInt("loadout_anim", 0) );
-					CBaseModFrame* mainMenu = CBaseModPanel::GetSingleton().GetWindow(WT_MAINMENU);
+					GetClassModel()->SetWeaponModel(pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl"), pWeapon->GetInt("loadout_anim", 0));
 
-					vgui::DMModelPanel* pClassModel = dynamic_cast<vgui::DMModelPanel*>(mainMenu->FindChildByName("classmodelpanel"));
-					if( pClassModel )
+					if( !engine->IsInGame() )
 					{
-						pClassModel->SetWeaponModel( pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl"), pWeapon->GetInt("loadout_anim", 0) );
+						CBaseModFrame* mainMenu = CBaseModPanel::GetSingleton().GetWindow(WT_MAINMENU);
+						vgui::DMModelPanel* pClassModel = dynamic_cast<vgui::DMModelPanel*>(mainMenu->FindChildByName("classmodelpanel"));
+						if (pClassModel)
+						{
+							pClassModel->SetWeaponModel(pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl"), pWeapon->GetInt("loadout_anim", 0));
+						}
 					}
 				}
 			}
