@@ -312,25 +312,19 @@ void CTFProjectile_Tranq::ProjectileTouch(CBaseEntity *pOther)
 
 	// determine the inflictor, which is the weapon which fired this projectile
 	CBaseEntity *pInflictor = NULL;
-	CBaseEntity *pOwner = GetOwnerEntity();
-	if (pOwner)
-	{
-		CTFPlayer *pTFPlayer = ToTFPlayer(pOwner);
-		if (pTFPlayer)
-		{
+	CTFPlayer *pTFOwner = ToTFPlayer( GetOwnerEntity() );
 
-			pInflictor = pTFPlayer->Weapon_OwnsThisID(GetWeaponID());
-		}
-	}
+	if (pTFOwner)
+		pInflictor = pTFOwner->Weapon_OwnsThisID(GetWeaponID());
 
 	CTakeDamageInfo info;
-	info.SetAttacker(GetOwnerEntity());		// the player who operated the thing that emitted nails
-	info.SetInflictor(pInflictor);	// the weapon that emitted this projectile
-	info.SetDamage(GetDamage());
-	info.SetDamageForce(GetDamageForce());
-	info.SetDamagePosition(GetAbsOrigin());
-	info.SetDamageType(GetDamageType());
-	info.SetDamageCustom(GetCustomDamageType());
+	info.SetAttacker( pTFOwner );					// the player who operated the thing that emitted nails
+	info.SetInflictor( pInflictor );				// the weapon that emitted this projectile
+	info.SetDamage( GetDamage() );
+	info.SetDamageForce( GetDamageForce() );
+	info.SetDamagePosition( GetAbsOrigin() );
+	info.SetDamageType( GetDamageType() );
+	info.SetDamageCustom( GetCustomDamageType() );
 
 	Vector dir;
 	AngleVectors(GetAbsAngles(), &dir);
@@ -338,17 +332,19 @@ void CTFProjectile_Tranq::ProjectileTouch(CBaseEntity *pOther)
 	pOther->DispatchTraceAttack(info, dir, pNewTrace);
 	ApplyMultiDamage();
 
-	UTIL_Remove(this);
+	CTFPlayer *pTFOther = ToTFPlayer(pOther);
 
-	if (pOther->IsPlayer())
+	if ( pTFOther )
 	{
-		CTFPlayer *pPlayer = ToTFPlayer(pOther);
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pInflictor->GetClassname() );
+		Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
+		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo *>( GetFileWeaponInfoFromHandle(hWpnInfo) );
 
-		if ((ToTFPlayer(GetOwnerEntity())->GetTeamNumber() != pPlayer->GetTeamNumber()) || (ToTFPlayer(GetOwnerEntity())->GetTeamNumber() && pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY))
-		{
-			pPlayer->m_Shared.Tranq(ToTFPlayer(GetOwnerEntity()), 12.0f, 0.5f, 1);
-		}
+		if ( ( pTFOwner->GetTeamNumber() != pTFOther->GetTeamNumber() ) || ( pTFOwner->GetTeamNumber() && pTFOther->GetTeamNumber() == TF_TEAM_MERCENARY ) )
+			pTFOther->m_Shared.Tranq( pTFOwner, pWeaponInfo->m_flEffectDuration, pWeaponInfo->m_flSpeedReduction, pWeaponInfo->m_bTranqOrLeg );
 	}
+
+	UTIL_Remove(this);
 }
 #endif
 

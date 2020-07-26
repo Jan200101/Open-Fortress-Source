@@ -238,11 +238,11 @@ CTFPlayerShared::CTFPlayerShared()
 {
 	m_nPlayerState.Set( TF_STATE_WELCOME );
 	m_bJumping = false;
-	m_bIsTopThree = false,
-		bWatchReady = false;
-	m_bIsZombie = false,
-		m_bAirDash = false;
-	m_iAirDashCount = 0;
+	m_bIsTopThree = false;
+	bWatchReady = false;
+	m_bIsZombie = false;
+	m_bAirDash = false;
+	m_iAirDashCount = 0,
 	m_bBlockJump = false;
 	m_Hook = NULL;
 	m_flGHookProp = 0.f;
@@ -1441,17 +1441,17 @@ void CTFPlayerShared::OnRemoveHaste( void )
 void CTFPlayerShared::OnAddTranq( void )
 {
 #ifdef CLIENT_DLL
-	if(!m_pOuter->m_Shared.m_flTranqEffects == 1)
+	if(!m_bTranqEffects)
 	{
-		m_pOuter->ParticleProp()->Create("sleepy_overhead", PATTACH_POINT_FOLLOW, "head");
-
 		if (m_pOuter->IsLocalPlayer() == true)
 			m_pOuter->StartTranqSound();
-	} 
+	}
+	/*
 	else
 	{
-		m_pOuter->ParticleProp()->Create("mark_for_death", PATTACH_POINT_FOLLOW, "head");
+		//Placeholder Stuff
 	}
+	*/
 #endif
 	m_pOuter->TeamFortress_SetSpeed();
 }
@@ -1459,15 +1459,16 @@ void CTFPlayerShared::OnAddTranq( void )
 void CTFPlayerShared::OnRemoveTranq( void )
 {
 #ifdef CLIENT_DLL
-	if(!m_pOuter->m_Shared.m_flTranqEffects == 1)
-		{
-		m_pOuter->ParticleProp()->StopParticlesNamed("sleepy_overhead", true);
+	if(!m_bTranqEffects)
+	{
 		m_pOuter->StopTranqSound();
-		}
+	}
+	/*
 	else
-		{
-		m_pOuter->ParticleProp()->StopParticlesNamed("mark_for_death", true);
-		}
+	{
+		//Placeholder Stuff
+	}
+	*/
 #endif
 	m_pOuter->TeamFortress_SetSpeed();
 }
@@ -1565,6 +1566,8 @@ void CTFPlayerShared::OnRemoveShield( void )
 	{
 		view->SetScreenOverlayMaterial( NULL );
 	}
+#else
+	m_pOuter->ResetShieldDamage();
 #endif
 }
 
@@ -1665,7 +1668,7 @@ void CTFPlayerShared::Poison( CTFPlayer *pAttacker, float flTime )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flSpeed, float flEffects)
+void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flSpeed, bool bEffects)
 {
 #ifdef GAME_DLL
 	m_flTranqSlowness = flSpeed;
@@ -1678,7 +1681,7 @@ void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flSpeed, f
 		// Start sloweness
 		AddCond(TF_COND_TRANQ, flTime);
 		m_flTranqTime = gpGlobals->curtime;    //asap
-		m_flTranqEffects = flEffects;
+		m_bTranqEffects = bEffects;
 	}
 #endif
 }
@@ -1728,7 +1731,6 @@ void CTFPlayerShared::OnRemovePoison( void )
 	if (m_pOuter->IsLocalPlayer())
 
 		view->SetScreenOverlayMaterial(NULL);
-		m_pOuter->ParticleProp()->StopParticlesNamed("poison_overhead", true);
 		SetPoisonEffectEnabled(false);
 #else
 	m_hPoisonAttacker = NULL;
@@ -1912,8 +1914,6 @@ void CTFPlayerShared::OnAddPoison( void )
 		C_BasePlayer *pLocal = C_BasePlayer::GetLocalPlayer();
 			pLocal->EmitSound("PlayerMedkitInfected");
 	}
-
-	m_pOuter->ParticleProp()->Create("poison_overhead", PATTACH_POINT_FOLLOW, "head");
 #endif
 }
 
@@ -2206,18 +2206,25 @@ bool CTFPlayerShared::DoLungeCheck( void )
 {
 	if ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT )
 	{
-		bool OnGround = m_pOuter->GetGroundEntity() != NULL;
+		bool bInWater = m_pOuter->GetWaterLevel() > WL_Feet;
 
-		if ( m_bIsLunging && OnGround )
+		if ( bInWater || !m_pOuter->IsAlive() )
+		{
+			m_bIsLunging = false;
+			return false;
+		}
+
+		bool bOnGround = m_pOuter->GetGroundEntity() != NULL;
+
+		if ( bOnGround )
 			m_bIsLunging = false;
 
-		CTFClaws *pWeapon = dynamic_cast<CTFClaws*>( m_pOuter->GetActiveWeapon() );
+		CTFClaws *pWeapon = dynamic_cast<CTFClaws *>( m_pOuter->GetActiveWeapon() );
 
 		if ( !pWeapon )
 			return false;
 
-		if ( ( m_pOuter->m_nButtons & IN_ATTACK2 ) && pWeapon->CanPrimaryAttack() &&
-			 m_pOuter->GetWaterLevel() < 2 && !m_pOuter->m_Shared.InCond( TF_COND_TAUNTING ) && OnGround )
+		if ( (m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() && !m_pOuter->m_Shared.InCond(TF_COND_TAUNTING) && bOnGround )
 		{
 			if ( m_flNextLungeTime <= gpGlobals->curtime )
 			{
@@ -3805,10 +3812,7 @@ int CTFPlayer::GetMaxAmmo( int iAmmoIndex, int iClassNumber /*= -1*/ )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::InCondUber( void )
 {
-	if ( InCond( TF_COND_INVULNERABLE ) || InCond( TF_COND_SPAWNPROTECT ) )
-		return true;
-	else
-		return false;
+	return InCond(TF_COND_INVULNERABLE) || InCond(TF_COND_SPAWNPROTECT);
 }
 void CTFPlayerShared::RemoveCondUber( void )
 {
@@ -3818,10 +3822,7 @@ void CTFPlayerShared::RemoveCondUber( void )
 
 bool CTFPlayerShared::InCondShield( void )
 {
-	if ( InCond( TF_COND_SHIELD ) )
-		return true;
-	else
-		return false;
+	return InCond(TF_COND_SHIELD);
 }
 void CTFPlayerShared::RemoveCondShield( void )
 {
@@ -3833,10 +3834,7 @@ void CTFPlayerShared::RemoveCondShield( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::InCondCrit( void )
 {
-	if ( InCond( TF_COND_CRITBOOSTED ) || InCond( TF_COND_CRIT_POWERUP ) || InCond( TF_COND_CRITBOOSTED_DEMO_CHARGE ) )
-		return true;
-	else
-		return false;
+	return InCond(TF_COND_CRITBOOSTED) || InCond(TF_COND_CRIT_POWERUP) || InCond(TF_COND_CRITBOOSTED_DEMO_CHARGE);
 }
 
 //-----------------------------------------------------------------------------
@@ -3854,10 +3852,7 @@ void CTFPlayerShared::RemoveCondCrit( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::InCondInvis( void )
 {
-	if ( InCond( TF_COND_STEALTHED ) || InCond( TF_COND_INVIS_POWERUP ) )
-		return true;
-	else
-		return false;
+	return InCond(TF_COND_STEALTHED) || InCond(TF_COND_INVIS_POWERUP);
 }
 
 //-----------------------------------------------------------------------------

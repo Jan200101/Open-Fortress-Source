@@ -13,6 +13,7 @@
 #include "tf_weaponbase_rocket.h"
 
 #define CTFProjectile_Rocket C_TFProjectile_Rocket
+#define CTFProjectile_BouncyRocket C_TFProjectile_BouncyRocket
 
 //-----------------------------------------------------------------------------
 // Purpose: Rocket projectile.
@@ -34,6 +35,22 @@ public:
 
 private:
 	int			m_bCritical;
+};
+
+//----------------------------------------------------------------------------
+// Purpose: Rocket projectile.
+//-----------------------------------------------------------------------------
+class C_TFProjectile_BouncyRocket : public C_TFProjectile_Rocket
+{
+	DECLARE_CLASS(C_TFProjectile_BouncyRocket, C_TFProjectile_Rocket);
+public:
+	DECLARE_NETWORKCLASS();
+
+	C_TFProjectile_BouncyRocket();
+	~C_TFProjectile_BouncyRocket();
+
+	virtual void	CreateRocketTrails(void) {}
+	virtual void	CreateLightEffects(void) {}
 };
 
 #endif // C_TF_PROJECTILE_ROCKET_H

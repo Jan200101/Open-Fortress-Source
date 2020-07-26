@@ -16,14 +16,14 @@
 
 // Client specific.
 #ifdef CLIENT_DLL
-
-#define CTFRocketLauncher C_TFRocketLauncher
-#define CTFOriginal C_TFOriginal
-#define CTFSuperRocketLauncher C_TFSuperRocketLauncher
-#define CTFCRPG C_TFCRPG
-#define CTFCIncendiaryCannon C_TFCIncendiaryCannon
+	#define CTFRocketLauncher C_TFRocketLauncher
+	#define CTFOriginal C_TFOriginal
+	#define CTFSuperRocketLauncher C_TFSuperRocketLauncher
+	#define CTFCRPG C_TFCRPG
+	#define CTFCIncendiaryCannon C_TFCIncendiaryCannon
+	#define CTFBouncer C_TFBouncer
 #else
-#include "tf_projectile_rocket.h"
+	#include "tf_projectile_rocket.h"
 #endif
 
 //=============================================================================
@@ -49,7 +49,7 @@ public:
 #ifdef GAME_DLL
 	virtual void	Precache();
 #endif
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROCKETLAUNCHER; }
+	virtual int		GetWeaponID( void ) const { return TF_WEAPON_ROCKETLAUNCHER; }
 	virtual CBaseEntity *FireProjectile( CTFPlayer *pPlayer );
 	virtual void	ItemPostFrame( void );
 	virtual bool	Deploy( void );
@@ -83,7 +83,7 @@ public:
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_ROCKETLAUNCHER_DM; }
+	virtual int		GetWeaponID( void ) const { return TF_WEAPON_ROCKETLAUNCHER_DM; }
 };
 
 //Quad RPG
@@ -97,7 +97,7 @@ public:
 	CTFSuperRocketLauncher();
 	~CTFSuperRocketLauncher();
 	
-	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_SUPER_ROCKETLAUNCHER; }
+	virtual int		GetWeaponID( void ) const { return TF_WEAPON_SUPER_ROCKETLAUNCHER; }
 	virtual CBaseEntity *FireRocket( CTFPlayer *pPlayer );
 	virtual	void	AddRocket( CTFBaseRocket *pRocket );
 	virtual bool	Reload( void );
@@ -144,8 +144,7 @@ public:
 
 	CTFCRPG();
 	
-	virtual int		GetWeaponID( void ) const			{ return TFC_WEAPON_RPG; }
-	
+	virtual int		GetWeaponID( void ) const { return TFC_WEAPON_RPG; }
 };
 
 class CTFCIncendiaryCannon : public CTFRocketLauncher
@@ -161,12 +160,21 @@ public:
 
 	CTFCIncendiaryCannon();
 	
-	virtual int		GetWeaponID( void ) const			{ return TFC_WEAPON_INCENDIARYCANNON; }
-	
+	virtual int		GetWeaponID( void ) const { return TFC_WEAPON_INCENDIARYCANNON; }
 };
 
+class CTFBouncer : public CTFRocketLauncher
+{
+public:
+	DECLARE_CLASS(CTFBouncer, CTFRocketLauncher);
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
 
-// Server specific
+	CTFBouncer();
+
+	virtual int		GetWeaponID(void) const	{ return TF_WEAPON_BOUNCER; }
+};
+
 #ifdef GAME_DLL
 
 //=============================================================================
@@ -186,7 +194,5 @@ public:
 };
 
 #endif
-
-
 
 #endif // TF_WEAPON_ROCKETLAUNCHER_H

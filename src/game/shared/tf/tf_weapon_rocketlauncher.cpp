@@ -13,10 +13,15 @@
 	#include "tf_player.h"
 #endif
 
+ConVar of_quad_explode_delay("of_quad_explode_delay", "0.2", FCVAR_REPLICATED, "How long the rocket has to be active for before you can detonate it.");
+
 //=============================================================================
 //
 // Weapon Rocket Launcher tables.
 //
+
+//*****************************************************************************
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFRocketLauncher, DT_WeaponRocketLauncher )
 
 BEGIN_NETWORK_TABLE( CTFRocketLauncher, DT_WeaponRocketLauncher )
@@ -39,6 +44,8 @@ BEGIN_DATADESC( CTFRocketLauncher )
 END_DATADESC()
 #endif
 
+//*****************************************************************************
+
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCRPG, DT_TFCRPG )
 
 BEGIN_NETWORK_TABLE( CTFCRPG, DT_TFCRPG )
@@ -55,6 +62,8 @@ LINK_ENTITY_TO_CLASS( tfc_weapon_rpg, CTFCRPG );
 BEGIN_DATADESC( CTFCRPG )
 END_DATADESC()
 #endif
+
+//*****************************************************************************
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCIncendiaryCannon, DT_TFCIncendiaryCannon )
 
@@ -73,7 +82,53 @@ BEGIN_DATADESC( CTFCIncendiaryCannon )
 END_DATADESC()
 #endif
 
-ConVar of_quad_explode_delay( "of_quad_explode_delay", "0.2", FCVAR_REPLICATED, "How long the rocket has to be active for before you can detonate it." );
+//*****************************************************************************
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFOriginal, DT_TFOriginal);
+
+BEGIN_NETWORK_TABLE(CTFOriginal, DT_TFOriginal)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFOriginal)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_rocketlauncher_dm, CTFOriginal);
+//PRECACHE_WEAPON_REGISTER(tf_weapon_rocketlauncher_dm);
+
+//*****************************************************************************
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFSuperRocketLauncher, DT_TFSuperRocketLauncher);
+
+BEGIN_NETWORK_TABLE(CTFSuperRocketLauncher, DT_TFSuperRocketLauncher)
+#ifdef CLIENT_DLL
+	RecvPropInt(RECVINFO(m_iRocketCount)),
+	RecvPropInt(RECVINFO(m_bTargeting)),
+	RecvPropBool(RECVINFO(m_bHoming)),
+	RecvPropBool(RECVINFO(m_bAllowToggle)),
+#else
+	SendPropInt(SENDINFO(m_iRocketCount), 5, SPROP_UNSIGNED),
+	SendPropBool(SENDINFO(m_bTargeting)),
+	SendPropBool(SENDINFO(m_bHoming)),
+	SendPropBool(SENDINFO(m_bAllowToggle)),
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFSuperRocketLauncher)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_super_rocketlauncher, CTFSuperRocketLauncher);
+
+//*****************************************************************************
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFBouncer, DT_TFBouncer);
+
+BEGIN_NETWORK_TABLE(CTFBouncer, DT_TFBouncer)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFBouncer)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_bouncer, CTFBouncer);
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -110,6 +165,11 @@ CTFCRPG::CTFCRPG()
 }
 
 CTFCIncendiaryCannon::CTFCIncendiaryCannon()
+{
+	m_bReloadsSingly = true;
+}
+
+CTFBouncer::CTFBouncer()
 {
 	m_bReloadsSingly = true;
 }
@@ -565,35 +625,4 @@ void CTFSuperRocketLauncher::UpdateTargetDot( void )
 #endif
 }
 
-IMPLEMENT_NETWORKCLASS_ALIASED(TFOriginal, DT_TFOriginal);
-
-BEGIN_NETWORK_TABLE( CTFOriginal, DT_TFOriginal )
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA( CTFOriginal )
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS(tf_weapon_rocketlauncher_dm, CTFOriginal);
-//PRECACHE_WEAPON_REGISTER(tf_weapon_rocketlauncher_dm);
-
-IMPLEMENT_NETWORKCLASS_ALIASED(TFSuperRocketLauncher, DT_TFSuperRocketLauncher);
-
-BEGIN_NETWORK_TABLE(CTFSuperRocketLauncher, DT_TFSuperRocketLauncher)
-#ifdef CLIENT_DLL
-	RecvPropInt( RECVINFO( m_iRocketCount ) ),
-	RecvPropInt( RECVINFO( m_bTargeting ) ),
-	RecvPropBool( RECVINFO( m_bHoming ) ),
-	RecvPropBool( RECVINFO( m_bAllowToggle ) ),
-#else
-	SendPropInt( SENDINFO( m_iRocketCount ), 5, SPROP_UNSIGNED ),
-	SendPropBool( SENDINFO( m_bTargeting ) ),
-	SendPropBool( SENDINFO( m_bHoming ) ),
-	SendPropBool( SENDINFO( m_bAllowToggle ) ),
-#endif
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA( CTFSuperRocketLauncher )
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS(tf_weapon_super_rocketlauncher, CTFSuperRocketLauncher);
 //PRECACHE_WEAPON_REGISTER(tf_weapon_super_rocketlauncher);

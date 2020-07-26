@@ -149,6 +149,8 @@ public:
 	void			NotifyHookAttached(CBaseEntity *pTarget);
 	bool			HookLOS(Vector hookPos);
 	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
+#else
+	float			GetGrappleCharge() { return max( 0.f, (m_flNextSecondaryAttack - gpGlobals->curtime) ); }
 #endif
 
 private:
@@ -174,7 +176,6 @@ class CTFMeatHook : public CBaseCombatCharacter
 public:
 
 	CTFMeatHook(void) {}
-	~CTFMeatHook(void);
 	void Spawn(void);
 	void Precache(void);
 	static CTFMeatHook *HookCreate(const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL);

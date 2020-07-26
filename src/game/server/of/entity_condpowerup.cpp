@@ -22,28 +22,26 @@ extern ConVar of_powerups;
 // Purpose: Spawn function for the powerupspawner
 //-----------------------------------------------------------------------------
 
-
-BEGIN_DATADESC( CCondPowerup )
-
 // Inputs.
-DEFINE_KEYFIELD( m_iCondition, FIELD_INTEGER, "condID" ),
-DEFINE_KEYFIELD( m_flCondDuration, FIELD_FLOAT, "duration" ),
-DEFINE_KEYFIELD( m_iszPowerupModel, FIELD_STRING, "model" ),
-DEFINE_KEYFIELD( m_iszPowerupModelOLD, FIELD_STRING, "powerup_model" ),
-DEFINE_KEYFIELD( m_iszPickupSound, FIELD_STRING, "pickup_sound" ),
-DEFINE_KEYFIELD( m_iszTimerIcon, FIELD_STRING, "timericon" ),
-DEFINE_KEYFIELD( m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow" ),
-DEFINE_THINKFUNC( AnnouncerThink ),
+BEGIN_DATADESC( CCondPowerup )
+	DEFINE_KEYFIELD( m_iCondition, FIELD_INTEGER, "condID" ),
+	DEFINE_KEYFIELD( m_flCondDuration, FIELD_FLOAT, "duration" ),
+	DEFINE_KEYFIELD( m_iszPowerupModel, FIELD_STRING, "model" ),
+	DEFINE_KEYFIELD( m_iszPowerupModelOLD, FIELD_STRING, "powerup_model" ),
+	DEFINE_KEYFIELD( m_iszPickupSound, FIELD_STRING, "pickup_sound" ),
+	DEFINE_KEYFIELD( m_iszTimerIcon, FIELD_STRING, "timericon" ),
+	DEFINE_KEYFIELD( m_bDisableShowOutline, FIELD_BOOLEAN, "disable_glow" ),
+	DEFINE_THINKFUNC( AnnouncerThink ),
 END_DATADESC()
 
 IMPLEMENT_SERVERCLASS_ST( CCondPowerup, DT_CondPowerup )
-SendPropInt( SENDINFO( m_iCondition ) ),
-SendPropBool( SENDINFO( m_bDisableShowOutline ) ),
-SendPropBool( SENDINFO( m_bRespawning) ),
-SendPropBool( SENDINFO( bInitialDelay ) ),
-SendPropTime( SENDINFO( m_flRespawnTick ) ),
-SendPropTime( SENDINFO( fl_RespawnTime ) ),
-SendPropTime( SENDINFO( fl_RespawnDelay ) ),
+	SendPropInt( SENDINFO( m_iCondition ) ),
+	SendPropBool( SENDINFO( m_bDisableShowOutline ) ),
+	SendPropBool( SENDINFO( m_bRespawning ) ),
+	SendPropBool( SENDINFO( bInitialDelay ) ),
+	SendPropTime( SENDINFO( m_flRespawnTick ) ),
+	SendPropTime( SENDINFO( fl_RespawnTime ) ),
+	SendPropTime( SENDINFO( fl_RespawnDelay ) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( dm_powerup_spawner, CCondPowerup );
@@ -64,10 +62,6 @@ CCondPowerup::CCondPowerup()
 
 void CCondPowerup::Spawn( void )
 {
-	//disable outline
-	if (TFGameRules()->IsDuelGamemode())
-		m_bDisableShowOutline = true;
-
 	Precache();
 
 	if ( m_iszPowerupModel == MAKE_STRING( "" ) ) 
@@ -81,6 +75,13 @@ void CCondPowerup::Spawn( void )
 	SetContextThink( &CCondPowerup::AnnouncerThink, gpGlobals->curtime, "AnnounceThink" );
 
 	BaseClass::Spawn();
+
+	//disable outline
+	if (TFGameRules()->IsDuelGamemode())
+	{
+		m_bDisableShowOutline = true;
+		fl_RespawnTime = 60.f;
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -158,34 +159,39 @@ bool CCondPowerup::DoPowerupEffect( CTFPlayer *pTFPlayer )
 			m_iCondition = TF_COND_BERSERK;
 			break;
 		case 15:
-		case TF_COND_SHIELD_DUEL:
 			m_iCondition = TF_COND_SHIELD;
 			break;
-	}	
+		case TF_COND_SHIELD_DUEL:
+			m_iCondition = TF_COND_SHIELD;
+			m_flCondDuration = 60.f;
+			break;
+	}
 	
 	if ( pTFPlayer->m_Shared.InCond(m_iCondition) )
 		return false;
 
 	pTFPlayer->m_Shared.AddCond( m_iCondition , m_flCondDuration );
-	int iRandom = random->RandomInt( 0, 1 );
-	pTFPlayer->SpeakConceptIfAllowed( ( iRandom == 1 ) ? MP_CONCEPT_PLAYER_SPELL_PICKUP_RARE : MP_CONCEPT_PLAYER_SPELL_PICKUP_COMMON );
+	pTFPlayer->SpeakConceptIfAllowed( ( random->RandomInt( 0, 1 ) == 1 ) ? MP_CONCEPT_PLAYER_SPELL_PICKUP_RARE : MP_CONCEPT_PLAYER_SPELL_PICKUP_COMMON );
 	
-	Vector vecOrigin;
-	QAngle vecAngles;
-	CTFDroppedPowerup *pPowerup = static_cast<CTFDroppedPowerup*>( CBaseAnimating::CreateNoSpawn( "tf_dropped_powerup", vecOrigin, vecAngles, pTFPlayer ) );
-	if( pPowerup )
+	if (!TFGameRules()->IsDuelGamemode())
 	{
-		pPowerup->SetModelName( m_iszPowerupModel );
-		pPowerup->m_nSkin = m_nSkin;
-		Q_strncpy( pPowerup->szTimerIcon, STRING(m_iszTimerIcon), sizeof( pPowerup->szTimerIcon ) );
-		pPowerup->m_iPowerupID = m_iCondition;
-		pPowerup->m_flCreationTime = gpGlobals->curtime;
-		pPowerup->m_flDespawnTime = gpGlobals->curtime + m_flCondDuration;
-		pPowerup->SetContextThink( &CBaseEntity::SUB_Remove, pPowerup->m_flDespawnTime, "DieContext" );
+		Vector vecOrigin;
+		QAngle vecAngles;
+		CTFDroppedPowerup *pPowerup = static_cast<CTFDroppedPowerup*>(CBaseAnimating::CreateNoSpawn("tf_dropped_powerup", vecOrigin, vecAngles, pTFPlayer));
+		if (pPowerup)
+		{
+			pPowerup->SetModelName(m_iszPowerupModel);
+			pPowerup->m_nSkin = m_nSkin;
+			Q_strncpy(pPowerup->szTimerIcon, STRING(m_iszTimerIcon), sizeof(pPowerup->szTimerIcon));
+			pPowerup->m_iPowerupID = m_iCondition;
+			pPowerup->m_flCreationTime = gpGlobals->curtime;
+			pPowerup->m_flDespawnTime = gpGlobals->curtime + m_flCondDuration;
+			pPowerup->SetContextThink(&CBaseEntity::SUB_Remove, pPowerup->m_flDespawnTime, "DieContext");
+		}
+		PowerupHandle hHandle;
+		hHandle = pPowerup;
+		pTFPlayer->m_hPowerups.AddToTail(hHandle);
 	}
-	PowerupHandle hHandle;
-	hHandle = pPowerup;	
-	pTFPlayer->m_hPowerups.AddToTail( hHandle );
 	
 	IGameEvent *event = gameeventmanager->CreateEvent( "add_powerup_timer" );
 	if ( event )
@@ -204,10 +210,10 @@ CBaseEntity *CCondPowerup::Respawn( void )
 	m_flRespawnTick = GetNextThink();
 
 	//In duel mode don't show the respawn timers, unless the convar allows it
-	if ( TFGameRules()->IsDuelGamemode() && !of_duel_powerup_timers.GetBool() )
+	if ( TFGameRules()->IsDuelGamemode() && !of_duel_powerup_timers.GetBool())
 	{
 		m_nRenderFX = kRenderFxNone;
-		AddEffects( EF_NODRAW );
+		AddEffects(EF_NODRAW);
 	}
 	else
 	{

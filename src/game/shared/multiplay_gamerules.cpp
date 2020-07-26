@@ -772,8 +772,9 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		DeathNotice( pVictim, info );
 
 #ifdef OF_DLL
-		//if game is over no more kills awarded
-		if (TFGameRules()->State_Get() == GR_STATE_TEAM_WIN)
+		//if warmup or game over don't award frags
+		int iTFRulesState = TFGameRules()->State_Get();
+		if (iTFRulesState == GR_STATE_TEAM_WIN || TFGameRules()->IsInWaitingForPlayers() || iTFRulesState <= GR_STATE_PREGAME)
 			return;
 #endif
 

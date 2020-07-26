@@ -430,6 +430,7 @@ protected:
 	virtual	bool CheckWinLimit( bool bAllowEnd = true );
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	virtual bool CheckMaxRounds( bool bAllowEnd = true );
+	virtual bool CheckForcedRounds();
 #else
 	bool CheckMaxRounds( bool bAllowEnd = true );
 #endif

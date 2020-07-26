@@ -12,7 +12,10 @@
 
 #include "items.h"
 
-class CTFDroppedWeapon : public CItem
+//needed to remove dropped weapons at the end of every round
+DECLARE_AUTO_LIST( ICondDroppedWeaponAutoList );
+
+class CTFDroppedWeapon : public CItem, public ICondDroppedWeaponAutoList
 {
 public:
 	DECLARE_CLASS( CTFDroppedWeapon, CItem );

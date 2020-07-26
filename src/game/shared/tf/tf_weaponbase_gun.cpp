@@ -419,6 +419,12 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pProjectile = FireCoom( pPlayer );
 		pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
 		break;
+
+	case TF_PROJECTILE_BOUNCYROCKET:
+		pProjectile = FireBouncer(pPlayer);
+		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+		break;
+
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -689,7 +695,7 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 	
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
-	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create( this, vecSrc, angForward, pPlayer, pPlayer );
+	CTFProjectile_Rocket *pProjectile = CTFProjectile_Rocket::Create(this, vecSrc, angForward, pPlayer, pPlayer);
 	if ( pProjectile )
 	{
 		CTFSuperRocketLauncher *pQuad = dynamic_cast<CTFSuperRocketLauncher*>(this);
@@ -973,6 +979,45 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 		pProjectile->SetDamage( GetProjectileDamage() );
 		pProjectile->SetLauncher( this );
 		pProjectile->SetKillIcon( GetClassname() );
+	}
+	return pProjectile;
+
+#endif
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fire a bouncing projectile
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireBouncer(CTFPlayer *pPlayer)
+{
+	PlayWeaponShootSound();
+
+	// Server only - create the rocket.
+#ifdef GAME_DLL
+	int iQuakeCvar = 0;
+
+	if (!pPlayer->IsFakeClient())
+		iQuakeCvar = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered"));
+
+	Vector vecSrc;
+	QAngle angForward;
+	Vector vecOffset(23.5f, 12.0f, -5.f);
+	if (iQuakeCvar)
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
+	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
+
+	CTFProjectile_BouncyRocket *pProjectile = CTFProjectile_BouncyRocket::Create(this, vecSrc, angForward, pPlayer, pPlayer);
+	if (pProjectile)
+	{
+		pProjectile->SetCritical(IsCurrentAttackACrit());
+		pProjectile->SetDamage(GetProjectileDamage());
+		pProjectile->SetLauncher(this);
 	}
 	return pProjectile;
 

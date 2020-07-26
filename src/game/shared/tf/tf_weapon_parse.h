@@ -120,6 +120,7 @@ public:
 	// Bomblet functions for the dynamite pack and GIB
 	bool 	m_bDropBomblets;
 	int 	m_iBombletAmount;
+
 	
 	float	m_flBombletTimer;
 	float	m_flBombletDamage;
@@ -144,7 +145,12 @@ public:
 	
 	int		m_iContinuousFireDamageIncrease;
 	float	m_flContinuousFireBlastRadiusIncrease;
-	
+
+	// Effect Duration Amount
+	float 	m_flEffectDuration;
+	bool 	m_bTranqOrLeg;
+	float 	m_flSpeedReduction;
+
 	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function

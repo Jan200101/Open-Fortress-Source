@@ -30,6 +30,7 @@
 #define BOLT_WATER_VELOCITY	1500
 #define MAX_ROPE_LENGTH		1500.f
 #define HOOK_PULL			720.f
+#define GRAPPLE_CHARGETIME	0.25f
 
 extern ConVar of_hook_pendulum;
 
@@ -69,6 +70,7 @@ CWeaponGrapple::CWeaponGrapple( void )
 	m_bFiresUnderwater	  = true;
 	m_iAttached			  = 0;
 	m_nBulletType		  = -1;
+	m_flGrappleCharge	  = 1.f;
 	
 #ifdef GAME_DLL
 	m_hHook			= NULL;
@@ -210,23 +212,32 @@ void CWeaponGrapple::ItemPostFrame(void)
 	}
 #endif
 
-	if (pPlayer->m_nButtons & IN_ATTACK)
+	bool bRecharge = true;
+	if ( (pPlayer->m_nButtons & IN_ATTACK) && m_flGrappleCharge > 0.f )
 	{
-		if (m_flNextPrimaryAttack < gpGlobals->curtime)
+		//you need at least 25% of total charge to start a grapple
+		if ( m_flNextPrimaryAttack < gpGlobals->curtime && m_flGrappleCharge >= 0.25f )
 			PrimaryAttack();
 
 		if (pHook && m_iAttached) //hook is attached to a surface
 		{
-			if ( (pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 72.f )	//player is very close to the attached hook
+			if ( (pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 72.f )	//player is very close to the attached hook, this is for safety only
 				RemoveHook();
 			else if (m_iAttached == 2) //notify player how it should behave
 				InitiateHook(pPlayer, pHook);
+
+			m_flGrappleCharge = max(0.f, m_flGrappleCharge - GRAPPLE_CHARGETIME * gpGlobals->frametime);
+			bRecharge = false;
 		}
 	}
 	else if (m_iAttached)
 	{
 		RemoveHook();
 	}
+
+	//recharge grapple when not firing
+	if (bRecharge)
+		m_flGrappleCharge = min(1.f, m_flGrappleCharge + GRAPPLE_CHARGETIME * 0.5f * gpGlobals->frametime);
 }
 
 void CWeaponGrapple::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *hook)
@@ -286,9 +297,11 @@ void CWeaponGrapple::RemoveHook(void)
 #endif
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
-
 	if (pPlayer)
 	{
+#ifdef GAME_DLL
+		pPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
+#endif
 		pPlayer->m_Shared.SetHook(NULL);
 		pPlayer->m_Shared.SetHookProperty(0.f);
 	}
@@ -456,23 +469,10 @@ CGrappleHook *CGrappleHook::HookCreate(const Vector &vecOrigin, const QAngle &an
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-CGrappleHook::~CGrappleHook(void)
-{
-	CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
-	if (!pOwner)
-		return;
-
-	if (pOwner)
-		pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
-}
-
-//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 unsigned int CGrappleHook::PhysicsSolidMaskForEntity() const
 {
-	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
+	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX);
 }
 
 bool CGrappleHook::CreateVPhysics(void)
@@ -575,7 +575,6 @@ void CGrappleHook::HookTouch(CBaseEntity *pOther)
 			m_hOwner->NotifyHookAttached();
 
 			VPhysicsDestroyObject();
-			VPhysicsInitNormal(SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false);
 			AddSolidFlags(FSOLID_NOT_SOLID);
 			
 			CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();

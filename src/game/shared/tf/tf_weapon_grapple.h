@@ -36,6 +36,7 @@ class CWeaponGrapple : public CTFWeaponBaseGun
 public:
 
 	CWeaponGrapple( void );
+	virtual int		GetWeaponID(void) const	{ return TF_WEAPON_GRAPPLE; }
 
 	void			Precache( void );
 	void			PrimaryAttack( void );
@@ -51,6 +52,8 @@ public:
 	void			NotifyHookAttached(void);
 	void   			DrawBeam(const Vector &endPos, const float width = 2.f);
 	void			DoImpactEffect(trace_t &tr, int nDamageType);
+#else
+	float			GetGrappleCharge() { return m_flGrappleCharge; }
 #endif
 
 	DECLARE_NETWORKCLASS(); 
@@ -72,6 +75,7 @@ private:
 #endif
 	CNetworkVar(int, m_iAttached);
 	CNetworkVar(int, m_nBulletType);
+	CNetworkVar(float, m_flGrappleCharge);
 };
 
 #ifdef GAME_DLL
@@ -85,7 +89,6 @@ class CGrappleHook : public CBaseCombatCharacter
 public:
 
 	CGrappleHook(void) {}
-	~CGrappleHook(void);
     void Spawn( void );
     void Precache( void );
 	static CGrappleHook *HookCreate( const Vector &vecOrigin, const QAngle &angAngles, CBaseEntity *pentOwner = NULL );

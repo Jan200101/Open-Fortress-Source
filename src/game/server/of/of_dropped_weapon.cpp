@@ -19,6 +19,7 @@
 //----------------------------------------------
 
 extern ConVar of_allow_allclass_pickups;
+extern ConVar of_forceclass;
 
 // Network table.
 IMPLEMENT_SERVERCLASS_ST( CTFDroppedWeapon, DT_DroppedWeapon )
@@ -34,8 +35,9 @@ BEGIN_DATADESC( CTFDroppedWeapon )
 END_DATADESC();
 
 LINK_ENTITY_TO_CLASS( tf_dropped_weapon, CTFDroppedWeapon );
-
 PRECACHE_REGISTER( tf_dropped_weapon );
+
+IMPLEMENT_AUTO_LIST(ICondDroppedWeaponAutoList);
 
 CTFDroppedWeapon::CTFDroppedWeapon()
 {
@@ -76,6 +78,10 @@ void CTFDroppedWeapon::Precache( void )
 
 CTFDroppedWeapon *CTFDroppedWeapon::Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname )
 {
+	//Everybody has a crowbar so there is not reason to drop it
+	if (iWeaponID == TF_WEAPON_CROWBAR && of_allow_allclass_pickups.GetBool() && !of_forceclass.GetBool())
+		return NULL;
+
 	CTFDroppedWeapon *pDroppedWeapon = static_cast<CTFDroppedWeapon*>( CBaseAnimating::CreateNoSpawn( "tf_dropped_weapon", vecOrigin, vecAngles, pOwner ) );
 	if ( pDroppedWeapon )
 	{
@@ -86,10 +92,7 @@ CTFDroppedWeapon *CTFDroppedWeapon::Create( const Vector &vecOrigin, const QAngl
 		pDroppedWeapon->WeaponID = iWeaponID;
 		pDroppedWeapon->pszWeaponName = pszClassname;
 		pDroppedWeapon->pWeaponInfo = pWeaponInfo;
-		if ( iWeaponID == TF_WEAPON_FLAMETHROWER || iWeaponID == TFC_WEAPON_FLAMETHROWER )
-			pDroppedWeapon->m_bFlamethrower = true;
-		else
-			pDroppedWeapon->m_bFlamethrower = false;
+		pDroppedWeapon->m_bFlamethrower = iWeaponID == TF_WEAPON_FLAMETHROWER || iWeaponID == TFC_WEAPON_FLAMETHROWER;
 
 		DispatchSpawn( pDroppedWeapon );
 	}
@@ -113,14 +116,8 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	if (WeaponID == TF_WEAPON_NONE)
 		return;
 
-	if (!pOther)
+	if ( !pOther || !pOther->IsPlayer() || !pOther->IsAlive() )
 		return;
-
-	if ( !pOther->IsPlayer() )
-		return;
-
-	if ( !pOther->IsAlive() )
-		return;	
 
 	if ( TFGameRules() && TFGameRules()->IsGGGamemode() )
 		return;
@@ -257,7 +254,6 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 		}
 		UTIL_Remove( this );																	// Remove the dropped weapon entity
 	}
-	
 }
 
 //-----------------------------------------------------------------------------

@@ -208,12 +208,14 @@ ConVar mp_teams_unbalance_limit( "mp_teams_unbalance_limit", "1", FCVAR_REPLICAT
 					 true, 0,	// min value
 					 true, 64	// max value
 					 );
+
+ConVar of_force_round_limit( "of_force_round_limit", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "server will not change map until the max amount of rounds has been played", true, 0, false, 0 );
 #else
 ConVar mp_teams_unbalance_limit( "mp_teams_unbalance_limit", "1", FCVAR_REPLICATED,
 					 "Teams are unbalanced when one team has this many more players than the other team. (0 disables check)",
 					 true, 0,	// min value
 					 true, 30	// max value
-					 );	
+					 );
 #endif
 
 ConVar mp_maxrounds( "mp_maxrounds", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "max number of rounds to play before server changes maps", true, 0, false, 0 );
@@ -1195,6 +1197,12 @@ bool CTeamplayRoundBasedRules::CheckTimeLimit( bool bAllowEnd /*= true*/ )
 	if ( IsInPreMatch() == true )
 		return false;
 
+#ifdef OF_DLL
+	//Game only ends when all the rounds have been played
+	if( CheckForcedRounds() )
+		return false;
+#endif
+
 	if ( ( mp_timelimit.GetInt() > 0 && CanChangelevelBecauseOfTimeLimit() ) || m_bChangelevelAfterStalemate )
 	{
 		// If there's less than 5 minutes to go, just switch now. This avoids the problem
@@ -1299,6 +1307,11 @@ bool CTeamplayRoundBasedRules::CheckNextLevelCvar( bool bAllowEnd /*= true*/ )
 //-----------------------------------------------------------------------------
 bool CTeamplayRoundBasedRules::CheckWinLimit( bool bAllowEnd /*= true*/ )
 {
+#ifdef OF_DLL
+	if( CheckForcedRounds() )
+		return false;
+#endif
+
 	// has one team won the specified number of rounds?
 	int iWinLimit = mp_winlimit.GetInt();
 
@@ -1355,6 +1368,11 @@ bool CTeamplayRoundBasedRules::CheckMaxRounds( bool bAllowEnd /*= true*/ )
 	}
 
 	return false;
+}
+
+bool CTeamplayRoundBasedRules::CheckForcedRounds()
+{
+	return of_force_round_limit.GetBool() && mp_maxrounds.GetInt();
 }
 
 //-----------------------------------------------------------------------------
@@ -2086,9 +2104,11 @@ void CTeamplayRoundBasedRules::State_Think_RND_RUNNING( void )
 void CTeamplayRoundBasedRules::State_Enter_TEAM_WIN( void )
 {
 	m_flStateTransitionTime = gpGlobals->curtime + GetBonusRoundTime();
+
 #ifdef OF_DLL
 	m_flStartedWinState = gpGlobals->curtime;
 #endif
+
 	// if we're forcing the map to reset it must be the end of a "full" round not a mini-round
 	if ( m_bForceMapReset )
 	{
@@ -2106,7 +2126,7 @@ void CTeamplayRoundBasedRules::State_Enter_TEAM_WIN( void )
 	
 #ifdef TF_DLL
 	// Do this now, so players don't leave before the usual CheckWinLimit() call happens
-	bool bDone = ( CheckTimeLimit( false ) || CheckWinLimit( false ) || CheckMaxRounds( false ) || CheckNextLevelCvar( false ) );
+	bool bDone = CheckTimeLimit( false ) || CheckWinLimit( false ) || CheckMaxRounds( false ) || CheckNextLevelCvar( false );
 	if ( TFGameRules() && TFGameRules()->IsCompetitiveMode() && bDone )
 	{
 		TFGameRules()->StopCompetitiveMatch( CMsgGC_Match_Result_Status_MATCH_SUCCEEDED );
@@ -2129,7 +2149,7 @@ void CTeamplayRoundBasedRules::State_Think_TEAM_WIN( void )
 		}
 #endif // TF_DLL
 
-		bool bDone = ( CheckTimeLimit() || CheckWinLimit() || CheckMaxRounds() || CheckNextLevelCvar() );
+		bool bDone = CheckTimeLimit() || CheckWinLimit() || CheckMaxRounds() || CheckNextLevelCvar();
 
 		// check the win limit, max rounds, time limit and nextlevel cvar before starting the next round
 		if ( !bDone )
@@ -2150,6 +2170,14 @@ void CTeamplayRoundBasedRules::State_Think_TEAM_WIN( void )
 				}
 #endif
 
+#ifdef OF_DLL
+				if( CheckForcedRounds() )
+				{
+					ResetMapTime();
+					if(TFGameRules()->IsDuelGamemode())
+						SetInWaitingForPlayers( true );
+				}
+#endif
 				State_Transition( GR_STATE_PREROUND );
 			}
 		}
@@ -2506,9 +2534,7 @@ void CTeamplayRoundBasedRules::State_Enter_RESTART( void )
 	// send restart event
 	IGameEvent *event = gameeventmanager->CreateEvent( "teamplay_restart_round" );
 	if ( event )
-	{
 		gameeventmanager->FireEvent( event );
-	}
 
 	m_bPrevRoundWasWaitingForPlayers = m_bInWaitingForPlayers;
 	SetInWaitingForPlayers( false );
@@ -2992,8 +3018,6 @@ void CTeamplayRoundBasedRules::RespawnPlayers( bool bForceRespawn, bool bTeam /*
 
 					continue;
 				}
-
-			
 			}
 		}
 		// Respawn this player

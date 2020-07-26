@@ -135,7 +135,7 @@ public:
 
 	virtual int			OnTakeDamage( const CTakeDamageInfo &inputInfo );
 	virtual int			OnTakeDamage_Alive( const CTakeDamageInfo &info );
-	void				ApplyDamageKnockback( const CTakeDamageInfo &info );
+	void				ApplyDamageKnockback( const CTakeDamageInfo &info, bool noKnockback = false, Vector *dir = NULL );
 	void				AddDamagerToHistory( EHANDLE hDamager );
 	void				ClearDamagerHistory();
 	DamagerHistory_t	&GetDamagerHistory( int i ) { return m_DamagerHistory[i]; }
@@ -535,6 +535,12 @@ public:
 	CUtlVector< PowerupHandle >	m_hPowerups;
 	CUtlVector< WeaponHandle >	m_hSuperWeapons;
 
+	void				ResetShieldDamage();
+
+private:
+	int					m_iShieldDamage;
+
+public:
 	WeaponHandle m_hWeaponInSlot[10][20]; // 20 pos cuz melee my ass
 
 	//medals

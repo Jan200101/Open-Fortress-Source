@@ -439,7 +439,6 @@ void CTFEternalShotgun::SecondaryAttack()
 #endif
 
 	m_bCanRefire = false;
-	m_flNextSecondaryAttack = gpGlobals->curtime + 1.f;
 }
 
 void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
@@ -511,7 +510,10 @@ void CTFEternalShotgun::RemoveHook(void)
 	}
 #endif
 
-	CTFPlayer *pHook = ToTFPlayer(GetHookEntity());
+	//the hook entity, which may be an enemy player
+	CTFPlayer *pHook = ToTFPlayer( GetHookEntity() );
+	//the owner of the shotgun
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 
 	if (pHook)
 		pHook->m_Shared.RemoveCond(TF_COND_HOOKED);
@@ -533,14 +535,15 @@ void CTFEternalShotgun::RemoveHook(void)
 	}
 #endif
 
-	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
-
 	if (pPlayer)
 	{
+#ifdef GAME_DLL
+		pPlayer->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
+#endif
 		pPlayer->m_Shared.SetHook(NULL);
 		pPlayer->m_Shared.SetHookProperty(0.f);
 	}
-
+	
 	m_hHook = NULL;
 	m_flNextSecondaryAttack = gpGlobals->curtime + 1.f;
 	m_iAttached = 0;
@@ -639,16 +642,6 @@ CTFMeatHook *CTFMeatHook::HookCreate(const Vector &vecOrigin, const QAngle &angA
 	return pHook;
 }
 
-CTFMeatHook::~CTFMeatHook(void)
-{
-	CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
-	if (!pOwner)
-		return;
-
-	if (pOwner)
-		pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, false);
-}
-
 void CTFMeatHook::Spawn(void)
 {
 	Precache();
@@ -688,14 +681,6 @@ unsigned int CTFMeatHook::PhysicsSolidMaskForEntity() const
 	return (BaseClass::PhysicsSolidMaskForEntity() | CONTENTS_HITBOX) & ~CONTENTS_GRATE;
 }
 
-bool CTFMeatHook::CreateVPhysics(void)
-{
-	// Create the object in the physics system
-	VPhysicsInitNormal(SOLID_BBOX, FSOLID_NOT_STANDABLE, false);
-
-	return true;
-}
-
 void CTFMeatHook::FlyThink(void)
 {
 	if (!m_hOwner)
@@ -715,6 +700,13 @@ void CTFMeatHook::FlyThink(void)
 	SetNextThink(gpGlobals->curtime + 0.1f);
 }
 
+bool CTFMeatHook::CreateVPhysics(void)
+{
+	// Create the object in the physics system
+	VPhysicsInitNormal(SOLID_BBOX, FSOLID_NOT_STANDABLE, false);
+	return true;
+}
+
 void CTFMeatHook::HookTouch(CBaseEntity *pOther)
 {
 	if (pOther == m_hOwner || !pOther->IsPlayer() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !GetOwnerEntity())
@@ -724,19 +716,13 @@ void CTFMeatHook::HookTouch(CBaseEntity *pOther)
 	}
 
 	//hooked an entity that can be damaged
-	SetMoveType(MOVETYPE_NONE);
 	EmitSound("Weapon_AR2.Reload_Push");
 
 	SetTouch(NULL);
 	SetThink(NULL);
 
-	VPhysicsDestroyObject();
-	VPhysicsInitNormal(SOLID_VPHYSICS, FSOLID_NOT_STANDABLE, false);
-	AddSolidFlags(FSOLID_NOT_SOLID);
-
 	CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
 	pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, true);
-
 	pOwner->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
 
 	CTFPlayer *pHooked = ToTFPlayer(pOther);

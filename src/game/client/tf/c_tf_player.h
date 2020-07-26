@@ -155,6 +155,8 @@ public:
 
 	void CreateSaveMeEffect( void );
 	void CreateChattingEffect(void);
+	void CreatePoisonEffect(void);
+	void CreateTranqEffect(void);
 
 	CGlowObject			*m_pGlowEffect;
 
@@ -354,6 +356,10 @@ private:
 	CNewParticleEffect	*m_pSaveMeEffect;
 	// Player typing particle effect
 	CNewParticleEffect	*m_pChattingEffect;
+	// Poison particle effect
+	CNewParticleEffect	*m_pPoisonEffect;
+	// Tranq particle effect
+	CNewParticleEffect	*m_pTranqEffect;
 
 	bool m_bUpdateObjectHudState;
 
