@@ -40,6 +40,7 @@
 #include "team_control_point_master.h"
 #include "gamevars_shared.h"
 #include "NextBotUtil.h"
+#include "tf_player_resource.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -1402,6 +1403,8 @@ void CTFPlayer::UpdateCosmetics()
 			GetViewModel( TF_VIEWMODEL_COSMETICS )->m_nSkin = GetTeamNumber() - 2;
 		}
 	}
+	
+	GetTFPlayerResource()->UpdatePlayerCosmetics( this );
 }
 
 void CTFPlayer::ClearSlots()

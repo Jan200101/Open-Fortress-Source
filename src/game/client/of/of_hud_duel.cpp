@@ -337,69 +337,65 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 		for( int i = 0; i < 2; i++ )
 		{
 			int iPlayer = i ? iSecondPlayer : iFirstPlayer;
-			CTFPlayer *pPlayer = i ? m_pPlayer2 : m_pPlayer1;
-			
-			if( pPlayer )
+			CModelPanel *pModelPanel = NULL;
+			switch( i )
 			{
-				CModelPanel *pModelPanel = NULL;
-				switch( i )
-				{
-					case 0:
-						pModelPanel = pFirstModel;
-						pFirstBG->SetPlayerOwner(iPlayer);
-						pFirstExBG->SetPlayerOwner(iPlayer);
-						break;
-					case 1:
-						pModelPanel = pSecondModel;
-						pSecondBG->SetPlayerOwner(iPlayer);
-						pSecondExBG->SetPlayerOwner(iPlayer);
-						break;
-				}
+				case 0:
+					pModelPanel = pFirstModel;
+					pFirstBG->SetPlayerOwner(iPlayer);
+					pFirstExBG->SetPlayerOwner(iPlayer);
+					break;
+				case 1:
+					pModelPanel = pSecondModel;
+					pSecondBG->SetPlayerOwner(iPlayer);
+					pSecondExBG->SetPlayerOwner(iPlayer);
+					break;
+			}
+			
+			if( pModelPanel )
+			{
+				pModelPanel->SetModelColor(tf_PR->GetPlayerColorVector(iPlayer));
+				char pAttachedModel[128], szVCD[128], szClassModelName[128];
+				const char *pszClassName;
+				pszClassName = g_aPlayerClassNames_NonLocalized[tf_PR->GetPlayerClass( iPlayer )];
 				
-				if( pModelPanel )
+				bool bIsFirst = ( bWinningPlayer && i == 1 ) || ( !bWinningPlayer && i == 0 );
+				
+				Q_snprintf(szVCD, sizeof(szVCD), "scenes/Player/%s/low/%s_place.vcd", pszClassName, bIsFirst ? "first" : "third");
+
+				KeyValues *pModelAttachement = new KeyValues("Models");
+				pModelAttachement->LoadFromFile(filesystem, "resource/ui/winpaneldm_objects.txt");
+				//Find the weapon to be attached to the player model
+				if (pModelAttachement)
 				{
-					pModelPanel->SetModelColor(tf_PR->GetPlayerColorVector(iPlayer));
-					char pAttachedModel[128], szVCD[128], szClassModelName[128];
-					const char *pszClassName;
-					pszClassName = g_aPlayerClassNames_NonLocalized[pPlayer->GetPlayerClass()->GetClassIndex()];
-					
-					bool bIsFirst = ( bWinningPlayer && i == 1 ) || ( !bWinningPlayer && i == 0 );
-					
-					Q_snprintf(szVCD, sizeof(szVCD), "scenes/Player/%s/low/%s_place.vcd", pszClassName, bIsFirst ? "first" : "third");
-
-					KeyValues *pModelAttachement = new KeyValues("Models");
-					pModelAttachement->LoadFromFile(filesystem, "resource/ui/winpaneldm_objects.txt");
-					//Find the weapon to be attached to the player model
-					if (pModelAttachement)
+					Q_snprintf(szClassModelName, sizeof(szClassModelName), "%s_%s_model", pszClassName, bIsFirst ? "first" : "third" );
+					Q_strncpy(pAttachedModel, pModelAttachement->GetString(szClassModelName), sizeof(pAttachedModel));
+				}
+				pModelAttachement->deleteThis();
+				//Finalize player model setup
+				pModelPanel->SwapModel(GetPlayerClassData( tf_PR->GetPlayerClass( iPlayer ) )->GetModelName(), pAttachedModel, szVCD);
+				if( !of_disable_cosmetics.GetBool() )
+				{
+					int iCount = tf_PR->GetPlayerCosmeticCount( iPlayer );
+					for (int y = 0; y < iCount; y++)
 					{
-						Q_snprintf(szClassModelName, sizeof(szClassModelName), "%s_%s_model", pszClassName, bIsFirst ? "first" : "third" );
-						Q_strncpy(pAttachedModel, pModelAttachement->GetString(szClassModelName), sizeof(pAttachedModel));
-					}
-					pModelAttachement->deleteThis();
-					//Finalize player model setup
-					pModelPanel->SwapModel(pPlayer->GetPlayerClass()->GetModelName(), pAttachedModel, szVCD);
-					if( !of_disable_cosmetics.GetBool() )
-					{
-						for (int y = 0; y < pPlayer->m_iCosmetics.Count(); y++)
+						if (tf_PR->GetPlayerCosmetic( iPlayer, y ))
 						{
-							if (pPlayer->m_iCosmetics[y])
+							KeyValues* pCosmetic = GetCosmetic(tf_PR->GetPlayerCosmetic( iPlayer, y ));
+							if (!pCosmetic)
+								continue;
+
+							if (Q_strcmp(pCosmetic->GetString("Model"), "BLANK"))
 							{
-								KeyValues* pCosmetic = GetCosmetic(pPlayer->m_iCosmetics[y]);
-								if (!pCosmetic)
-									continue;
+								pModelPanel->AddAttachment(pCosmetic->GetString("Model", "models/empty.mdl"));
+							}
 
-								if (Q_strcmp(pCosmetic->GetString("Model"), "BLANK"))
+							KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+							if (pBodygroups)
+							{
+								for (KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue())
 								{
-									pModelPanel->AddAttachment(pCosmetic->GetString("Model", "models/empty.mdl"));
-								}
-
-								KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
-								if (pBodygroups)
-								{
-									for (KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue())
-									{
-										pModelPanel->SetBodygroup(sub->GetName(), sub->GetInt());
-									}
+									pModelPanel->SetBodygroup(sub->GetName(), sub->GetInt());
 								}
 							}
 						}
@@ -421,88 +417,80 @@ void CTFDuelAnnouncement::CheckAnnounce()
 	if (!tf_PR)
 		return;	
 	
+	m_bAnnouncePlayers = false;
+	
 	DevMsg("Round Start\n");
 	
 	iFirstPlayer = OFDuelQueue()->GetIndex(0  DUEL_ADJUSTMENT );
 	iSecondPlayer = OFDuelQueue()->GetIndex(1 DUEL_ADJUSTMENT );
-	
-	m_pPlayer1 = ToTFPlayer(UTIL_PlayerByIndex(iFirstPlayer));
-	m_pPlayer2 = ToTFPlayer(UTIL_PlayerByIndex(iSecondPlayer));
 
-	// Retry untill we get both players
-	if( m_pPlayer1 && m_pPlayer2 )
+	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "DuelTheFuckers");
+	pFirstPanel->SetDialogVariable( "PlayerOne", tf_PR ? tf_PR->GetPlayerName( iFirstPlayer ) : "" );
+	pSecondPanel->SetDialogVariable( "PlayerTwo", tf_PR ? tf_PR->GetPlayerName( iSecondPlayer ) : "" );
+	DevMsg("Player one %s\n", tf_PR ? tf_PR->GetPlayerName( iFirstPlayer ) : "" );
+	DevMsg("Player two %s\n", tf_PR ? tf_PR->GetPlayerName( iSecondPlayer ) : "" );
+	for( int i = 0; i < 2; i++ )
 	{
-		m_bAnnouncePlayers = false;
-		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "DuelTheFuckers");
-		pFirstPanel->SetDialogVariable( "PlayerOne", tf_PR ? tf_PR->GetPlayerName( iFirstPlayer ) : "" );
-		pSecondPanel->SetDialogVariable( "PlayerTwo", tf_PR ? tf_PR->GetPlayerName( iSecondPlayer ) : "" );
-		DevMsg("Player one %s\n", tf_PR ? tf_PR->GetPlayerName( iFirstPlayer ) : "" );
-		DevMsg("Player two %s\n", tf_PR ? tf_PR->GetPlayerName( iSecondPlayer ) : "" );
-		for( int i = 0; i < 2; i++ )
+		int iPlayer = i ? iSecondPlayer : iFirstPlayer;
+		
+		CModelPanel *pModelPanel = NULL;
+		switch( i )
 		{
-			int iPlayer = i ? iSecondPlayer : iFirstPlayer;
-			
-			CTFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex(iPlayer));
-			if (pPlayer)
+			case 0:
+				pModelPanel = pFirstModel;
+				pFirstBG->SetPlayerOwner(iPlayer);
+				pFirstExBG->SetPlayerOwner(iPlayer);
+				break;
+			case 1:
+				pModelPanel = pSecondModel;
+				pSecondBG->SetPlayerOwner(iPlayer);
+				pSecondExBG->SetPlayerOwner(iPlayer);
+				break;
+		}
+		
+		if( pModelPanel )
+		{
+			pModelPanel->DeleteModelData();
+			pModelPanel->SetModelColor(tf_PR->GetPlayerColorVector(iPlayer));
+			char pAttachedModel[128], szVCD[128], szClassModelName[128];
+			const char *pszClassName;
+
+			pszClassName = g_aPlayerClassNames_NonLocalized[tf_PR->GetPlayerClass( iPlayer )];
+			Q_snprintf(szVCD, sizeof(szVCD), "scenes/Player/%s/low/%s_place.vcd", pszClassName, "first");
+
+			KeyValues *pModelAttachement = new KeyValues("Models");
+			pModelAttachement->LoadFromFile(filesystem, "resource/ui/winpaneldm_objects.txt");
+			//Find the weapon to be attached to the player model
+			if (pModelAttachement)
 			{
-				CModelPanel *pModelPanel = NULL;
-				switch( i )
-				{
-					case 0:
-						pModelPanel = pFirstModel;
-						pFirstBG->SetPlayerOwner(iPlayer);
-						pFirstExBG->SetPlayerOwner(iPlayer);
-						break;
-					case 1:
-						pModelPanel = pSecondModel;
-						pSecondBG->SetPlayerOwner(iPlayer);
-						pSecondExBG->SetPlayerOwner(iPlayer);
-						break;
-				}
-				
-				if( pModelPanel )
-				{
-					pModelPanel->DeleteModelData();
-					pModelPanel->SetModelColor(tf_PR->GetPlayerColorVector(iPlayer));
-					char pAttachedModel[128], szVCD[128], szClassModelName[128];
-					const char *pszClassName;
-					pszClassName = g_aPlayerClassNames_NonLocalized[pPlayer->GetPlayerClass()->GetClassIndex()];
-					Q_snprintf(szVCD, sizeof(szVCD), "scenes/Player/%s/low/%s_place.vcd", pszClassName, "first");
+				Q_snprintf(szClassModelName, sizeof(szClassModelName), "%s_%s_model", pszClassName, "first");
+				Q_strncpy(pAttachedModel, pModelAttachement->GetString(szClassModelName), sizeof(pAttachedModel));
+			}
+			pModelAttachement->deleteThis();
+			//Finalize player model setup
+			pModelPanel->SwapModel(GetPlayerClassData( tf_PR->GetPlayerClass( iPlayer ) )->GetModelName(), pAttachedModel, szVCD);
+			if( !of_disable_cosmetics.GetBool() )
+			{
+				int iCount = tf_PR->GetPlayerCosmeticCount( iPlayer );
+				for (int y = 0; y < iCount; y++)
+				{ 
+					if (tf_PR->GetPlayerCosmetic( iPlayer, y ))
+					{
+						KeyValues* pCosmetic = GetCosmetic(tf_PR->GetPlayerCosmetic( iPlayer, y ));
+						if (!pCosmetic)
+							continue;
 
-					KeyValues *pModelAttachement = new KeyValues("Models");
-					pModelAttachement->LoadFromFile(filesystem, "resource/ui/winpaneldm_objects.txt");
-					//Find the weapon to be attached to the player model
-					if (pModelAttachement)
-					{
-						Q_snprintf(szClassModelName, sizeof(szClassModelName), "%s_%s_model", pszClassName, "first");
-						Q_strncpy(pAttachedModel, pModelAttachement->GetString(szClassModelName), sizeof(pAttachedModel));
-					}
-					pModelAttachement->deleteThis();
-					//Finalize player model setup
-					pModelPanel->SwapModel(pPlayer->GetPlayerClass()->GetModelName(), pAttachedModel, szVCD);
-					if( !of_disable_cosmetics.GetBool() )
-					{
-						for (int y = 0; y < pPlayer->m_iCosmetics.Count(); y++)
+						if (Q_strcmp(pCosmetic->GetString("Model"), "BLANK"))
 						{
-							if (pPlayer->m_iCosmetics[y])
+							pModelPanel->AddAttachment(pCosmetic->GetString("Model", "models/empty.mdl"));
+						}
+
+						KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+						if (pBodygroups)
+						{
+							for (KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue())
 							{
-								KeyValues* pCosmetic = GetCosmetic(pPlayer->m_iCosmetics[y]);
-								if (!pCosmetic)
-									continue;
-
-								if (Q_strcmp(pCosmetic->GetString("Model"), "BLANK"))
-								{
-									pModelPanel->AddAttachment(pCosmetic->GetString("Model", "models/empty.mdl"));
-								}
-
-								KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
-								if (pBodygroups)
-								{
-									for (KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue())
-									{
-										pModelPanel->SetBodygroup(sub->GetName(), sub->GetInt());
-									}
-								}
+								pModelPanel->SetBodygroup(sub->GetName(), sub->GetInt());
 							}
 						}
 					}

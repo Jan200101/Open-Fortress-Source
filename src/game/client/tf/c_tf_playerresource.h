@@ -26,11 +26,13 @@ public:
 	int	GetTotalScore( int iIndex ) { return GetArrayValue( iIndex, m_iTotalScore, 0 ); }
 	int GetMaxHealth( int iIndex )   { return GetArrayValue( iIndex, m_iMaxHealth, TF_HEALTH_UNDEFINED ); }
 	int GetPlayerClass( int iIndex ) { return GetArrayValue( iIndex, m_iPlayerClass, TF_CLASS_UNDEFINED ); }
+	int GetPlayerCosmetic( int iPlayerIndex ,int iIndex );
+	int GetPlayerCosmeticCount( int iIndex );
 	const Vector &GetPlayerColorVector( int iIndex );
 	Color GetPlayerColor( int iIndex );
 	
 	int GetCountForPlayerClass( int iTeam, int iClass, bool bExcludeLocalPlayer = false );
-	
+	virtual void OnDataChanged( DataUpdateType_t updateType );
 protected:
 	int GetArrayValue( int iIndex, int *pArray, int defaultVal );
 
@@ -38,6 +40,10 @@ protected:
 	int		m_iMaxHealth[MAX_PLAYERS+1];
 	int		m_iPlayerClass[MAX_PLAYERS+1];
 	Vector	m_vecColors[MAX_PLAYERS + 1];
+	int		m_iCosmetics[(16)*33];
+	int		m_iCosmetics2[(16)*33];
+	int		m_iCosmetics3[(16)*33];
+	int		m_iCosmetics4[(17)*33];
 };
 
 inline C_TF_PlayerResource *GetTFPlayerResource( void )

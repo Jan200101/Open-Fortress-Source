@@ -1890,6 +1890,13 @@ void CTFGameRules::Activate()
 		engine->ServerExecute();
 	}
 
+	if( of_duel.GetBool() )
+	{
+		AddGametype(TF_GAMETYPE_DUEL);
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Duel gamemode config file\n");
+		engine->ServerCommand("exec config_default_duel.cfg \n");
+		engine->ServerExecute();
+	}
 	if (gEntList.FindEntityByClassname(NULL, "of_logic_dm") || !Q_strncmp(STRING(gpGlobals->mapname), "dm_", 3) || !Q_strncmp(STRING(gpGlobals->mapname), "duel_", 5) )
 	{
 		AddGametype(TF_GAMETYPE_DM);
@@ -2317,7 +2324,7 @@ bool CTFGameRules::IsArenaGamemode( void )
 
 bool CTFGameRules::IsDuelGamemode( void )
 { 
-	return of_duel.GetBool();
+	return InGametype( TF_GAMETYPE_DUEL );
 }
 
 bool CTFGameRules::IsESCGamemode( void )

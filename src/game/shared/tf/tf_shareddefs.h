@@ -239,7 +239,8 @@ enum
 	TF_GAMETYPE_GG, // Gun Game
 	TF_GAMETYPE_3WAVE, // 3 Wave
 	TF_GAMETYPE_INF, // Infection
-	TF_GAMETYPE_JUG, // Juggernaught
+	TF_GAMETYPE_JUG, // Juggernaught  // Halway through our 32 gamemode limit
+	TF_GAMETYPE_DUEL, // Duel
 
 	TF_GAMETYPE_LAST
 };
