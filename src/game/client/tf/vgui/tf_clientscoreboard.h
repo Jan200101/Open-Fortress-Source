@@ -52,7 +52,7 @@ private:
 	void UpdatePlayerList();
 	void UpdateSpectatorList();
 	void UpdatePlayerDetails();
-	void ClearPlayerDetails(bool dmNoDetails);
+	void ClearPlayerDetails( bool isDM );
 	bool ShouldShowAsSpectator( int iPlayerIndex );
 
 	void FormatMedalName(char *medalName);
@@ -76,6 +76,8 @@ private:
 	int							m_iImageNemesis;
 	
 	int							m_iClassIcon[TF_CLASS_COUNT_ALL];
+
+	static const char			*szPlayerDetailsLabels[13];
 	
 	CPanelAnimationVarAliasType( int, m_iStatusWidth, "status_width", "12", "proportional_int" );
 	CPanelAnimationVarAliasType( int, m_iNemesisWidth, "nemesis_width", "20", "proportional_int" );

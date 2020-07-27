@@ -27,8 +27,6 @@ class CTFHudMedals : public CHudElement, public EditablePanel
 
 public:
 
-	static const char *medalPaths[DENIED + 1];
-
 	CTFHudMedals(const char *pElementName);
 
 	virtual void ApplySchemeSettings(IScheme *pScheme);
@@ -53,6 +51,8 @@ private:
 		const char *medal_sound;
 	};
 	CUtlVector<medal_info> medalsQueue;
+
+	static const char *medalPaths[DENIED + 1];
 
 	ImagePanel *m_pMedalImage;
 };
