@@ -36,19 +36,20 @@ public:
 	CNetworkVar( int, m_iReserveAmmo );
 	CNetworkVar( int, m_iClip );
 	CNetworkVar( bool, m_bFlamethrower );
+
 private:
 
-	CGlowObject		   *m_pGlowEffect;
-	bool	m_bShouldGlow;
-	void	UpdateGlowEffect( void );
-	void	DestroyGlowEffect(void);
+	CGlowObject		*m_pGlowEffect;
+	bool			m_bShouldGlow;
+	void			UpdateGlowEffect( void );
+	void			DestroyGlowEffect(void);
 
-	Vector		m_vecInitialVelocity;
+	Vector			m_vecInitialVelocity;
 
 	// Looping sound emitted by dropped flamethrowers
 	CSoundPatch *m_pPilotLightSound;
 	
-	int		iTeamNum;
+	int				iTeamNum;
 
 };
 
@@ -75,7 +76,8 @@ void C_TFDroppedWeapon::Spawn( void )
 	BaseClass::Spawn();
 	iTeamNum = TEAM_INVALID;
 
-	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
+	m_bShouldGlow = of_droppedweapons_glow.GetBool();
+	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor( GetLocalPlayerTeam() ), of_glow_alpha.GetFloat(), true, true );
 
 	UpdateGlowEffect();
 
@@ -100,43 +102,36 @@ void C_TFDroppedWeapon::Spawn( void )
 }
 
 void C_TFDroppedWeapon::ClientThink( void )
-{	
-	bool bShouldGlow = false;
-
+{
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
 	if ( !pPlayer )
 	{
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 		return;
 	}
+
+	bool bShouldGlow = of_droppedweapons_glow.GetBool() && !( !of_allow_allclass_pickups.GetBool() && !pPlayer->GetPlayerClass()->IsClass(TF_CLASS_MERCENARY) );
 	
-	if  ( 										// Don't glow if
-		( TFGameRules() && TFGameRules()->IsGGGamemode() ) || // we're in gun game
-		( ( m_iReserveAmmo <= 0 && m_iReserveAmmo != -1 ) && ( m_iClip <= 0 && m_iClip != -1 ) )	||			// or empty
-		( ( !of_allow_allclass_pickups.GetBool() && !pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY )  )) // Or we're not merc
-		)
+	if (!bShouldGlow)
 	{
-		if ( m_bShouldGlow )
+		if (m_bShouldGlow)
 		{
-			m_bShouldGlow = false;
+			m_bShouldGlow = bShouldGlow;
 			UpdateGlowEffect();
 		}
+
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 		return;
 	}
 	
 	trace_t tr;
 	UTIL_TraceLine( GetAbsOrigin(), pPlayer->EyePosition(), MASK_OPAQUE, this, COLLISION_GROUP_NONE, &tr );
-	if ( tr.fraction == 1.0f )
-	{
-		bShouldGlow = true;
-	}
+	bShouldGlow = tr.fraction == 1.0f;
 	
-	if ( m_bShouldGlow != bShouldGlow || ( iTeamNum != pPlayer->GetTeamNumber() ) )
+	if ( m_bShouldGlow != bShouldGlow || iTeamNum != pPlayer->GetTeamNumber() )
 	{
 		m_bShouldGlow = bShouldGlow;
 		iTeamNum = pPlayer->GetTeamNumber();
-
 		UpdateGlowEffect();
 	}
 

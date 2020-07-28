@@ -251,8 +251,8 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	}
 
 	// Setup the initial velocity.
-	Vector vecForward, vecRight, vecUp;
-	AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
+	Vector vecForward;
+	AngleVectors( vecAngles, &vecForward );
 
 	Vector vecVelocity = vecForward * 1100.0f;
 	pRocket->SetAbsVelocity( vecVelocity );	

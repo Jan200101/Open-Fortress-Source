@@ -31,31 +31,32 @@ public:
 
 	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
 
-	static CTFDroppedWeapon *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname );
+	static CTFDroppedWeapon *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname, bool bThrown = false );
 
 	float GetCreationTime( void ) { return m_flCreationTime; }
 	void  SetInitialVelocity( Vector &vecVelocity );
 	
 	int GetTeamNum(){ return m_iTeamNum; }
-	void SetTeamNum( int iTeam ){ m_iTeamNum = iTeam; }
+	void SetTeamNum( int iTeam ) { m_iTeamNum = iTeam; }
 
 public:
 	CNetworkVar( int, m_iReserveAmmo );
 	CNetworkVar( int, m_iClip );
 	CNetworkVar( bool, m_bFlamethrower );
 	
-	const char *pszWeaponName;
-	CTFWeaponInfo *pWeaponInfo;
-	int WeaponID;
-private:
-	float m_flCreationTime;
+	CTFWeaponInfo	*pWeaponInfo;
+	const char		*pszWeaponName;
+	int				WeaponID;
 
+private:
 	bool m_bAllowOwnerPickup;
-	CNetworkVector( m_vecInitialVelocity );
-	
+	bool m_bThrown;
+	float m_flCreationTime;
+	float m_flNextPickupTime;
 	int m_iTeamNum;
 
-private:
+	CNetworkVector( m_vecInitialVelocity );
+
 	CTFDroppedWeapon( const CTFDroppedWeapon & );
 
 	DECLARE_DATADESC();

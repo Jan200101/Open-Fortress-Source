@@ -300,7 +300,7 @@ bool CTFGameMovement::CanAccelerate()
 {
 	// Only allow the player to accelerate when in certain states.
 	if (m_pTFPlayer->m_Shared.GetState() == TF_STATE_ACTIVE)
-		return !player->GetWaterJumpTime() && !m_pTFPlayer->m_Shared.GetHook() && !m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED);
+		return !player->GetWaterJumpTime() && !m_pTFPlayer->m_Shared.GetHook() && !m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED) && !m_pTFPlayer->m_Shared.IsLunging();
 	
 	if (player->IsObserver())
 		return true;
@@ -837,7 +837,7 @@ void CTFGameMovement::WaterMove(void)
 	}
 
 	// water acceleration
-	if (wishspeed >= 0.1f && !hooked)  // old !
+	if ( wishspeed >= 0.1f && CanAccelerate() )  // old !
 	{
 		addspeed = wishspeed - newspeed;
 		if (addspeed > 0)
@@ -1101,7 +1101,7 @@ void CTFGameMovement::WalkMove(bool CSliding)
 //-----------------------------------------------------------------------------
 void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel)
 {
-	if (m_pTFPlayer->m_Shared.GetHook() || m_pTFPlayer->m_Shared.IsLunging() || m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED))
+	if (!CanAccelerate())
 		return;
 
 	float addspeed, currentspeed;
@@ -1610,6 +1610,10 @@ void CTFGameMovement::FullWalkMove()
 		return;
 	}
 
+	//Zombie lunge
+	if (m_pTFPlayer->m_Shared.DoLungeCheck())
+		CheckLunge();
+
 	//Jumping stuff
 	if (mv->m_nButtons & IN_JUMP && canMove)
 	{
@@ -1620,10 +1624,6 @@ void CTFGameMovement::FullWalkMove()
 	{
 		m_pTFPlayer->m_Shared.SetJumpBuffer(false);
 	}
-
-	//Zombie lunge
-	if (m_pTFPlayer->m_Shared.DoLungeCheck())
-		CheckLunge();
 
 	// Make sure velocity is valid.
 	CheckVelocity();

@@ -94,6 +94,7 @@ ConVar tf_max_voice_speak_delay			( "tf_max_voice_speak_delay", "1.5", FCVAR_REP
 ConVar of_forcespawnprotect	( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Manually define how long the spawn protection lasts." );
 ConVar of_instantrespawn	( "of_instantrespawn", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Instant respawning." );
 ConVar of_dropweapons		( "of_dropweapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow manual weapon dropping." );
+ConVar of_throwweapon		( "of_throwweapon", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Hurt enemies hit by the thrown weapon." );
 ConVar of_healonkill		( "of_healonkill", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Amount of health gained after a kill." );
 
 ConVar of_resistance		( "of_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "Defines the resistance of the Shield powerup." );
@@ -6401,6 +6402,7 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 	
 	if( of_randomizer.GetBool() )
 		return;
+
 	// We want the ammo packs to look like the player's weapon model they were carrying.
 	// except if they are melee or building weapons
 	CTFWeaponBase *pWeapon = NULL;
@@ -6408,11 +6410,10 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 	if ( !pActiveWeapon || pActiveWeapon->GetTFWpnData().m_bDontDrop || pActiveWeapon->GetWeaponID() == TF_WEAPON_BUILDER || pActiveWeapon->GetWeaponID() == TF_WEAPON_GRAPPLE || pActiveWeapon->GetWeaponID() == TF_WEAPON_PDA_ENGINEER_DESTROY )
 	{
 		// Don't drop this one, find another one to drop
-
 		int iWeight = -1;
 
 		// find the highest weighted weapon
-		for ( int i = 0;i < WeaponCount(); i++ ) 
+		for ( int i = 0; i < WeaponCount(); i++ ) 
 		{
 			CTFWeaponBase *pWpn = ( CTFWeaponBase *)GetWeapon(i);
 			if ( !pWpn )
@@ -6448,73 +6449,76 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 	QAngle vecPackAngles;
 	if( !CalculateAmmoPackPositionAndAngles( pWeapon, vecPackOrigin, vecPackAngles ) )
 		return;
-
-	int m_iWeaponID = pWeapon->GetWeaponID();
-
+	
 	// Create the ammo pack.
-	CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create( vecPackOrigin, vecPackAngles, this, pszWorldModel, m_iWeaponID, pWeapon->GetClassname() );
+	bool bThrownHurt = bThrown && of_throwweapon.GetBool();
+	CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create(vecPackOrigin, vecPackAngles, this, pszWorldModel, pWeapon->GetWeaponID(), pWeapon->GetClassname(), bThrownHurt);
 	Assert( pDroppedWeapon );
 	if ( pDroppedWeapon )
 	{
-		Vector vecRight, vecUp;
-		AngleVectors( EyeAngles(), NULL, &vecRight, &vecUp );
-
 		// Calculate the initial impulse on the weapon.
+		AngularImpulse angImp;
 		Vector vecImpulse( 0.0f, 0.0f, 0.0f );
-
-		vecImpulse += vecUp * random->RandomFloat( -0.25, 0.25 );
-		vecImpulse += vecRight * random->RandomFloat( -0.25, 0.25 );
-		VectorNormalize( vecImpulse );
-		vecImpulse *= random->RandomFloat( tf_weapon_ragdoll_velocity_min.GetFloat(), tf_weapon_ragdoll_velocity_max.GetFloat() );			
-		vecImpulse += GetAbsVelocity();
 		
-
-		// Cap the impulse.
-		float flSpeed = vecImpulse.Length();
-		if ( flSpeed > tf_weapon_ragdoll_maxspeed.GetFloat() )
+		if (bThrown)
 		{
-				VectorScale( vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse );
-		}
+			angImp = AngularImpulse(200, 200, 200);
 
-		if ( pDroppedWeapon->VPhysicsGetObject() )
-		{
-			// We can probably remove this when the mass on the weapons is correct!
-			pDroppedWeapon->VPhysicsGetObject()->SetMass( 25.0f );
+			Vector vecMuzzlePos = Weapon_ShootPosition();
+			Vector vecEndPos;
+			EyeVectors(&vecEndPos);
+			vecEndPos = vecMuzzlePos + vecEndPos * 256.f;
 
-			AngularImpulse angImpulse( 0, random->RandomFloat( 0, 100 ), 0 );
-			AngularImpulse angImp( 200, 200, 200 );
-			
-			if ( bThrown )
+			trace_t tr;
+			UTIL_TraceLine(vecMuzzlePos, vecEndPos, MASK_SOLID, this, COLLISION_GROUP_NONE, &tr);
+
+			vecImpulse = tr.endpos - pDroppedWeapon->GetAbsOrigin();
+			VectorNormalize(vecImpulse);
+			Vector pVelocity = GetAbsVelocity();
+			pVelocity = Vector(pVelocity.x, pVelocity.y, 60.f);
+
+			//Throw like you mean it
+			if (bThrownHurt)
 			{
-					// This makes it so it always get thrown upwards
-					Vector vecImpulse(0.0f, 0.0f, 150.0f);
-
-					Vector vecMuzzlePos = this->Weapon_ShootPosition();
-					Vector forward;
-					this->EyeVectors(&forward);
-					Vector vecEndPos = vecMuzzlePos + (forward * 256);
-
-					trace_t    trace;
-					UTIL_TraceLine(vecMuzzlePos, vecEndPos, (MASK_SHOT & ~CONTENTS_WINDOW), this, COLLISION_GROUP_NONE, &trace);
-
-					Vector vecTarget = trace.endpos;
-					Vector vecDir = vecTarget - this->GetAbsOrigin();
-					VectorNormalize(vecDir);
-					float flSpeed = 300;
-					vecDir *= flSpeed;
-
-					Vector vecThrowWeapon = vecDir += vecImpulse;
-
-					pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous(&vecThrowWeapon, &angImp);
+				vecImpulse = vecImpulse * 1200.f + pVelocity;
+				vecImpulse.z += 60.f;
 			}
 			else
 			{
-				pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous( &vecImpulse, &angImpulse );
+				vecImpulse = vecImpulse * 300.f + pVelocity;
+				vecImpulse.z += 150.f;
 			}
+		}
+		else
+		{
+			angImp = AngularImpulse(0, random->RandomFloat(0, 100), 0);
 
+			Vector vecRight, vecUp;
+			AngleVectors(EyeAngles(), NULL, &vecRight, &vecUp);
+
+			vecImpulse += vecUp * random->RandomFloat(-0.25, 0.25);
+			vecImpulse += vecRight * random->RandomFloat(-0.25, 0.25);
+			VectorNormalize(vecImpulse);
+			vecImpulse *= random->RandomFloat(tf_weapon_ragdoll_velocity_min.GetFloat(), tf_weapon_ragdoll_velocity_max.GetFloat());
+			vecImpulse += GetAbsVelocity();
+
+			// Cap the impulse.
+			float flSpeed = vecImpulse.Length();
+			if (flSpeed > tf_weapon_ragdoll_maxspeed.GetFloat())
+				VectorScale(vecImpulse, tf_weapon_ragdoll_maxspeed.GetFloat() / flSpeed, vecImpulse);
 		}
 
-		pDroppedWeapon->SetInitialVelocity( vecImpulse );
+		//if VPhysics Object exists apply velocity on it, otherwise apply it to the entity
+		if (pDroppedWeapon->VPhysicsGetObject())
+		{
+			// We can probably remove this when the mass on the weapons is correct!
+			pDroppedWeapon->VPhysicsGetObject()->SetMass(25.f);
+			pDroppedWeapon->VPhysicsGetObject()->SetVelocityInstantaneous(&vecImpulse, &angImp);
+		}
+		else
+		{
+			pDroppedWeapon->SetInitialVelocity(vecImpulse);
+		}
 
 		if ( GetTeamNumber() == TF_TEAM_RED )
 			pDroppedWeapon->m_nSkin = 0;

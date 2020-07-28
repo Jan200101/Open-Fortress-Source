@@ -206,10 +206,6 @@ public:
 
 	void	FadeInvis( float flInvisFadeTime );
 	float	GetPercentInvisible( void );
-	float	GetNextLungeTime( void ){ return m_flNextLungeTime; }
-	void	SetNextLungeTime( float flNextLungeTime ){ m_flNextLungeTime = flNextLungeTime; }
-	bool	IsLunging(void) { return m_bIsLunging; }
-	void	StopLunge() { m_bIsLunging = false; }
 	void	NoteLastDamageTime( int nDamage );
 	void	OnSpyTouchedByEnemy( void );
 	float	GetLastStealthExposedTime( void ) { return m_flLastStealthExposeTime; }
@@ -219,21 +215,30 @@ public:
 	float	GetSpyCloakMeter() const		{ return m_flCloakMeter; }
 	void	SetSpyCloakMeter( float val ) { m_flCloakMeter = val; }
 
+	//Jumping
 	bool	IsJumping( void ) { return m_bJumping; }
 	void	SetJumping( bool bJumping );
+	void	SetJumpBuffer(bool buffer);
+	bool	GetJumpBuffer() { return m_bBlockJump; }
+	//Air dash
 	bool    IsAirDashing( void ) { return m_bAirDash; }
 	void    SetAirDash( bool bAirDash );
 	int     GetAirDashCount( void ) { return m_iAirDashCount; }
 	void    AddAirDashCount();
 	void    SetAirDashCount( int iAirDashCount );
+	//Grappling hook
 	CBaseEntity *GetHook( void ) { return m_Hook; }
 	void    SetHook(CBaseEntity *hook);
 	void    SetHookProperty(float pull);
 	float	GetHookProperty() { return m_flGHookProp; }
-	void	SetJumpBuffer(bool buffer);
-	bool	GetJumpBuffer() { return m_bBlockJump; }
+	//CSlide
 	void	SetCSlideDuration(float duration);
 	float	GetCSlideDuration() { return m_flCSlideDuration; }
+	//Lunge
+	float	GetNextLungeTime(void){ return m_flNextLungeTime; }
+	void	SetNextLungeTime(float flNextLungeTime){ m_flNextLungeTime = flNextLungeTime; }
+	bool	IsLunging(void) { return m_bIsLunging; }
+	void	StopLunge() { m_bIsLunging = false; }
 
 	// loser state
 	bool	IsLoser( void );
