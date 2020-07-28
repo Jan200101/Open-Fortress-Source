@@ -249,7 +249,7 @@ void CTFDuelHUD::FireGameEvent( IGameEvent *event )
 #define DUEL_ADJUSTMENT + 0
 #endif
 
-DECLARE_HUDELEMENT( CTFDuelAnnouncement );
+DECLARE_HUDELEMENT_DEPTH(CTFDuelAnnouncement, 70);
 
 CTFDuelAnnouncement::CTFDuelAnnouncement( const char *pElementName ) : CHudElement( pElementName ), BaseClass( NULL, "HudDuelAnnouncement" ) 
 {
@@ -287,6 +287,7 @@ void CTFDuelAnnouncement::ApplySchemeSettings( IScheme *pScheme )
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	// load control settings...
+	SetProportional(true);
 	LoadControlSettings( "resource/ui/HudDuelAnnouncement.res" );
 }
 
@@ -296,6 +297,16 @@ bool CTFDuelAnnouncement::ShouldDraw()
 		return false;
 	
 	if( !TFGameRules()->IsDuelGamemode() )
+		return false;
+
+	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if( !pLocalPlayer )
+		return false;
+
+	if( pLocalPlayer->m_Shared.InState( TF_STATE_WELCOME ) )
+		return false;
+	
+	if( OFDuelQueue()->GetIndex(0) == -1 || OFDuelQueue()->GetIndex(1 DUEL_ADJUSTMENT ) == -1  )
 		return false;
 
 	if( m_bAnnouncePlayers )
@@ -310,7 +321,7 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 
 	if( FStrEq( eventname, "teamplay_round_start" ) )
 	{
-		SetVisible(true);
+		SetVisible(false);
 		m_bAnnouncePlayers = true;
 	}
 	else if( FStrEq( eventname, "teamplay_win_panel" ) )
@@ -318,7 +329,7 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 		C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
 		if (!tf_PR)
 			return;	
-
+		
 		SetVisible(true);
 		
 		bool bWinningPlayer = iFirstPlayer != event->GetInt( "player_1", 0 );
@@ -417,10 +428,16 @@ void CTFDuelAnnouncement::CheckAnnounce()
 	if (!tf_PR)
 		return;	
 	
-	m_bAnnouncePlayers = false;
-	
 	iFirstPlayer = OFDuelQueue()->GetIndex(0  DUEL_ADJUSTMENT );
-	iSecondPlayer = OFDuelQueue()->GetIndex(1 DUEL_ADJUSTMENT );
+	iSecondPlayer = OFDuelQueue()->GetIndex(1 DUEL_ADJUSTMENT );	
+	
+	if( tf_PR->GetPlayerClass( iFirstPlayer ) == 0 || 
+		tf_PR->GetPlayerClass( iSecondPlayer ) == 0 )
+	{
+		return;
+	}
+	SetVisible(true);
+	m_bAnnouncePlayers = false;
 
 	g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "DuelTheFuckers");
 	pFirstPanel->SetDialogVariable( "PlayerOne", tf_PR ? tf_PR->GetPlayerName( iFirstPlayer ) : "" );
