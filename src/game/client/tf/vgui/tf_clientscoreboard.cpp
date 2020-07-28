@@ -750,7 +750,7 @@ void CTFClientScoreBoardDialog::UpdateLabelValue(const char *name, const int val
 {
 	CExLabel *pLabel = dynamic_cast<CExLabel *>(FindChildByName(name));
 	char szValue[4];
-	itoa(value, szValue, 10);
+	Q_snprintf(szValue, sizeof(szValue), "%d", value);
 	pLabel->SetText(szValue);
 }
 
