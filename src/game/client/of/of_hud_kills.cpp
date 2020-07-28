@@ -82,6 +82,10 @@ bool CTFHudKills::ShouldDraw( void )
 		!TFGameRules()->IsTeamplay() &&
 		!TFGameRules()->IsArenaGamemode() &&
 		!TFGameRules()->IsCoopEnabled() &&
+		// Dont display in duel if we're in preround or in waiting for players
+		(!TFGameRules()->IsDuelGamemode() || 
+		( TFGameRules() && TFGameRules()->PointsMayBeCaptured() ) ) &&
+	
 		( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills() ) 
 		|| TFGameRules()->IsGGGamemode()) )
 		return CHudElement::ShouldDraw();

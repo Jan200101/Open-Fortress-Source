@@ -88,7 +88,8 @@ class CTFDuelAnnouncement : public vgui::EditablePanel, public CHudElement
 
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 	
-	virtual void CheckAnnounce( void );
+	void CheckAnnounce( void );
+	virtual int GetRenderGroupPriority() { return 70; }
 private:
 	CModelPanel *pFirstModel;
 	CModelPanel *pSecondModel;

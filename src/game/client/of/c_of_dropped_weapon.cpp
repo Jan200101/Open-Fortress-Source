@@ -110,7 +110,9 @@ void C_TFDroppedWeapon::ClientThink( void )
 		return;
 	}
 
-	bool bShouldGlow = of_droppedweapons_glow.GetBool() && !( !of_allow_allclass_pickups.GetBool() && !pPlayer->GetPlayerClass()->IsClass(TF_CLASS_MERCENARY) );
+	bool bShouldGlow = of_droppedweapons_glow.GetBool() &&
+					   !( !of_allow_allclass_pickups.GetBool() && !pPlayer->GetPlayerClass()->IsClass(TF_CLASS_MERCENARY) ) &&
+					   m_iReserveAmmo && m_iClip;
 	
 	if (!bShouldGlow)
 	{
