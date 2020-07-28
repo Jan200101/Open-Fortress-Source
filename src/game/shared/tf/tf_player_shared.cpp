@@ -121,7 +121,7 @@ RecvPropInt( RECVINFO( m_nDesiredDisguiseClass ) ),
 RecvPropTime( RECVINFO( m_flStealthNoAttackExpire ) ),
 RecvPropTime( RECVINFO( m_flStealthNextChangeTime ) ),
 RecvPropTime( RECVINFO( m_flNextLungeTime ) ),
-RecvPropBool( RECVINFO( m_bIsLunging ) ),
+RecvPropBool( RECVINFO( m_bNoAirControl ) ),
 RecvPropTime( RECVINFO( m_flNextZoomTime ) ),
 RecvPropFloat( RECVINFO( m_flCloakMeter ) ),
 RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominated ), RecvPropBool( RECVINFO( m_bPlayerDominated[0] ) ) ),
@@ -187,7 +187,7 @@ SendPropInt( SENDINFO( m_nDesiredDisguiseClass ), 4, SPROP_UNSIGNED ),
 SendPropTime( SENDINFO( m_flStealthNoAttackExpire ) ),
 SendPropTime( SENDINFO( m_flStealthNextChangeTime ) ),
 SendPropTime( SENDINFO( m_flNextLungeTime ) ),
-SendPropBool( SENDINFO( m_bIsLunging ) ),
+SendPropBool( SENDINFO( m_bNoAirControl ) ),
 SendPropTime( SENDINFO( m_flNextZoomTime ) ),
 SendPropFloat( SENDINFO( m_flCloakMeter ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0, 100.0 ),
 SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominated ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominated ) ) ),
@@ -249,7 +249,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_flStealthNoAttackExpire = 0.0f;
 	m_flStealthNextChangeTime = 0.0f;
 	m_flNextLungeTime = 0.0f;
-	m_bIsLunging = false;
+	m_bNoAirControl = false;
 	m_flNextZoomTime = 0.0f;
 	m_iCritMult = 0;
 	m_flInvisibility = 0.0f;
@@ -2202,33 +2202,28 @@ void CTFPlayerShared::RemoveDisguise( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
+bool CTFPlayerShared::IsLunging()
+{
+	return IsZombie() && m_bNoAirControl;
+}
+
 bool CTFPlayerShared::DoLungeCheck( void )
 {
 	if ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT )
 	{
-		bool bInWater = m_pOuter->GetWaterLevel() > WL_Feet;
-
-		if ( bInWater || !m_pOuter->IsAlive() )
-		{
-			m_bIsLunging = false;
+		if ( m_bNoAirControl || !m_pOuter->GetGroundEntity() )
 			return false;
-		}
-
-		bool bOnGround = m_pOuter->GetGroundEntity() != NULL;
-
-		if ( bOnGround )
-			m_bIsLunging = false;
 
 		CTFClaws *pWeapon = dynamic_cast<CTFClaws *>( m_pOuter->GetActiveWeapon() );
 
 		if ( !pWeapon )
 			return false;
 
-		if ( (m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() && !m_pOuter->m_Shared.InCond(TF_COND_TAUNTING) && bOnGround )
+		if ( (m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() && !m_pOuter->m_Shared.InCond(TF_COND_TAUNTING) )
 		{
 			if ( m_flNextLungeTime <= gpGlobals->curtime )
 			{
-				m_bIsLunging = true;
+				m_bNoAirControl = true;
 				return true;
 			}
 			else

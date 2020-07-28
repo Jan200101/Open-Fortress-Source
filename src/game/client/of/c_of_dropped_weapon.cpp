@@ -109,16 +109,14 @@ void C_TFDroppedWeapon::ClientThink( void )
 		SetNextClientThink( CLIENT_THINK_ALWAYS );
 		return;
 	}
-
-	bool bShouldGlow = of_droppedweapons_glow.GetBool() &&
-					   !( !of_allow_allclass_pickups.GetBool() && !pPlayer->GetPlayerClass()->IsClass(TF_CLASS_MERCENARY) ) &&
-					   m_iReserveAmmo && m_iClip;
 	
-	if (!bShouldGlow)
+	if (!of_droppedweapons_glow.GetBool() ||
+		!m_iReserveAmmo || !m_iClip ||
+		( !of_allow_allclass_pickups.GetBool() && !pPlayer->GetPlayerClass()->IsClass( TF_CLASS_MERCENARY ) ) )
 	{
 		if (m_bShouldGlow)
 		{
-			m_bShouldGlow = bShouldGlow;
+			m_bShouldGlow = false;
 			UpdateGlowEffect();
 		}
 
@@ -128,7 +126,7 @@ void C_TFDroppedWeapon::ClientThink( void )
 	
 	trace_t tr;
 	UTIL_TraceLine( GetAbsOrigin(), pPlayer->EyePosition(), MASK_OPAQUE, this, COLLISION_GROUP_NONE, &tr );
-	bShouldGlow = tr.fraction == 1.0f;
+	bool bShouldGlow = tr.fraction == 1.0f;
 	
 	if ( m_bShouldGlow != bShouldGlow || iTeamNum != pPlayer->GetTeamNumber() )
 	{

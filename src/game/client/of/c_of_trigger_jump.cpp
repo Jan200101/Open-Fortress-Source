@@ -7,12 +7,11 @@ IMPLEMENT_CLIENTCLASS_DT( C_OFDTriggerJump, DT_OFDTriggerJump, COFDTriggerJump )
 	RecvPropFloat( RECVINFO( m_flApexBoost ) ),
 	RecvPropInt( RECVINFO( m_iSound ) ),
 	RecvPropBool( RECVINFO( m_bNoCompensation ) ),
+	RecvPropBool( RECVINFO( m_bNoAirControl ) ),
 END_RECV_TABLE()
-
 
 C_EntityClassList< C_OFDTriggerJump > g_TriggerJumpList;
 template<> C_OFDTriggerJump *C_EntityClassList<C_OFDTriggerJump>::m_pClassList = NULL;
-
 
 C_OFDTriggerJump::C_OFDTriggerJump()
 {

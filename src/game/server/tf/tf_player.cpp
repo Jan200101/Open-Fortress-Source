@@ -93,8 +93,7 @@ ConVar tf_max_voice_speak_delay			( "tf_max_voice_speak_delay", "1.5", FCVAR_REP
 
 ConVar of_forcespawnprotect	( "of_forcespawnprotect", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Manually define how long the spawn protection lasts." );
 ConVar of_instantrespawn	( "of_instantrespawn", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Instant respawning." );
-ConVar of_dropweapons		( "of_dropweapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "Allow manual weapon dropping." );
-ConVar of_throwweapon		( "of_throwweapon", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Hurt enemies hit by the thrown weapon." );
+ConVar of_dropweapons		( "of_dropweapons", "0", FCVAR_REPLICATED | FCVAR_NOTIFY , "1- Allow manual weapon dropping.\n2- Thrown weapons hurt enemies." );
 ConVar of_healonkill		( "of_healonkill", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Amount of health gained after a kill." );
 
 ConVar of_resistance		( "of_resistance", "0.33", FCVAR_REPLICATED | FCVAR_NOTIFY , "Defines the resistance of the Shield powerup." );
@@ -6264,7 +6263,6 @@ void CTFPlayer::DropAmmoPack( void )
 //-----------------------------------------------------------------------------
 void CC_DropWeapon( void )
 {
-
 	if ( !of_dropweapons.GetBool() )
 		return;
 
@@ -6297,13 +6295,14 @@ void CC_DropWeapon( void )
 		pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
 		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
 	}
+
 	if ( pPlayer->GetLastWeapon() )
 		pPlayer->Weapon_Switch( pPlayer->GetLastWeapon() );
-	
 	else
 		pPlayer->SwitchToNextBestWeapon( pPlayer->m_Shared.GetActiveTFWeapon() );
 }
-static ConCommand dropweapon( "dropweapon", CC_DropWeapon, "Drop your weapon." );
+static ConCommand dropweapon("dropweapon", CC_DropWeapon, "Drop your weapon.");
+
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 void CC_GiveHealthAmmo( void )
@@ -6451,7 +6450,7 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 		return;
 	
 	// Create the ammo pack.
-	bool bThrownHurt = bThrown && of_throwweapon.GetBool();
+	bool bThrownHurt = bThrown && of_dropweapons.GetInt() == 2;
 	CTFDroppedWeapon *pDroppedWeapon = CTFDroppedWeapon::Create(vecPackOrigin, vecPackAngles, this, pszWorldModel, pWeapon->GetWeaponID(), pWeapon->GetClassname(), bThrownHurt);
 	Assert( pDroppedWeapon );
 	if ( pDroppedWeapon )

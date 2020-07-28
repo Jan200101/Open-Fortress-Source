@@ -22,9 +22,7 @@ public:
 	void DrawDebugGeometryOverlays( void )
 	{
 		if ( m_debugOverlays & OVERLAY_BBOX_BIT )
-		{
 			NDebugOverlay::Line( GetAbsOrigin(), m_vecTarget, 0, 255, 0, true, 0.0f );
-		}
 		BaseClass::DrawDebugGeometryOverlays();
 	}
 
@@ -44,6 +42,7 @@ protected:
 	CNetworkVar( float, m_flApexBoost );
 	CNetworkVar( int, m_iSound );
 	CNetworkVar( bool, m_bNoCompensation );
+	CNetworkVar( bool, m_bNoAirControl );
 
 	CountdownTimer m_launchCooldowns[ MAX_PLAYERS + 1 ];
 };

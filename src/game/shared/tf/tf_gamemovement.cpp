@@ -155,6 +155,14 @@ CTFGameMovement::CTFGameMovement()
 //----------------------------------------------------------------------------------------
 void CTFGameMovement::PlayerMove()
 {
+	//make sure that if air control is blocked by a zombie lunge
+	//or a jumppad the first thing that happens once player touches ground
+	//or water is that it is reallowed
+	if (m_pTFPlayer->m_Shared.IsNoAirControl())
+		Msg("%f\n", gpGlobals->curtime);
+	if ( m_pTFPlayer->m_Shared.IsNoAirControl() && ( InWater() || player->GetGroundEntity() ) )
+		m_pTFPlayer->m_Shared.SetNoAirControl(false);
+
 	// call base class to do movement
 	BaseClass::PlayerMove();
 
@@ -300,7 +308,7 @@ bool CTFGameMovement::CanAccelerate()
 {
 	// Only allow the player to accelerate when in certain states.
 	if (m_pTFPlayer->m_Shared.GetState() == TF_STATE_ACTIVE)
-		return !player->GetWaterJumpTime() && !m_pTFPlayer->m_Shared.GetHook() && !m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED) && !m_pTFPlayer->m_Shared.IsLunging();
+		return !player->GetWaterJumpTime() && !m_pTFPlayer->m_Shared.GetHook() && !m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED) && !m_pTFPlayer->m_Shared.IsNoAirControl();
 	
 	if (player->IsObserver())
 		return true;

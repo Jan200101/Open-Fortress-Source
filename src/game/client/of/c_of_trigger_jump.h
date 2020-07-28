@@ -13,16 +13,16 @@ public:
 	virtual void Spawn();
 	virtual void StartTouch( CBaseEntity *pOther );
 
-public:
 	C_OFDTriggerJump	*m_pNext;
-
+	
+protected:
 	CountdownTimer m_launchCooldowns[ MAX_PLAYERS + 1 ];
 	
 	CNetworkVar( Vector, m_vecTarget );
 	CNetworkVar( float, m_flApexBoost );
 	CNetworkVar( int, m_iSound );
-	
 	CNetworkVar( bool, m_bNoCompensation );
+	CNetworkVar(bool, m_bNoAirControl);
 };
 
 extern C_EntityClassList< C_OFDTriggerJump > g_TriggerJumpList;

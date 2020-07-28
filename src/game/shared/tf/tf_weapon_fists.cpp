@@ -202,7 +202,7 @@ void CTFClaws::ItemPostFrame(void)
 				DoViewModelAnimation();
 				WeaponSound(MELEE_MISS);
 				Smack();
-				pOwner->m_Shared.StopLunge();
+				pOwner->m_Shared.SetNoAirControl(false);
 				m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 			}
 		}

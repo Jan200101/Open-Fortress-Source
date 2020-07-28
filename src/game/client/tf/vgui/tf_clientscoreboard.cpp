@@ -16,10 +16,6 @@
 #include <vgui/ILocalize.h>
 #include "tf_playerclass_shared.h"
 
-#if defined ( _X360 )
-#include "engine/imatchmaking.h"
-#endif
-
 using namespace vgui;
 
 #define SCOREBOARD_MAX_LIST_ENTRIES 12
@@ -147,9 +143,7 @@ void CTFClientScoreBoardDialog::ShowPanel( bool bShow )
 	Reset();
 
 	if ( m_pImageList == NULL )
-	{
 		InvalidateLayout( true, true );
-	}
 
 	// Don't show in commentary mode
 	if ( IsInCommentaryMode() )
@@ -628,9 +622,9 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 	{
 		//Find medals that were awarded, those that have no count will not be drawn
 		int iMedalCount = 0;
+		CExLabel *pLabel = NULL;
 		char szName[20];
 		int size = sizeof(szName);
-		CExLabel *pLabel = NULL;
 
 		int j = 1;
 		for (int i = 0; i < DENIED + 1 || j > PLAYERINFO_ELEMENTS; i++)
@@ -679,19 +673,19 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 		//regular scoreboard stuff
 		RoundStats_t &roundStats = GetStatPanel()->GetRoundStatsCurrentGame();
 
-		SetDialogVariable("Count01", tf_PR->GetPlayerScore(playerIndex));
-		SetDialogVariable("Count02", tf_PR->GetDeaths(playerIndex));
-		SetDialogVariable("Count03", roundStats.m_iStat[TFSTAT_KILLASSISTS]);
-		SetDialogVariable("Count04", roundStats.m_iStat[TFSTAT_BUILDINGSDESTROYED]);
-		SetDialogVariable("Count05", roundStats.m_iStat[TFSTAT_CAPTURES]);
-		SetDialogVariable("Count06", roundStats.m_iStat[TFSTAT_DEFENSES]);
-		SetDialogVariable("Count07", roundStats.m_iStat[TFSTAT_DOMINATIONS]);
-		SetDialogVariable("Count08", roundStats.m_iStat[TFSTAT_REVENGE]);
-		SetDialogVariable("Count09", roundStats.m_iStat[TFSTAT_INVULNS]);
-		SetDialogVariable("Count10", roundStats.m_iStat[TFSTAT_HEADSHOTS]);
-		SetDialogVariable("Count11", roundStats.m_iStat[TFSTAT_TELEPORTS]);
-		SetDialogVariable("Count12", roundStats.m_iStat[TFSTAT_HEALING]);
-		SetDialogVariable("Count13", roundStats.m_iStat[TFSTAT_BACKSTABS]);
+		UpdateLabelValue("Count01", tf_PR->GetPlayerScore(playerIndex));
+		UpdateLabelValue("Count02", tf_PR->GetDeaths(playerIndex));
+		UpdateLabelValue("Count03", roundStats.m_iStat[TFSTAT_KILLASSISTS]);
+		UpdateLabelValue("Count04", roundStats.m_iStat[TFSTAT_BUILDINGSDESTROYED]);
+		UpdateLabelValue("Count05", roundStats.m_iStat[TFSTAT_CAPTURES]);
+		UpdateLabelValue("Count06", roundStats.m_iStat[TFSTAT_DEFENSES]);
+		UpdateLabelValue("Count07", roundStats.m_iStat[TFSTAT_DOMINATIONS]);
+		UpdateLabelValue("Count08", roundStats.m_iStat[TFSTAT_REVENGE]);
+		UpdateLabelValue("Count09", roundStats.m_iStat[TFSTAT_INVULNS]);
+		UpdateLabelValue("Count10", roundStats.m_iStat[TFSTAT_HEADSHOTS]);
+		UpdateLabelValue("Count11", roundStats.m_iStat[TFSTAT_TELEPORTS]);
+		UpdateLabelValue("Count12", roundStats.m_iStat[TFSTAT_HEALING]);
+		UpdateLabelValue("Count13", roundStats.m_iStat[TFSTAT_BACKSTABS]);
 	}
 	
 	SetDialogVariable( "playername", tf_PR->GetPlayerName( playerIndex ) );
@@ -752,6 +746,14 @@ void CTFClientScoreBoardDialog::FormatMedalName(char *medalname)
 	}
 }
 
+void CTFClientScoreBoardDialog::UpdateLabelValue(const char *name, const int value)
+{
+	CExLabel *pLabel = dynamic_cast<CExLabel *>(FindChildByName(name));
+	char szValue[4];
+	itoa(value, szValue, 10);
+	pLabel->SetText(szValue);
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: Clears score details
 //-----------------------------------------------------------------------------
@@ -780,25 +782,29 @@ void CTFClientScoreBoardDialog::ClearPlayerDetails(bool isDM)
 	}
 	else if ( !isDM )
 	{
+		int i = 1;
+
 		//show the player details and give them the regular names
-		for (int i = 1; i < 14; i++)
+		for (; i < 14; i++)
 		{
 			//reset counter
 			Q_snprintf(szName, size, "Count%02d", i);
-			SetDialogVariable(szName, "");
+			pLabel = dynamic_cast<CExLabel *>( FindChildByName(szName) );
+			pLabel->SetText("0");
+			pLabel->SetVisible(true);
 
 			//Make sure the correct text is used in the label
 			Q_snprintf(szName, size, "Label%02d", i);
-			pLabel = dynamic_cast<CExLabel *>(FindChildByName(szName));
-			pLabel->SetText(szPlayerDetailsLabels[i]);
+			pLabel = dynamic_cast<CExLabel *>( FindChildByName(szName) );
+			pLabel->SetText(szPlayerDetailsLabels[i - 1]);
 			pLabel->SetVisible(true);
 		}
 
 		//hide the extra 3 details that are only used with medals
-		for (int i = 14; i < PLAYERINFO_ELEMENTS + 1; i++)
+		for (; i < PLAYERINFO_ELEMENTS + 1; i++)
 		{
 			Q_snprintf(szName, size, "Count%02d", i);
-			SetDialogVariable(szName, "");
+			SetControlVisible(szName, false);
 			Q_snprintf(szName, size, "Label%02d", i);
 			SetControlVisible(szName, false);
 		}

@@ -56,6 +56,7 @@ private:
 	bool ShouldShowAsSpectator( int iPlayerIndex );
 
 	void FormatMedalName(char *medalName);
+	void UpdateLabelValue(const char *name, const int value);
 	
 	virtual void FireGameEvent( IGameEvent *event );
 

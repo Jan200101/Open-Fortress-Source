@@ -2682,9 +2682,8 @@ void CTFGameRules::SetupOnRoundStart( void )
 	m_bEntityLimitPrevented = false;
 	
 	if ( IsArenaGamemode() )
-	{
 		m_flStalemateStartTime = gpGlobals->curtime;
-	}
+	
 #ifdef GAME_DLL
 	m_szMostRecentCappers[0] = 0;
 #endif
@@ -2774,22 +2773,27 @@ void CTFGameRules::SetupOnRoundStart( void )
 	{
 		m_hLogicLoadout.AddToTail( pLogicLoadout );
 		pLogicLoadout = gEntList.NextEntByClass( pLogicLoadout );
-	}	
+	}
+
+	//make sure no players have air control disabled
+	CTFPlayer *pPlayer = NULL;
+	for (int i = 1; i <= gpGlobals->maxClients; i++)
+	{
+		pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
+		if (pPlayer)
+			pPlayer->m_Shared.SetNoAirControl(false);
+	}
 	
 	if ( TFGameRules()->IsInfGamemode() )
 	{
 		// put everyone into RED again
-		CTFPlayer *pPlayer = NULL;
-		int i;
-
-		for ( i = 1; i <= gpGlobals->maxClients; i++ )
+		for (int i = 1; i <= gpGlobals->maxClients; i++ )
 		{
 			pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
 
 			if ( pPlayer && pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
 			{
 				pPlayer->m_Shared.SetZombie( false );
-				pPlayer->m_Shared.StopLunge(); //just for safety
 				pPlayer->ChangeTeam( TF_TEAM_RED, true );
 				if ( TFGameRules()->IsAllClassEnabled() ) 
 					pPlayer->SetDesiredPlayerClassIndex( TF_CLASS_MERCENARY );

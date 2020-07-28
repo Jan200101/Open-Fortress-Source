@@ -44,33 +44,6 @@ CTFDroppedWeapon::CTFDroppedWeapon()
 	m_iTeamNum = TEAM_UNASSIGNED;
 }
 
-void CTFDroppedWeapon::Spawn( void )
-{
-	Precache();
-	SetModel( STRING( GetModelName() ) );
-	BaseClass::Spawn();
-	
-	SetTouch( &CTFDroppedWeapon::PackTouch );
-	//if weapon was thrown to hurt an enemy the owner cannot ever pick it up again
-	if (!m_bThrown)
-	{
-		SetThink(&CTFDroppedWeapon::FlyThink);
-		SetNextThink(gpGlobals->curtime + 0.75f);
-	}
-
-	m_flCreationTime = gpGlobals->curtime;
-	m_flNextPickupTime = 0.f;
-
-	// no pickup until flythink
-	m_bAllowOwnerPickup = false;
-
-	float flDespawnTime = pWeaponInfo ? pWeaponInfo->m_flDespawnTime : 30.0f;
-	
-	// Die in 30 seconds
-	if( flDespawnTime > 0 )
-		SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + flDespawnTime, "DieContext" );
-}
-
 void CTFDroppedWeapon::Precache( void )
 {
 }
@@ -102,6 +75,33 @@ CTFDroppedWeapon *CTFDroppedWeapon::Create(const Vector &vecOrigin, const QAngle
 	return pDroppedWeapon;
 }
 
+void CTFDroppedWeapon::Spawn(void)
+{
+	Precache();
+	SetModel(STRING(GetModelName()));
+	BaseClass::Spawn();
+
+	SetTouch( &CTFDroppedWeapon::PackTouch );
+	//if weapon was thrown to hurt an enemy the owner cannot ever pick it up again
+	if ( !m_bThrown )
+	{
+		SetNextThink( gpGlobals->curtime + 0.75f );
+		SetThink( &CTFDroppedWeapon::FlyThink );
+	}
+
+	m_flCreationTime = gpGlobals->curtime;
+	m_flNextPickupTime = 0.f;
+
+	// no pickup until flythink
+	m_bAllowOwnerPickup = false;
+
+	float flDespawnTime = pWeaponInfo ? pWeaponInfo->m_flDespawnTime : 30.0f;
+
+	// Die in 30 seconds
+	if ( flDespawnTime > 0 )
+		SetContextThink( &CBaseEntity::SUB_Remove, gpGlobals->curtime + flDespawnTime, "DieContext" );
+}
+
 void CTFDroppedWeapon::SetInitialVelocity( Vector &vecVelocity )
 { 
 	m_vecInitialVelocity = vecVelocity;
@@ -130,6 +130,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	CBaseEntity *pOwner = GetOwnerEntity();
 	bool bIsOtherOwner = pOwner == pTFPlayer;
 
+	//code to hurt enemy players when weapon is thrown
 	if (m_bThrown && !bIsOtherOwner)
 	{
 		Vector vel;
@@ -150,6 +151,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 			info.SetDamagePosition( GetAbsOrigin() );
 			info.SetDamageType( DMG_CLUB | DMG_USEDISTANCEMOD );
 			info.SetDamageCustom( TF_DMG_CUSTOM_NONE );
+			//SetKillIcon(vForce);
 
 			pTFPlayer->TakeDamage(info);
 

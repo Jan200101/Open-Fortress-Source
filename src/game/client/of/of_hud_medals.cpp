@@ -83,7 +83,7 @@ bool CTFHudMedals::ShouldDraw(void)
 
 void CTFHudMedals::Reset(void)
 {
-	if ( TFGameRules() && TFGameRules()->State_Get() < GR_STATE_RND_RUNNING &&  medalsQueue.Size() )
+	if ( TFGameRules() && TFGameRules()->State_Get() < GR_STATE_RND_RUNNING )
 	{
 		m_pMedalImage->SetVisible(false);
 

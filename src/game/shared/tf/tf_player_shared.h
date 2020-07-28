@@ -180,8 +180,6 @@ public:
 
 	bool	IsZombie();
 	virtual void SetZombie( bool bZombie );
-	
-	bool	DoLungeCheck();
 
 	int		GetNumHealers( void ) { return m_nNumHealers; }
 
@@ -235,10 +233,13 @@ public:
 	void	SetCSlideDuration(float duration);
 	float	GetCSlideDuration() { return m_flCSlideDuration; }
 	//Lunge
-	float	GetNextLungeTime(void){ return m_flNextLungeTime; }
-	void	SetNextLungeTime(float flNextLungeTime){ m_flNextLungeTime = flNextLungeTime; }
-	bool	IsLunging(void) { return m_bIsLunging; }
-	void	StopLunge() { m_bIsLunging = false; }
+	bool	DoLungeCheck();
+	float	GetNextLungeTime(void) { return m_flNextLungeTime; }
+	void	SetNextLungeTime(float flNextLungeTime) { m_flNextLungeTime = flNextLungeTime; }
+	bool	IsLunging(void);
+	//Air control disabled (lunge and jumppads)
+	void	SetNoAirControl(bool control) { m_bNoAirControl = control; }
+	bool	IsNoAirControl() { return m_bNoAirControl; }
 
 	// loser state
 	bool	IsLoser( void );
@@ -412,7 +413,7 @@ private:
 	CNetworkVar( float, m_flStealthNextChangeTime );
 
 	CNetworkVar( float, m_flNextLungeTime );
-	CNetworkVar( bool, m_bIsLunging );
+	CNetworkVar( bool, m_bNoAirControl );
 
 	CNetworkVar( int, m_iCritMult );
 
