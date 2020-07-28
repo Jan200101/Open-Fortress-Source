@@ -379,9 +379,12 @@ void CDuelQueue::OnPreDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 void CDuelQueue::OnDataChanged( DataUpdateType_t updateType )
 {
+	DevMsg("Test\n");
 	IGameEvent *event = gameeventmanager->CreateEvent( "duel_refresh" );
 	if ( event )
-		gameeventmanager->FireEvent( event );
+	{
+		gameeventmanager->FireEventClientSide( event );
+	}
 }
 #endif
 
@@ -3600,7 +3603,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			// there is less than 60 seconds left of time, start voting for next map
 			//Ivory: but only if it is the last round if we are forcing teams to play the amount set by mp_maxrounds
 			bool bIsLastRound = of_force_round_limit.GetBool() ? m_nRoundsPlayed >= mp_maxrounds.GetInt() : true;
-			if ( mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && bIsLastRound && !TFGameRules()->IsInWaitingForPlayers() )
+			if ( of_votenearend.GetBool() && mp_timelimit.GetInt() > 0 && GetTimeLeft() <= 60 && !m_bStartedVote && bIsLastRound && !TFGameRules()->IsInWaitingForPlayers() )
 			{
 				DevMsg( "VoteController: Timeleft is less than 60 seconds, begin nextlevel voting... \n" );
 				m_bStartedVote = true;
@@ -4038,7 +4041,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				bVote = true;
 			}
 
-			if ( bVote && !m_bStartedVote )
+			if ( of_votenearend.GetBool() && bVote && !m_bStartedVote )
 			{
 				DevMsg( "VoteController: One round remaining until winlimit, begin nextlevel voting... \n" );
 				m_bStartedVote = true;
@@ -4956,7 +4959,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					}
 
 					// one of our players is at 80% of the fragcount, start voting for next map
-					if ( !m_bStartedVote && ( pTFPlayerScorer->FragCount() >= ( (float)iFragLimit * 0.8 ) ) && !IsInWaitingForPlayers() )
+					if ( of_votenearend.GetBool() && !m_bStartedVote && ( pTFPlayerScorer->FragCount() >= ( (float)iFragLimit * 0.8 ) ) && !IsInWaitingForPlayers() )
 					{
 						DevMsg( "VoteController: Player fraglimit is 80%%, begin nextlevel voting... \n" );
 						m_bStartedVote = true;
@@ -4977,7 +4980,7 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 			SetWinningTeam( TF_TEAM_MERCENARY, WINREASON_POINTLIMIT, true, true, false);
 		}
 
-		if ( !m_bStartedVote && ( pTFPlayerScorer->GGLevel() >= ( (float)m_iMaxLevel * 0.8 ) ) && !TFGameRules()->IsInWaitingForPlayers() )
+		if ( of_votenearend.GetBool() && !m_bStartedVote && ( pTFPlayerScorer->GGLevel() >= ( (float)m_iMaxLevel * 0.8 ) ) && !TFGameRules()->IsInWaitingForPlayers() )
 		{
 			DevMsg( "VoteController: GGLevel is 80%%, begin nextlevel voting... \n" );
 			m_bStartedVote = true;

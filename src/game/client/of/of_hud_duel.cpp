@@ -51,7 +51,7 @@ void CTFDuelRank::SetPlayer( int iIndex, int iOffset )
 	SetDialogVariable( "QueuePos", iQueuePos );
 	SetDialogVariable( "PlayerName", szPlayerName );
 	iPlayerIndex = iIndex;
-	m_pAvatar->SetPlayer( UTIL_PlayerByIndex(iPlayerIndex) );
+	m_pAvatar->SetPlayer( iPlayerIndex );
 	m_pAvatar->SetShouldDrawFriendIcon( false );
 	m_pImage->SetPlayerOwner( iPlayerIndex );
 }
