@@ -5400,17 +5400,16 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 	if( C_TFPlayer::GetLocalTFPlayer() && C_TFPlayer::GetLocalTFPlayer() == this )
 		return;
 
-	const char *eventname = event->GetName();
-
-	if ( !Q_strcmp( "player_jump", eventname ))
+	if ( !Q_strcmp( "player_jump", event->GetName() ) )
 	{
-		if( !of_jumpsound.GetBool() )
+		int iJumpSoundVar = of_jumpsound.GetInt();
+		if ( !iJumpSoundVar )
 			return;
 		
 		if ( event->GetInt("playerid") != entindex() )
 			return;
 		
-		if ( GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
+		if ( GetPlayerClass()->GetClassIndex() > 9 || iJumpSoundVar == 2 )
 			EmitSound( GetPlayerClass()->GetJumpSound() );
 	}
 }

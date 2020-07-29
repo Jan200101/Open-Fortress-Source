@@ -545,6 +545,7 @@ bool CTFGameMovement::CheckJumpButton()
 	m_pTFPlayer->DoAnimationEvent(PLAYERANIMEVENT_JUMP);
 	m_pTFPlayer->m_Shared.SetJumping(true);
 
+	//Step sound
 	if (gpGlobals->curtime >= m_pTFPlayer->m_Shared.m_flStepSoundDelay)
 		player->PlayStepSound((Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true);
 	m_pTFPlayer->m_Shared.m_flStepSoundDelay = gpGlobals->curtime + 0.25f;
@@ -579,6 +580,7 @@ bool CTFGameMovement::CheckJumpButton()
 	mv->m_outJumpVel.z += mv->m_vecVelocity.z - flStartZ;
 	mv->m_outStepHeight += 0.15f;
 
+	//jump sound (grunt)
 	if (gpGlobals->curtime >= m_pTFPlayer->m_Shared.m_flJumpSoundDelay)
 	{
 #ifdef GAME_DLL

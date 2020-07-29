@@ -2203,14 +2203,14 @@ void CTFPlayerShared::RemoveDisguise( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::IsLunging()
 {
-	return IsZombie() && m_bNoAirControl;
+	return ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT ) && m_bNoAirControl;
 }
 
 bool CTFPlayerShared::DoLungeCheck( void )
 {
 	if ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT )
 	{
-		if ( m_bNoAirControl || !m_pOuter->GetGroundEntity() )
+		if ( m_bNoAirControl || !m_pOuter->GetGroundEntity() || InCond(TF_COND_TAUNTING) )
 			return false;
 
 		CTFClaws *pWeapon = dynamic_cast<CTFClaws *>( m_pOuter->GetActiveWeapon() );
@@ -2218,7 +2218,7 @@ bool CTFPlayerShared::DoLungeCheck( void )
 		if ( !pWeapon )
 			return false;
 
-		if ( (m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() && !m_pOuter->m_Shared.InCond(TF_COND_TAUNTING) )
+		if ( (m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() )
 		{
 			if ( m_flNextLungeTime <= gpGlobals->curtime )
 			{
