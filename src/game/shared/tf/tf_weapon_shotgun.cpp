@@ -202,17 +202,17 @@ acttable_t *CTFSuperShotgun::ActivityList(int &iActivityCount)
 #define BOLT_WATER_VELOCITY	1500
 #define HOOK_PULL			720.f
 
-IMPLEMENT_NETWORKCLASS_ALIASED(TFEternalShotgun, DT_EternalShotgun)
+IMPLEMENT_NETWORKCLASS_ALIASED( TFEternalShotgun, DT_EternalShotgun )
 
 BEGIN_NETWORK_TABLE( CTFEternalShotgun, DT_EternalShotgun )
 #ifdef CLIENT_DLL
-	RecvPropInt(RECVINFO(m_iAttached)),
-	RecvPropBool(RECVINFO(m_bCanRefire)),
-	RecvPropEHandle(RECVINFO(m_hHook)),
+	RecvPropInt( RECVINFO( m_iAttached ) ),
+	RecvPropBool( RECVINFO( m_bCanRefire ) ),
+	RecvPropEHandle( RECVINFO( m_hHook ) ),
 #else
-	SendPropInt(SENDINFO(m_iAttached)),
-	SendPropBool(SENDINFO(m_bCanRefire)),
-	SendPropEHandle(SENDINFO(m_hHook)),
+	SendPropInt( SENDINFO( m_iAttached ) ),
+	SendPropBool( SENDINFO( m_bCanRefire) ),
+	SendPropEHandle( SENDINFO( m_hHook ) ),
 #endif
 END_NETWORK_TABLE()
 
@@ -330,12 +330,11 @@ void CTFEternalShotgun::ItemPostFrame()
 
 void CTFEternalShotgun::PrimaryAttack()
 {
-	BaseClass::PrimaryAttack();
-
 	CBaseEntity *pHook = GetHookEntity();
-
-	if( pHook )
+	if (pHook)
 		RemoveHook();
+
+	BaseClass::PrimaryAttack();
 }
 
 void CTFEternalShotgun::SecondaryAttack()
@@ -492,19 +491,19 @@ void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 
 void CTFEternalShotgun::RemoveHook(void)
 {
+	//the owner of the shotgun
+	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
+
 #ifdef CLIENT_DLL
 	if ( ShouldDrawUsingViewModel() )
 	{
 #endif
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		if ( pOwner != NULL )	
+		if ( pPlayer )
 		{
-			CBaseViewModel *vm =pOwner->GetViewModel();
+			CBaseViewModel *vm = pPlayer->GetViewModel();
 			
-			if ( vm != NULL )
-			{
+			if ( vm )
 				vm->SetPoseParameter( "reel_direction", 0 );
-			}
 		}
 #ifdef CLIENT_DLL
 	}
@@ -512,8 +511,6 @@ void CTFEternalShotgun::RemoveHook(void)
 
 	//the hook entity, which may be an enemy player
 	CTFPlayer *pHook = ToTFPlayer( GetHookEntity() );
-	//the owner of the shotgun
-	CTFPlayer *pPlayer = ToTFPlayer( GetPlayerOwner() );
 
 	if (pHook)
 		pHook->m_Shared.RemoveCond(TF_COND_HOOKED);

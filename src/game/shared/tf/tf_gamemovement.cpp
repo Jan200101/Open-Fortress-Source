@@ -1592,7 +1592,7 @@ void CTFGameMovement::Friction(bool CSliding)
 void CTFGameMovement::FullWalkMove()
 {
 	//deny jump and cslide at the start of the match when you can't move
-	bool canMove = int(mv->m_flClientMaxSpeed) != 1;
+	bool bCanMove = int(mv->m_flClientMaxSpeed) != 1;
 
 	if (!InWater())
 		StartGravity();
@@ -1620,7 +1620,7 @@ void CTFGameMovement::FullWalkMove()
 		CheckLunge();
 
 	//Jumping stuff
-	if (mv->m_nButtons & IN_JUMP && canMove)
+	if (mv->m_nButtons & IN_JUMP && bCanMove)
 	{
 		if (!m_pTFPlayer->m_Shared.GetJumpBuffer())
 			CheckJumpButton();
@@ -1633,8 +1633,8 @@ void CTFGameMovement::FullWalkMove()
 	// Make sure velocity is valid.
 	CheckVelocity();
 
-	bool cSliding = false;
-	bool cSlideOn = of_cslide.GetBool();
+	bool bCSliding = false;
+	bool bCSlideOn = of_cslide.GetBool();
 	CBaseEntity *pHook = m_pTFPlayer->m_Shared.GetHook();
 	if (pHook)
 	{
@@ -1646,18 +1646,18 @@ void CTFGameMovement::FullWalkMove()
 		if (player->GetGroundEntity() != NULL)
 		{
 			//check if player can CSlide
-			cSliding = cSlideOn &&															//crouch sliding is enabled
-					   canMove &&															//player allowed to move
+			bCSliding = bCSlideOn &&															//crouch sliding is enabled
+					   bCanMove &&															//player allowed to move
 					   !m_pTFPlayer->GetWaterLevel() &&		 								//player is not in water
 					   (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is ducked/ducking
 					   (mv->m_flForwardMove || mv->m_flSideMove) &&							//player is moving
 					   gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration();		//there is crouch slide charge to spend
 
-			Friction(cSliding);
-			WalkMove(cSliding);
+			Friction(bCSliding);
+			WalkMove(bCSliding);
 
 			//If not using CSlide right away clear it
-			if (!cSliding && m_pTFPlayer->m_Shared.GetCSlideDuration())
+			if (!bCSliding && m_pTFPlayer->m_Shared.GetCSlideDuration())
 				m_pTFPlayer->m_Shared.SetCSlideDuration(0.f);
 		}
 		else
@@ -1681,7 +1681,7 @@ void CTFGameMovement::FullWalkMove()
 		if (!IsDead() && m_pTFPlayer->m_Shared.IsJumping())
 			m_pTFPlayer->m_Shared.SetJumping(false);
 	}
-	else if (cSlideOn)
+	else if (bCSlideOn)
 	{
 		//Determine crouch slide duration
 		m_pTFPlayer->m_Shared.SetCSlideDuration(gpGlobals->curtime - (mv->m_vecVelocity[2] / 200.f) * of_cslideduration.GetFloat());
@@ -1694,7 +1694,7 @@ void CTFGameMovement::FullWalkMove()
 	CheckVelocity();
 
 	//Cslide sound turn on/off
-	CheckFootStepsSound(cSliding, pHook);
+	CheckFootStepsSound(bCSliding, pHook);
 }
 
 void CTFGameMovement::CheckFootStepsSound(bool CSliding, const CBaseEntity *hook)
