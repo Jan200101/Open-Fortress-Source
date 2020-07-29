@@ -6,10 +6,8 @@
 	#include "tf_player.h"
 	#include "tf_bot.h"
 #else
-	#include "engine/ivdebugoverlay.h"
 	#include "c_of_trigger_jump.h"
 	#include "c_tf_player.h"
-	#include "prediction.h"
 
 	#define COFDTriggerJump C_OFDTriggerJump
 #endif
@@ -34,13 +32,6 @@ void COFDTriggerJump::StartTouch( CBaseEntity *pOther )
 	if( pOther->GetMoveType() == MOVETYPE_FLYGRAVITY )
 		pOther->SetGravity( 1.0 );
 
-	if ( m_bNoAirControl )
-	{
-		CTFPlayer *pPlayer = ToTFPlayer(pOther);
-		if (pPlayer)
-			pPlayer->m_Shared.SetNoAirControl(true);
-	}
-
 	Vector startPos = pOther->GetAbsOrigin();
 	Vector endPos = m_vecTarget;
 	float flGravity = GetCurrentGravity();
@@ -55,14 +46,28 @@ void COFDTriggerJump::StartTouch( CBaseEntity *pOther )
 	Vector2D vecTargetVelXY = ( Vector2D( endPos.x, endPos.y ) - Vector2D( startPos.x, startPos.y ) ) / flTime;
 	Vector vecTargetVel = Vector( vecTargetVelXY.x, vecTargetVelXY.y, ( endPos.z - startPos.z ) / flTime + ( flGravity * flTime ) / 2.f );
 
+	pOther->SetGroundEntity(NULL);
+
+	//add the current player velocity to the jumppad output
 	if( m_bNoCompensation )
 	{
 		Vector vecCurrentVel = pOther->GetAbsVelocity();
 		vecTargetVel.x += vecCurrentVel.x;
 		vecTargetVel.y += vecCurrentVel.y;
 	}
-	
-	pOther->SetGroundEntity( NULL );
+	else
+	{
+		//for safety
+		pOther->SetAbsVelocity( Vector(0.f, 0.f, 0.f) );
+	}
+
+	//remove air control while in the air
+	if (m_bNoAirControl)
+	{
+		CTFPlayer *pPlayer = ToTFPlayer(pOther);
+		if (pPlayer)
+			pPlayer->m_Shared.SetNoAirControl(true);
+	}
 
 	if ( vecTargetVel.IsValid() )
 	{

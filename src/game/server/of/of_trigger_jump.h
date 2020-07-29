@@ -1,7 +1,6 @@
 #ifndef OFD_TRIGGER_JUMP_H
 #define OFD_TRIGGER_JUMP_H
 
-
 #include "cbase.h"
 #include "triggers.h"
 
@@ -34,12 +33,9 @@ protected:
 	EHANDLE m_pTarget;
 	bool m_iSoftLanding;
 
-	//float m_flApexBoost;
-
 	COutputEvent	m_OnJump;
 
 	CNetworkVar( Vector, m_vecTarget );
-	CNetworkVar( float, m_flApexBoost );
 	CNetworkVar( int, m_iSound );
 	CNetworkVar( bool, m_bNoCompensation );
 	CNetworkVar( bool, m_bNoAirControl );

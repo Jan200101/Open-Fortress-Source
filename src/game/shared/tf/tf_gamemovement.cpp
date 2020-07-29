@@ -158,8 +158,6 @@ void CTFGameMovement::PlayerMove()
 	//make sure that if air control is blocked by a zombie lunge
 	//or a jumppad the first thing that happens once player touches ground
 	//or water is that it is reallowed
-	if (m_pTFPlayer->m_Shared.IsNoAirControl())
-		Msg("%f\n", gpGlobals->curtime);
 	if ( m_pTFPlayer->m_Shared.IsNoAirControl() && ( InWater() || player->GetGroundEntity() ) )
 		m_pTFPlayer->m_Shared.SetNoAirControl(false);
 
@@ -595,7 +593,8 @@ bool CTFGameMovement::CheckJumpButton()
 			gameeventmanager->FireEvent(event);
 		}
 #else
-		if ((of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9) || of_jumpsound.GetInt() == 2)
+		int iJumpSound = of_jumpsound.GetInt();
+		if ( ( iJumpSound && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 ) || iJumpSound == 2 )
 			m_pTFPlayer->EmitSound(m_pTFPlayer->GetPlayerClass()->GetJumpSound());
 #endif
 	}

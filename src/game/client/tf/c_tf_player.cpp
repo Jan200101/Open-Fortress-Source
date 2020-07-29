@@ -5345,60 +5345,54 @@ void C_TFPlayer::Simulate( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
+void C_TFPlayer::FireEvent(const Vector& origin, const QAngle& angles, int event, const char *options)
 {
-	if ( event == 7001 )
+	Vector vel(0.f, 0.f, 0.f);
+	CEffectData data;
+	C_BaseAnimating *pWeapon;
+	CTFWeaponBase *pTFWeapon;
+
+	switch (event)
 	{
+	case 7001:
 		// Force a footstep sound
 		m_flStepSoundTime = 0;
-		Vector vel;
-		EstimateAbsVelocity( vel );
-		UpdateStepSound( GetGroundSurface(), GetAbsOrigin(), vel );
-	}
-	else if ( event == AE_WPN_HIDE )
-	{
-		if ( GetActiveWeapon() )
-		{
-			GetActiveWeapon()->SetWeaponVisible( false );
-		}
-	}
-	else if ( event == AE_WPN_UNHIDE )
-	{
-		if ( GetActiveWeapon() )
-		{
-			GetActiveWeapon()->SetWeaponVisible( true );
-		}
-	}
-	else if ( event == AE_CL_BODYGROUP_SET_VALUE )
-	{
-		CTFWeaponBase *pTFWeapon = GetActiveTFWeapon();
-		
-		if ( pTFWeapon )
+		EstimateAbsVelocity(vel);
+		UpdateStepSound(GetGroundSurface(), GetAbsOrigin(), vel);
+		break;
+
+	case AE_WPN_HIDE:
+		if (GetActiveWeapon())
+			GetActiveWeapon()->SetWeaponVisible(false);
+		break;
+
+	case AE_WPN_UNHIDE:
+		if (GetActiveWeapon())
+			GetActiveWeapon()->SetWeaponVisible(true);
+		break;
+
+	case AE_CL_BODYGROUP_SET_VALUE:
+		pTFWeapon = GetActiveTFWeapon();
+		if (pTFWeapon)
 		{
 			// hacky!
-			C_BaseAnimating *pWeapon = pTFWeapon->GetOwnModel();
-
-			if ( pWeapon )
-			{
-				pTFWeapon->FireEvent( origin, angles, AE_CL_BODYGROUP_SET_VALUE, options );
-			}
+			pWeapon = pTFWeapon->GetOwnModel();
+			if (pWeapon)
+				pTFWeapon->FireEvent(origin, angles, AE_CL_BODYGROUP_SET_VALUE, options);
 		}
-	}
+		break;
 
-	else if ( event == TF_AE_CIGARETTE_THROW )
-	{
-		CEffectData data;
-		int iAttach = LookupAttachment( options );
-		GetAttachment( iAttach, data.m_vOrigin, data.m_vAngles );
-
+	case TF_AE_CIGARETTE_THROW:
+		GetAttachment(LookupAttachment(options), data.m_vOrigin, data.m_vAngles);
 		data.m_vAngles = GetRenderAngles();
+		data.m_hEntity = ClientEntityList().EntIndexToHandle(entindex());
+		DispatchEffect("TF_ThrowCigarette", data);
+		break;
 
-		data.m_hEntity = ClientEntityList().EntIndexToHandle( entindex() );
-		DispatchEffect( "TF_ThrowCigarette", data );
-		return;
+	default:
+		BaseClass::FireEvent(origin, angles, event, options);
+		break;
 	}
-	else
-		BaseClass::FireEvent( origin, angles, event, options );
 }
 
 void C_TFPlayer::FireGameEvent( IGameEvent *event )
