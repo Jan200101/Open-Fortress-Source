@@ -334,7 +334,7 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 		
 		bool bWinningPlayer = iFirstPlayer != event->GetInt( "player_1", 0 );
 		
-		if( bWinningPlayer )
+		if( !bWinningPlayer )
 			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinRight");
 		else
 			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinLeft");
