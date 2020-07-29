@@ -4499,6 +4499,7 @@ void CTFPlayer::TFWeaponRemove( int iWeaponID )
 	}
 }
 
+/* Ivory: this is used for nothing
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -4523,12 +4524,15 @@ bool CTFPlayer::DropCurrentWeapon( void )
 		DropWeapon( m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
 		UTIL_Remove ( m_Shared.GetActiveTFWeapon() );
 	}
+
 	if ( GetLastWeapon() )
 		Weapon_Switch( GetLastWeapon() );
 	else
 		SwitchToNextBestWeapon( m_Shared.GetActiveTFWeapon() );
+
 	return true;
 }
+*/
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -5643,22 +5647,26 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	DropAmmoPack();
 	int Clip = -2;
 	int Reserve = -2;
+	CTFWeaponBase *pWeapon = m_Shared.GetActiveTFWeapon();
 
-	if( !of_fullammo.GetBool() || (m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop) )
+	if (!of_fullammo.GetBool() || (pWeapon && pWeapon->GetTFWpnData().m_bAlwaysDrop))
 	{
-		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
-		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
+		Clip = pWeapon->m_iClip1;
+		Reserve = pWeapon->m_iReserveAmmo;
 	}
+
 	// akimbo pickups have NOT pewished	
-	if ( m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
+	if (pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
 		DropWeapon( pTFPistol, false, false, (float)Clip / 2.0f, Reserve );
 		DropWeapon( pTFPistol, false, false, (float)Clip / 2.0f, Reserve );
 		pTFPistol = NULL;
 	}
-	else if ( m_Shared.GetActiveTFWeapon() && !m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop )
-		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false ,Clip, Reserve );	
+	else if (pWeapon && !pWeapon->GetTFWpnData().m_bAlwaysDrop)
+	{
+		DropWeapon(pWeapon, false, false, Clip, Reserve);
+	}
 	
 	Clip = -1;
 	Reserve = -1;
@@ -5711,7 +5719,6 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		}
 	}
 
-
 	// Remove all items...
 	RemoveAllItems( true );
 
@@ -5720,9 +5727,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
 
 		if ( pWeapon )
-		{
 			pWeapon->WeaponReset();
-		}
 	}
 
 	if ( GetActiveWeapon() )
@@ -6272,34 +6277,35 @@ void CC_DropWeapon( void )
 	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
 	if ( !pPlayer )
 		return;
+
+	CTFWeaponBase *pWeapon = pPlayer->m_Shared.GetActiveTFWeapon();
 	
-	if( !pPlayer->m_Shared.GetActiveTFWeapon() )
+	if (!pWeapon || !pWeapon->CanDropManualy() || pPlayer->m_Shared.GetHook())
 		return;
 	
-	if ( !pPlayer->m_Shared.GetActiveTFWeapon()->CanDropManualy() )
-		return;
-	
-	int Clip = pPlayer->m_Shared.GetActiveTFWeapon()->m_iClip1;
-	int ReserveAmmo = pPlayer->m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
+	int Clip = pWeapon->m_iClip1;
+	int ReserveAmmo = pWeapon->m_iReserveAmmo;
 	
 	// akimbo pickups have NOT pewished
-	if ( pPlayer->m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
+	if (pWeapon->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
 	{
 		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
 		pPlayer->DropWeapon( pTFPistol, true, false, (float)Clip / 2.0f, ReserveAmmo );
 		pTFPistol = NULL;
-		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
+		UTIL_Remove(pWeapon);
 	}
 	else
 	{
-		pPlayer->DropWeapon( pPlayer->m_Shared.GetActiveTFWeapon(), true, false, Clip, ReserveAmmo );
-		UTIL_Remove ( pPlayer->m_Shared.GetActiveTFWeapon() );
+		pPlayer->DropWeapon( pWeapon, true, false, Clip, ReserveAmmo );
+		UTIL_Remove( pWeapon );
 	}
 
-	if ( pPlayer->GetLastWeapon() )
-		pPlayer->Weapon_Switch( pPlayer->GetLastWeapon() );
+	CBaseCombatWeapon *pLastWeapon = pPlayer->GetLastWeapon();
+
+	if ( pLastWeapon )
+		pPlayer->Weapon_Switch( pLastWeapon );
 	else
-		pPlayer->SwitchToNextBestWeapon( pPlayer->m_Shared.GetActiveTFWeapon() );
+		pPlayer->SwitchToNextBestWeapon( pWeapon );
 }
 static ConCommand dropweapon("dropweapon", CC_DropWeapon, "Drop your weapon.");
 

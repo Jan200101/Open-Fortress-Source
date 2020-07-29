@@ -170,7 +170,7 @@ public:
 
 	virtual	void		RemoveAllItems( bool removeSuit );
 
-	bool				DropCurrentWeapon( void );
+	//bool				DropCurrentWeapon( void ); Ivory: this is not used anywhere
 	void				DropFlag( void );
 	void				TFWeaponRemove( int iWeaponID );
 	bool				TFWeaponDrop( CTFWeaponBase *pWeapon, bool bThrowForward );
