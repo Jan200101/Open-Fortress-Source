@@ -5647,25 +5647,28 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	DropAmmoPack();
 	int Clip = -2;
 	int Reserve = -2;
-	CTFWeaponBase *pWeapon = m_Shared.GetActiveTFWeapon();
+	CTFWeaponBase *pTFWeapon = m_Shared.GetActiveTFWeapon();
 
-	if (!of_fullammo.GetBool() || (pWeapon && pWeapon->GetTFWpnData().m_bAlwaysDrop))
+	if (pTFWeapon)
 	{
-		Clip = pWeapon->m_iClip1;
-		Reserve = pWeapon->m_iReserveAmmo;
-	}
+		if (!of_fullammo.GetBool() || pTFWeapon->GetTFWpnData().m_bAlwaysDrop)
+		{
+			Clip = pTFWeapon->m_iClip1;
+			Reserve = pTFWeapon->m_iReserveAmmo;
+		}
 
-	// akimbo pickups have NOT pewished	
-	if (pWeapon && pWeapon->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
-	{
-		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-		DropWeapon( pTFPistol, false, false, (float)Clip / 2.0f, Reserve );
-		DropWeapon( pTFPistol, false, false, (float)Clip / 2.0f, Reserve );
-		pTFPistol = NULL;
-	}
-	else if (pWeapon && !pWeapon->GetTFWpnData().m_bAlwaysDrop)
-	{
-		DropWeapon(pWeapon, false, false, Clip, Reserve);
+		// akimbo pickups have NOT pewished	
+		if (pTFWeapon->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
+		{
+			CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID(TF_WEAPON_PISTOL_MERCENARY);
+			DropWeapon(pTFPistol, false, false, (float)Clip / 2.0f, Reserve);
+			DropWeapon(pTFPistol, false, false, (float)Clip / 2.0f, Reserve);
+			pTFPistol = NULL;
+		}
+		else if (!pTFWeapon->GetTFWpnData().m_bAlwaysDrop)
+		{
+			DropWeapon(pTFWeapon, false, false, Clip, Reserve);
+		}
 	}
 	
 	Clip = -1;
@@ -5724,16 +5727,16 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	for ( int iWeapon = 0; iWeapon < TF_PLAYER_WEAPON_COUNT; ++iWeapon )
 	{
-		CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
-
-		if ( pWeapon )
-			pWeapon->WeaponReset();
+		pTFWeapon = (CTFWeaponBase *)GetWeapon( iWeapon );
+		if ( pTFWeapon )
+			pTFWeapon->WeaponReset();
 	}
 
-	if ( GetActiveWeapon() )
+	CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+	if (pWeapon)
 	{
-		GetActiveWeapon()->SendViewModelAnim( ACT_IDLE );
-		GetActiveWeapon()->Holster();
+		pWeapon->SendViewModelAnim(ACT_IDLE);
+		pWeapon->Holster();
 		SetActiveWeapon( NULL );
 	}
 
@@ -5763,7 +5766,8 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	}
 	*/
 
-	if ( info.GetDamageType() & DMG_FALL ) // fall damage
+	int iDamageType = info.GetDamageType();
+	if ( iDamageType & DMG_FALL ) // fall damage
 	{
 		// begone legs!
 		if ( m_iGoreRightLeg < 2 )
@@ -5772,7 +5776,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 			m_iGoreLeftLeg = 2;
 	}
 
-	if ( ( info.GetDamageType() & DMG_BLAST || info.GetDamageType() & DMG_NERVEGAS ) ) // explosives or sawblade
+	if ( iDamageType & DMG_BLAST || iDamageType & DMG_NERVEGAS ) // explosives or sawblade
 		DismemberRandomLimbs();
 
 	if ( info_modified.GetDamageCustom() == TF_DMG_CUSTOM_DECAPITATION_BOSS )
@@ -5813,14 +5817,13 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 				pPlayerAttacker->IncrementLevelProgress(TFGameRules()->m_iRequiredKills);
 			else
 				pPlayerAttacker->IncrementLevelProgress(1);
+
 			if ( pPlayerAttacker->GetLevelProgress() >= TFGameRules()->m_iRequiredKills )
 			{
 				pPlayerAttacker->SetLevelProgress(0);
 				pPlayerAttacker->IncrementGGLevel(1);
 				if ( pPlayerAttacker->GGLevel() < TFGameRules()->m_iMaxLevel )
-				{
 					pPlayerAttacker->UpdateGunGameLevel();
-				}
 			}
 		}
 		
@@ -5890,25 +5893,17 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 
 	BaseClass::Event_Killed( info_modified );
 	bool bDissolve = false;
-	if ( info.GetDamageType() & DMG_DISSOLVE )
-	{
+	if ( iDamageType & DMG_DISSOLVE )
 		bDissolve = true;
-	}
 	
-	if ( ( TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom() ) && pInflictor )
-	{				
+	if ( TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom() && pInflictor )
 		CTF_GameStats.Event_Headshot( pPlayerAttacker );
-	}
-	else if ( ( TF_DMG_CUSTOM_BACKSTAB == info.GetDamageCustom() ) && pInflictor )
-	{
+	else if ( TF_DMG_CUSTOM_BACKSTAB == info.GetDamageCustom() && pInflictor )
 		CTF_GameStats.Event_Backstab( pPlayerAttacker );
-	}
 
 	// Create the ragdoll entity.
 	if ( bGib || bRagdoll )
-	{
 		CreateRagdollEntity( bGib, bBurning, bDissolve, bFlagOnGround, info.GetDamageCustom() );
-	}
 
 	// Don't overflow the value for this.
 	m_iHealth = 0;
@@ -6776,23 +6771,32 @@ void CTFPlayer::TeamFortress_ClientDisconnected( void )
 
 	// Drop a pack with their leftover ammo
 	DropAmmoPack();
-	int Clip = -1;
-	int Reserve = -1;
-	if (!of_fullammo.GetBool() || (m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetTFWpnData().m_bAlwaysDrop))
+
+	//Drop the weapon
+	CTFWeaponBase *pTFWeapon = m_Shared.GetActiveTFWeapon();
+	if (pTFWeapon)
 	{
-		Clip = m_Shared.GetActiveTFWeapon()->m_iClip1;
-		Reserve = m_Shared.GetActiveTFWeapon()->m_iReserveAmmo;
+		int Clip = -1;
+		int Reserve = -1;
+		if (!of_fullammo.GetBool() || pTFWeapon->GetTFWpnData().m_bAlwaysDrop)
+		{
+			Clip = pTFWeapon->m_iClip1;
+			Reserve = pTFWeapon->m_iReserveAmmo;
+		}
+
+		// akimbo pickups have NOT pewished
+		if (pTFWeapon->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
+		{
+			CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID(TF_WEAPON_PISTOL_MERCENARY);
+			DropWeapon(pTFPistol, false, false, Clip, Reserve);
+			DropWeapon(pTFPistol, false, false, Clip, Reserve);
+			pTFPistol = NULL;
+		}
+		else
+		{
+			DropWeapon(pTFWeapon, false, false, Clip, Reserve);
+		}
 	}
-	// akimbo pickups have NOT pewished
-	if ( m_Shared.GetActiveTFWeapon() && m_Shared.GetActiveTFWeapon()->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO )
-	{
-		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-		DropWeapon( pTFPistol, false, false, Clip, Reserve );
-		DropWeapon( pTFPistol, false, false, Clip, Reserve );
-		pTFPistol = NULL;
-	}
-	else
-		DropWeapon( m_Shared.GetActiveTFWeapon(), false, false, Clip, Reserve );
 
 	TeamFortress_RemoveEverythingFromWorld();
 	RemoveAllWeapons();

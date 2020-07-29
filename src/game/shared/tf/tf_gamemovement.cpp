@@ -456,10 +456,6 @@ void CTFGameMovement::PreventBunnyJumping()
 
 bool CTFGameMovement::CheckJumpButton()
 {
-	//hooked
-	if (m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED))
-		return false;
-
 	// Are we dead?  Then we cannot jump.
 	if (player->pl.deadflag)
 		return false;
@@ -468,8 +464,8 @@ bool CTFGameMovement::CheckJumpButton()
 	if (!CheckWaterJumpButton())
 		return false;
 
-	// Cannot jump while taunting
-	if (m_pTFPlayer->m_Shared.InCond(TF_COND_TAUNTING))
+	//conds preventing jump
+	if (m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED) || m_pTFPlayer->m_Shared.InCond(TF_COND_TAUNTING))
 		return false;
 
 	//You can air jump with the meat hook, not the regular one

@@ -1524,7 +1524,6 @@ void CTFPlayerShared::OnRemoveInvulnerable( void )
 void CTFPlayerShared::OnAddShield( void )
 {
 #ifdef CLIENT_DLL
-
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		char *pEffectName = NULL;
@@ -1538,7 +1537,7 @@ void CTFPlayerShared::OnAddShield( void )
 			pEffectName = "effects/shield_overlay_red";
 			break;
 		case TF_TEAM_MERCENARY:
-			pEffectName = "effects/shield_overlay_dm";
+			pEffectName = TFGameRules()->IsDuelGamemode() ? "effects/shield_overlay_duel" : "effects/shield_overlay_dm";
 			break;
 		default:
 			pEffectName = "effects/shield_overlay_blue";
