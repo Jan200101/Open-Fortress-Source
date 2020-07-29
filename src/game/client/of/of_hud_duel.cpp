@@ -334,15 +334,11 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 		
 		bool bWinningPlayer = iFirstPlayer != event->GetInt( "player_1", 0 );
 		
-		switch( bWinningPlayer )
-		{
-			case 0:
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinRight");
-			break;
-			case 1:
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinLeft");
-			break;
-		}
+		if( bWinningPlayer )
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinRight");
+		else
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinLeft");
+
 		
 		SetDialogVariable( "Winner", g_PR ? g_PR->GetPlayerName( bWinningPlayer ? iSecondPlayer : iFirstPlayer ) : "" );
 		for( int i = 0; i < 2; i++ )
