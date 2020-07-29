@@ -164,10 +164,10 @@ Color CHudChat::GetClientColor( int clientIndex )
 		C_TFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( clientIndex ) );
 		C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 		
-		if (pPlayer && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay())
+		if (TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay())
 		{
 			C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
-			return tf_PR->GetPlayerColor(pPlayer->entindex());
+			return tf_PR->GetPlayerColor(clientIndex);
 		}
 
 		if ( IsVoiceSubtitle() == true )

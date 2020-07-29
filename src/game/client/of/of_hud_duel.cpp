@@ -51,7 +51,7 @@ void CTFDuelRank::SetPlayer( int iIndex, int iOffset )
 	SetDialogVariable( "QueuePos", iQueuePos );
 	SetDialogVariable( "PlayerName", szPlayerName );
 	iPlayerIndex = iIndex;
-	m_pAvatar->SetPlayer( UTIL_PlayerByIndex(iPlayerIndex) );
+	m_pAvatar->SetPlayer( iPlayerIndex );
 	m_pAvatar->SetShouldDrawFriendIcon( false );
 	m_pImage->SetPlayerOwner( iPlayerIndex );
 }
@@ -303,7 +303,7 @@ bool CTFDuelAnnouncement::ShouldDraw()
 	if( !pLocalPlayer )
 		return false;
 
-	if( pLocalPlayer->m_Shared.InState( TF_STATE_WELCOME ) )
+	if( pLocalPlayer->GetTeamNumber() == TEAM_UNASSIGNED )
 		return false;
 	
 	if( OFDuelQueue()->GetIndex(0) == -1 || OFDuelQueue()->GetIndex(1 DUEL_ADJUSTMENT ) == -1  )
@@ -334,15 +334,11 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 		
 		bool bWinningPlayer = iFirstPlayer != event->GetInt( "player_1", 0 );
 		
-		switch( bWinningPlayer )
-		{
-			case 0:
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinRight");
-			break;
-			case 1:
-				g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinLeft");
-			break;
-		}
+		if( !bWinningPlayer )
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinRight");
+		else
+			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "WinLeft");
+
 		
 		SetDialogVariable( "Winner", g_PR ? g_PR->GetPlayerName( bWinningPlayer ? iSecondPlayer : iFirstPlayer ) : "" );
 		for( int i = 0; i < 2; i++ )
