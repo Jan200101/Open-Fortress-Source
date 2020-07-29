@@ -303,7 +303,7 @@ bool CTFDuelAnnouncement::ShouldDraw()
 	if( !pLocalPlayer )
 		return false;
 
-	if( pLocalPlayer->m_Shared.InState( TF_STATE_WELCOME ) )
+	if( pLocalPlayer->GetTeamNumber() == TEAM_UNASSIGNED )
 		return false;
 	
 	if( OFDuelQueue()->GetIndex(0) == -1 || OFDuelQueue()->GetIndex(1 DUEL_ADJUSTMENT ) == -1  )
