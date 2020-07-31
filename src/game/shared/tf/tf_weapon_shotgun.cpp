@@ -647,7 +647,6 @@ void CTFMeatHook::Spawn(void)
 	SetMoveType(MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM);
 	UTIL_SetSize(this, -Vector(1, 1, 1), Vector(1, 1, 1));
 	SetSolid(SOLID_BBOX);
-	SetGravity(0.05f);
 
 	// The rock is invisible, the crossbow bolt is the visual representation
 	AddEffects(EF_NODRAW);
@@ -706,7 +705,10 @@ bool CTFMeatHook::CreateVPhysics(void)
 
 void CTFMeatHook::HookTouch(CBaseEntity *pOther)
 {
-	if (pOther == m_hOwner || !pOther->IsPlayer() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !GetOwnerEntity())
+	if (pOther->IsSolidFlagSet(FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS))
+		return;
+
+	if (pOther == m_hOwner || !pOther->IsPlayer() || !GetOwnerEntity())
 	{
 		m_hOwner->RemoveHook();
 		return;

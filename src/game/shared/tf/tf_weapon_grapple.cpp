@@ -493,7 +493,6 @@ void CGrappleHook::Spawn(void)
 	SetMoveType(MOVETYPE_FLY, MOVECOLLIDE_FLY_CUSTOM);
 	UTIL_SetSize(this, -Vector(1, 1, 1), Vector(1, 1, 1));
 	SetSolid(SOLID_BBOX);
-	SetGravity(0.05f);
 
 	// The rock is invisible, the crossbow bolt is the visual representation
 	AddEffects(EF_NODRAW);
@@ -547,7 +546,10 @@ void CGrappleHook::FlyThink(void)
 //-----------------------------------------------------------------------------
 void CGrappleHook::HookTouch(CBaseEntity *pOther)
 {
-	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS) || !GetOwnerEntity())
+	if(pOther->IsSolidFlagSet(FSOLID_TRIGGER|FSOLID_VOLUME_CONTENTS))
+		return;
+
+	if (!pOther->IsSolid() || !GetOwnerEntity())
 	{
 		m_hOwner->RemoveHook();
 		return;
