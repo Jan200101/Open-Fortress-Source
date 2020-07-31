@@ -4757,7 +4757,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	bool bIsAlly = false;
 
-	// If we're invulnerable, force ourselves to only take damage events only, so we still get pushed
+	// If we're invulnerable, only apply knockback unless certain special conditions are met
 	if ( m_Shared.InCondUber() )
 	{
 		bool bAllowDamage = false;
