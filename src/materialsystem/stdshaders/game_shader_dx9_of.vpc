@@ -11,4 +11,13 @@ $Include "$SRCDIR\materialsystem\stdshaders\game_shader_dx9_base.vpc"
 
 $Project "Shaders (Open Fortress)"
 {
+    $Folder	"Source Files"
+    {
+        $Folder	"VertexLitGeneric"
+        {
+            $File "of_vertexlitgeneric_dx9.cpp"
+            $File "of_vertexlitgeneric_dx9_helper.cpp"
+            $File "of_vertexlitgeneric_dx9_helper.h"
+        }
+    }
 }
