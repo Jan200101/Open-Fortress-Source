@@ -854,33 +854,6 @@ const char *CBaseVSShader::UnlitGeneric_ComputePixelShaderName( bool bMask,
 }
 
 
-//-----------------------------------------------------------------------------
-// Sets up hw morphing state for the vertex shader
-//-----------------------------------------------------------------------------
-void CBaseVSShader::SetHWMorphVertexShaderState( int nDimConst, int nSubrectConst, VertexTextureSampler_t morphSampler )
-{
-#ifndef _X360
-	if ( !s_pShaderAPI->IsHWMorphingEnabled() )
-		return;
-
-	int nMorphWidth, nMorphHeight;
-	s_pShaderAPI->GetStandardTextureDimensions( &nMorphWidth, &nMorphHeight, TEXTURE_MORPH_ACCUMULATOR );
-
-	int nDim = s_pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_MORPH_ACCUMULATOR_4TUPLE_COUNT );
-	float pMorphAccumSize[4] = { (float)nMorphWidth, (float)nMorphHeight, (float)nDim, 0.0f };
-	s_pShaderAPI->SetVertexShaderConstant( nDimConst, pMorphAccumSize );
-
-	int nXOffset = s_pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_MORPH_ACCUMULATOR_X_OFFSET );
-	int nYOffset = s_pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_MORPH_ACCUMULATOR_Y_OFFSET );
-	int nWidth = s_pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_MORPH_ACCUMULATOR_SUBRECT_WIDTH );
-	int nHeight = s_pShaderAPI->GetIntRenderingParameter( INT_RENDERPARM_MORPH_ACCUMULATOR_SUBRECT_HEIGHT );
-	float pMorphAccumSubrect[4] = { (float)nXOffset, (float)nYOffset, (float)nWidth, (float)nHeight };
-	s_pShaderAPI->SetVertexShaderConstant( nSubrectConst, pMorphAccumSubrect );
-
-	s_pShaderAPI->BindStandardVertexTexture( morphSampler, TEXTURE_MORPH_ACCUMULATOR );
-#endif
-}
-
 
 //-----------------------------------------------------------------------------
 // Vertex shader unlit generic pass
@@ -1572,6 +1545,35 @@ void CBaseVSShader::DrawWorldBumpedUsingVertexShader( int baseTextureVar, int ba
 	}
 }
 #endif // GAME_SHADER_DLL
+
+
+
+//-----------------------------------------------------------------------------
+// Sets up hw morphing state for the vertex shader
+//-----------------------------------------------------------------------------
+void CBaseVSShader::SetHWMorphVertexShaderState(int nDimConst, int nSubrectConst, VertexTextureSampler_t morphSampler)
+{
+#ifndef _X360
+	if (!s_pShaderAPI->IsHWMorphingEnabled())
+		return;
+
+	int nMorphWidth, nMorphHeight;
+	s_pShaderAPI->GetStandardTextureDimensions(&nMorphWidth, &nMorphHeight, TEXTURE_MORPH_ACCUMULATOR);
+
+	int nDim = s_pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_MORPH_ACCUMULATOR_4TUPLE_COUNT);
+	float pMorphAccumSize[4] = { (float)nMorphWidth, (float)nMorphHeight, (float)nDim, 0.0f };
+	s_pShaderAPI->SetVertexShaderConstant(nDimConst, pMorphAccumSize);
+
+	int nXOffset = s_pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_MORPH_ACCUMULATOR_X_OFFSET);
+	int nYOffset = s_pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_MORPH_ACCUMULATOR_Y_OFFSET);
+	int nWidth = s_pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_MORPH_ACCUMULATOR_SUBRECT_WIDTH);
+	int nHeight = s_pShaderAPI->GetIntRenderingParameter(INT_RENDERPARM_MORPH_ACCUMULATOR_SUBRECT_HEIGHT);
+	float pMorphAccumSubrect[4] = { (float)nXOffset, (float)nYOffset, (float)nWidth, (float)nHeight };
+	s_pShaderAPI->SetVertexShaderConstant(nSubrectConst, pMorphAccumSubrect);
+
+	s_pShaderAPI->BindStandardVertexTexture(morphSampler, TEXTURE_MORPH_ACCUMULATOR);
+#endif
+}
 
 
 //-----------------------------------------------------------------------------
