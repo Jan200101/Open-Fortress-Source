@@ -156,6 +156,12 @@ void CTFPistol::PrimaryAttack( void )
 	BaseClass::PrimaryAttack();
 }
 
+void CTFPistol_Mercenary::Precache()
+{
+	BaseClass::Precache();
+	UTIL_PrecacheOther( "tf_weapon_pistol_akimbo" ); 
+}
+
 //Act tables for Merc
 acttable_t m_acttablePistol[] =
 {

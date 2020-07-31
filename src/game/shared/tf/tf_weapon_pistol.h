@@ -79,6 +79,7 @@ public:
 	DECLARE_PREDICTABLE();
 
 	virtual int		GetWeaponID( void ) const			{ return TF_WEAPON_PISTOL_MERCENARY; }
+	virtual void	Precache( void );
 	
 	virtual acttable_t *ActivityList( int &iActivityCount );
 
