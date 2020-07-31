@@ -856,8 +856,8 @@ void CInput::ComputeSideMove( CUserCmd *cmd )
 
 	In order to do null movement script, we need to figure out:
 	1. if both keys are being held down at the same time, and
-	2. which key was pressed soonest
-	the key that was pressed soonest gets priority; the other key gets its input nullified.
+	2. which key was pressed sooner
+	the key that was pressed sooner gets priority; the other key gets its input nullified.
 	*/
 
 	if (of_nullmovescript.GetBool())
