@@ -6,6 +6,18 @@
 // $NoKeywords: $
 //=====================================================================================//
 
+/*
+	Hello! A message from Luna.
+	This is the Open Fortress specific VertexLitGeneric shader.
+	The main goal of it is to provide control for half-lambert on phong materials.
+	Unfortunately, while we have VertexLitGeneric and Skin_DX9 code, there is no Cloak code, which is needed for the Spy cloak and the invisibility powerup.
+	For now I have disabled it and made the standard pass not render if the player is fully cloaked (which is probably bad).
+
+	Another thing, I'm making this shader SM3.0 only, since basically all GPUs made after 2005 have it.
+
+	TL;DR NEED TO REIMPLEMENT CLOAK
+*/
+
 #include "BaseVSShader.h"
 #include "of_vertexlitgeneric_dx9_helper.h"
 

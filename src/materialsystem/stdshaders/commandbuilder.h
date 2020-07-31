@@ -20,7 +20,7 @@
 #pragma once
 #endif
 
-extern ConVar	my_mat_fullbright;
+extern ConVarRef	my_mat_fullbright;
 
 template<int N> class CFixedCommandStorageBuffer
 {

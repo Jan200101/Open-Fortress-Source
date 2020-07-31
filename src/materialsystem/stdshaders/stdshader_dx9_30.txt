@@ -8,3 +8,11 @@
 //
 
 // There are no examples of such shaders in the SDK, but add yours here.
+
+of_skin_ps30.fxc
+of_skin_vs30.fxc
+
+of_vertexlit_and_unlit_generic_bump_ps30.fxc
+of_vertexlit_and_unlit_generic_bump_vs30.fxc
+of_vertexlit_and_unlit_generic_ps30.fxc
+of_vertexlit_and_unlit_generic_vs30.fxc

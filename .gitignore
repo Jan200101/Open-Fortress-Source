@@ -145,6 +145,8 @@ src/utils/vvis/Release/vvis_dll.lib
 src/utils/vvis/Release/vvis_dll.pdb
 
 *.lib
+
+# LUNA: Shaders
 src/materialsystem/stdshaders/filestocopy.txt
 src/materialsystem/stdshaders/inclist.txt
 src/materialsystem/stdshaders/uniquefilestocopy.txt

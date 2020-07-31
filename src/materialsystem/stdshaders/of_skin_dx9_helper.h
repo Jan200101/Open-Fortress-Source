@@ -10,7 +10,7 @@
 
 #include <string.h>
 
-#include "vertexlitgeneric_dx9_helper.h"
+#include "of_vertexlitgeneric_dx9_helper.h"
 
 //-----------------------------------------------------------------------------
 // Forward declarations

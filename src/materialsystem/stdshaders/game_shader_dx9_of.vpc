@@ -18,6 +18,8 @@ $Project "Shaders (Open Fortress)"
             $File "of_vertexlitgeneric_dx9.cpp"
             $File "of_vertexlitgeneric_dx9_helper.cpp"
             $File "of_vertexlitgeneric_dx9_helper.h"
+            $File "of_skin_dx9_helper.cpp"
+            $File "of_skin_dx9_helper.h"
         }
     }
 }

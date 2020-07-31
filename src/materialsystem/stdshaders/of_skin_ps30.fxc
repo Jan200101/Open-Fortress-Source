@@ -1,5 +1,4 @@
-//======= Copyright © 1996-2007, Valve Corporation, All rights reserved. ======
-// STATIC: "CONVERT_TO_SRGB"			"0..0"
+//======= Copyright ï¿½ 1996-2007, Valve Corporation, All rights reserved. ======
 // STATIC: "CUBEMAP"					"0..1"
 // STATIC: "SELFILLUM"					"0..1"
 // STATIC: "SELFILLUMFRESNEL"			"0..1"
@@ -10,22 +9,17 @@
 // STATIC: "DETAIL_BLEND_MODE"          "0..6"
 // STATIC: "DETAILTEXTURE"				"0..1"
 // STATIC: "RIMLIGHT"					"0..1"
-// STATIC: "FLASHLIGHTDEPTHFILTERMODE"	"0..2"	[ps20b] [PC]
-// STATIC: "FLASHLIGHTDEPTHFILTERMODE"	"0..2"	[ps30]  [PC]
-// STATIC: "FLASHLIGHTDEPTHFILTERMODE"	"0..0"	[ps20b] [XBOX]
+// STATIC: "FLASHLIGHTDEPTHFILTERMODE"	"0..2"
 // STATIC: "FASTPATH_NOBUMP"            "0..1"
 // STATIC: "BLENDTINTBYBASEALPHA"       "0..1"
 
 // DYNAMIC: "WRITEWATERFOGTODESTALPHA"  "0..1"
 // DYNAMIC: "PIXELFOGTYPE"				"0..1"
 // DYNAMIC: "NUM_LIGHTS"				"0..4"
-// DYNAMIC: "WRITE_DEPTH_TO_DESTALPHA"	"0..1"	[ps20b] [PC]
-// DYNAMIC: "WRITE_DEPTH_TO_DESTALPHA"	"0..0"	[ps20b] [XBOX]
-// DYNAMIC: "WRITE_DEPTH_TO_DESTALPHA"	"0..1"	[ps30]
-// DYNAMIC: "FLASHLIGHTSHADOWS"			"0..1"	[ps20b]
-// DYNAMIC: "FLASHLIGHTSHADOWS"			"0..1"	[ps30]
-// DYNAMIC: "PHONG_USE_EXPONENT_FACTOR"	"0..0"	[ps20]
-// DYNAMIC: "PHONG_USE_EXPONENT_FACTOR"	"0..1"	[ps20b] [ps30]  [PC]
+// DYNAMIC: "HALF_LAMBERT" 				"0..1"
+// DYNAMIC: "WRITE_DEPTH_TO_DESTALPHA"	"0..1"
+// DYNAMIC: "FLASHLIGHTSHADOWS"			"0..1"
+// DYNAMIC: "PHONG_USE_EXPONENT_FACTOR"	"0..1"
 
 
 // SKIP: ($PIXELFOGTYPE == 0) && ($WRITEWATERFOGTODESTALPHA != 0)
@@ -216,10 +210,17 @@ float4 main( PS_INPUT i ) : COLOR
 	float3 envMapColor = float3( 0.0f, 0.0f, 0.0f );
 	if( !bFlashlight )
 	{
+		const bool bHalfLambert = 
+		#if HALF_LAMBERT > 0
+			1
+		#else 
+			0
+		#endif
+		;
 		// Summation of diffuse illumination from all local lights
 		diffuseLighting = PixelShaderDoLighting( vWorldPos, worldSpaceNormal,
 			float3( 0.0f, 0.0f, 0.0f ), false, true, vLightAtten,
-			cAmbientCube, NormalizeRandRotSampler, nNumLights, cLightInfo, true,
+			cAmbientCube, NormalizeRandRotSampler, nNumLights, cLightInfo, bHalfLambert,
 
 			// These parameters aren't passed by generic shaders:
 			false, 1.0f,
