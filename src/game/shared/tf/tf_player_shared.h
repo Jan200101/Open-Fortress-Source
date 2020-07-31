@@ -403,7 +403,11 @@ private:
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );
 	CNetworkVar( int,  m_iAirDashCount );
+#ifdef GAME_DLL
 	CNetworkHandle( CBaseEntity, m_Hook );
+#else
+	EHANDLE		 m_Hook;
+#endif
 	CNetworkVar( float, m_flGHookProp );
 	CNetworkVar( bool, m_bBlockJump);
 	CNetworkVar( float, m_flCSlideDuration );

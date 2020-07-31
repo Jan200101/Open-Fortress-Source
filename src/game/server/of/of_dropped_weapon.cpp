@@ -51,9 +51,9 @@ void CTFDroppedWeapon::Precache( void )
 CTFDroppedWeapon *CTFDroppedWeapon::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname, bool bThrown)
 {
 	//Don't drop if it's a crowabr and everybody has it or it is a gamemode where no weapons should be dropped
-	if (TFGameRules() && TFGameRules()->IsGGGamemode() ||
-		iWeaponID == TF_WEAPON_CROWBAR && of_allow_allclass_pickups.GetBool() && !of_forceclass.GetBool() ||
-		iWeaponID == TF_WEAPON_NONE)
+	if ( ( TFGameRules() && TFGameRules()->IsGGGamemode() ) ||
+		( iWeaponID == TF_WEAPON_CROWBAR && of_forceclass.GetBool() ) ||
+		iWeaponID == TF_WEAPON_NONE )
 		return NULL;
 
 	CTFDroppedWeapon *pDroppedWeapon = static_cast<CTFDroppedWeapon *>( CBaseAnimating::CreateNoSpawn( "tf_dropped_weapon", vecOrigin, vecAngles, pOwner ) );

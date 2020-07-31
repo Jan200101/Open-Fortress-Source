@@ -124,6 +124,7 @@ RecvPropTime( RECVINFO( m_flNextLungeTime ) ),
 RecvPropBool( RECVINFO( m_bNoAirControl ) ),
 RecvPropTime( RECVINFO( m_flNextZoomTime ) ),
 RecvPropFloat( RECVINFO( m_flCloakMeter ) ),
+RecvPropEHandle( RECVINFO( m_Hook ) ),
 RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominated ), RecvPropBool( RECVINFO( m_bPlayerDominated[0] ) ) ),
 RecvPropArray3( RECVINFO_ARRAY( m_bPlayerDominatingMe ), RecvPropBool( RECVINFO( m_bPlayerDominatingMe[0] ) ) ),
 RecvPropArray3( RECVINFO_ARRAY( m_flCondExpireTimeLeft ), RecvPropFloat( RECVINFO( m_flCondExpireTimeLeft[0] ) ) ),
@@ -189,6 +190,7 @@ SendPropTime( SENDINFO( m_flStealthNextChangeTime ) ),
 SendPropTime( SENDINFO( m_flNextLungeTime ) ),
 SendPropBool( SENDINFO( m_bNoAirControl ) ),
 SendPropTime( SENDINFO( m_flNextZoomTime ) ),
+SendPropEHandle( SENDINFO( m_Hook ), 0 ),
 SendPropFloat( SENDINFO( m_flCloakMeter ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN, 0.0, 100.0 ),
 SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominated ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominated ) ) ),
 SendPropArray3( SENDINFO_ARRAY3( m_bPlayerDominatingMe ), SendPropBool( SENDINFO_ARRAY( m_bPlayerDominatingMe ) ) ),
@@ -1524,7 +1526,6 @@ void CTFPlayerShared::OnRemoveInvulnerable( void )
 void CTFPlayerShared::OnAddShield( void )
 {
 #ifdef CLIENT_DLL
-
 	if ( m_pOuter->IsLocalPlayer() )
 	{
 		char *pEffectName = NULL;
@@ -1538,7 +1539,7 @@ void CTFPlayerShared::OnAddShield( void )
 			pEffectName = "effects/shield_overlay_red";
 			break;
 		case TF_TEAM_MERCENARY:
-			pEffectName = "effects/shield_overlay_dm";
+			pEffectName = TFGameRules()->IsDuelGamemode() ? "effects/shield_overlay_duel" : "effects/shield_overlay_dm";
 			break;
 		default:
 			pEffectName = "effects/shield_overlay_blue";
@@ -2204,14 +2205,14 @@ void CTFPlayerShared::RemoveDisguise( void )
 //-----------------------------------------------------------------------------
 bool CTFPlayerShared::IsLunging()
 {
-	return IsZombie() && m_bNoAirControl;
+	return ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT ) && m_bNoAirControl;
 }
 
 bool CTFPlayerShared::DoLungeCheck( void )
 {
 	if ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT )
 	{
-		if ( m_bNoAirControl || !m_pOuter->GetGroundEntity() )
+		if ( m_bNoAirControl || !m_pOuter->GetGroundEntity() || InCond(TF_COND_TAUNTING) )
 			return false;
 
 		CTFClaws *pWeapon = dynamic_cast<CTFClaws *>( m_pOuter->GetActiveWeapon() );
@@ -2219,7 +2220,7 @@ bool CTFPlayerShared::DoLungeCheck( void )
 		if ( !pWeapon )
 			return false;
 
-		if ( (m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() && !m_pOuter->m_Shared.InCond(TF_COND_TAUNTING) )
+		if ( (m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() )
 		{
 			if ( m_flNextLungeTime <= gpGlobals->curtime )
 			{

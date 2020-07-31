@@ -158,8 +158,6 @@ void CTFGameMovement::PlayerMove()
 	//make sure that if air control is blocked by a zombie lunge
 	//or a jumppad the first thing that happens once player touches ground
 	//or water is that it is reallowed
-	if (m_pTFPlayer->m_Shared.IsNoAirControl())
-		Msg("%f\n", gpGlobals->curtime);
 	if ( m_pTFPlayer->m_Shared.IsNoAirControl() && ( InWater() || player->GetGroundEntity() ) )
 		m_pTFPlayer->m_Shared.SetNoAirControl(false);
 
@@ -458,10 +456,6 @@ void CTFGameMovement::PreventBunnyJumping()
 
 bool CTFGameMovement::CheckJumpButton()
 {
-	//hooked
-	if (m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED))
-		return false;
-
 	// Are we dead?  Then we cannot jump.
 	if (player->pl.deadflag)
 		return false;
@@ -470,8 +464,8 @@ bool CTFGameMovement::CheckJumpButton()
 	if (!CheckWaterJumpButton())
 		return false;
 
-	// Cannot jump while taunting
-	if (m_pTFPlayer->m_Shared.InCond(TF_COND_TAUNTING))
+	//conds preventing jump
+	if (m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED) || m_pTFPlayer->m_Shared.InCond(TF_COND_TAUNTING))
 		return false;
 
 	//You can air jump with the meat hook, not the regular one
@@ -551,6 +545,7 @@ bool CTFGameMovement::CheckJumpButton()
 	m_pTFPlayer->DoAnimationEvent(PLAYERANIMEVENT_JUMP);
 	m_pTFPlayer->m_Shared.SetJumping(true);
 
+	//Step sound
 	if (gpGlobals->curtime >= m_pTFPlayer->m_Shared.m_flStepSoundDelay)
 		player->PlayStepSound((Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true);
 	m_pTFPlayer->m_Shared.m_flStepSoundDelay = gpGlobals->curtime + 0.25f;
@@ -585,6 +580,7 @@ bool CTFGameMovement::CheckJumpButton()
 	mv->m_outJumpVel.z += mv->m_vecVelocity.z - flStartZ;
 	mv->m_outStepHeight += 0.15f;
 
+	//jump sound (grunt)
 	if (gpGlobals->curtime >= m_pTFPlayer->m_Shared.m_flJumpSoundDelay)
 	{
 #ifdef GAME_DLL
@@ -595,7 +591,8 @@ bool CTFGameMovement::CheckJumpButton()
 			gameeventmanager->FireEvent(event);
 		}
 #else
-		if ((of_jumpsound.GetBool() && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9) || of_jumpsound.GetInt() == 2)
+		int iJumpSound = of_jumpsound.GetInt();
+		if ( ( iJumpSound && m_pTFPlayer->GetPlayerClass()->GetClassIndex() > 9 ) || iJumpSound == 2 )
 			m_pTFPlayer->EmitSound(m_pTFPlayer->GetPlayerClass()->GetJumpSound());
 #endif
 	}
@@ -1109,16 +1106,10 @@ void CTFGameMovement::WalkMove(bool CSliding)
 //-----------------------------------------------------------------------------
 void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float accel, bool q1accel)
 {
-	if (!CanAccelerate())
+	if (!CanAccelerate() || player->pl.deadflag || player->m_flWaterJumpTime)
 		return;
 
-	float addspeed, currentspeed;
-	float wishspd;
-
-	wishspd = wishspeed;
-
-	if (player->pl.deadflag || player->m_flWaterJumpTime)
-		return;
+	float wishspd = wishspeed;
 
 	// Cap speed, this is the only thing to edit to allow
 	// Q3 style strafejumping, if Q3 movement is on it is ignored
@@ -1126,10 +1117,10 @@ void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float acce
 		wishspd = min(wishspd, GetAirSpeedCap());
 
 	// Determine veer amount
-	currentspeed = mv->m_vecVelocity.Dot(wishdir);
+	float currentspeed = mv->m_vecVelocity.Dot(wishdir);
 
 	// See how much to add
-	addspeed = wishspd - currentspeed;
+	float addspeed = wishspd - currentspeed;
 
 	// If not adding any, done.
 	if (addspeed <= 0)
@@ -1138,9 +1129,10 @@ void CTFGameMovement::AirAccelerate(Vector& wishdir, float wishspeed, float acce
 	// Determine acceleration speed after acceleration and cap it
 	float accelspeed = min(accel * wishspeed * gpGlobals->frametime * player->m_surfaceFriction, addspeed);
 
-	// Adjust pmove vel.
-	VectorAdd(mv->m_vecVelocity, accelspeed * wishdir, mv->m_vecVelocity);
-	VectorAdd(mv->m_outWishVel, accelspeed * wishdir, mv->m_outWishVel);
+	// Adjust pmove vel
+	wishdir *= accelspeed;
+	VectorAdd(mv->m_vecVelocity, wishdir, mv->m_vecVelocity);
+	VectorAdd(mv->m_outWishVel, wishdir, mv->m_outWishVel);
 }
 
 //-----------------------------------------------------------------------------
@@ -1595,7 +1587,7 @@ void CTFGameMovement::Friction(bool CSliding)
 void CTFGameMovement::FullWalkMove()
 {
 	//deny jump and cslide at the start of the match when you can't move
-	bool canMove = int(mv->m_flClientMaxSpeed) != 1;
+	bool bCanMove = int(mv->m_flClientMaxSpeed) != 1;
 
 	if (!InWater())
 		StartGravity();
@@ -1623,7 +1615,7 @@ void CTFGameMovement::FullWalkMove()
 		CheckLunge();
 
 	//Jumping stuff
-	if (mv->m_nButtons & IN_JUMP && canMove)
+	if (mv->m_nButtons & IN_JUMP && bCanMove)
 	{
 		if (!m_pTFPlayer->m_Shared.GetJumpBuffer())
 			CheckJumpButton();
@@ -1636,8 +1628,8 @@ void CTFGameMovement::FullWalkMove()
 	// Make sure velocity is valid.
 	CheckVelocity();
 
-	bool cSliding = false;
-	bool cSlideOn = of_cslide.GetBool();
+	bool bCSliding = false;
+	bool bCSlideOn = of_cslide.GetBool();
 	CBaseEntity *pHook = m_pTFPlayer->m_Shared.GetHook();
 	if (pHook)
 	{
@@ -1649,18 +1641,18 @@ void CTFGameMovement::FullWalkMove()
 		if (player->GetGroundEntity() != NULL)
 		{
 			//check if player can CSlide
-			cSliding = cSlideOn &&															//crouch sliding is enabled
-					   canMove &&															//player allowed to move
+			bCSliding = bCSlideOn &&															//crouch sliding is enabled
+					   bCanMove &&															//player allowed to move
 					   !m_pTFPlayer->GetWaterLevel() &&		 								//player is not in water
 					   (player->m_Local.m_bDucking || player->m_Local.m_bDucked) &&			//player is ducked/ducking
 					   (mv->m_flForwardMove || mv->m_flSideMove) &&							//player is moving
 					   gpGlobals->curtime <= m_pTFPlayer->m_Shared.GetCSlideDuration();		//there is crouch slide charge to spend
 
-			Friction(cSliding);
-			WalkMove(cSliding);
+			Friction(bCSliding);
+			WalkMove(bCSliding);
 
 			//If not using CSlide right away clear it
-			if (!cSliding && m_pTFPlayer->m_Shared.GetCSlideDuration())
+			if (!bCSliding && m_pTFPlayer->m_Shared.GetCSlideDuration())
 				m_pTFPlayer->m_Shared.SetCSlideDuration(0.f);
 		}
 		else
@@ -1684,7 +1676,7 @@ void CTFGameMovement::FullWalkMove()
 		if (!IsDead() && m_pTFPlayer->m_Shared.IsJumping())
 			m_pTFPlayer->m_Shared.SetJumping(false);
 	}
-	else if (cSlideOn)
+	else if (bCSlideOn)
 	{
 		//Determine crouch slide duration
 		m_pTFPlayer->m_Shared.SetCSlideDuration(gpGlobals->curtime - (mv->m_vecVelocity[2] / 200.f) * of_cslideduration.GetFloat());
@@ -1697,7 +1689,7 @@ void CTFGameMovement::FullWalkMove()
 	CheckVelocity();
 
 	//Cslide sound turn on/off
-	CheckFootStepsSound(cSliding, pHook);
+	CheckFootStepsSound(bCSliding, pHook);
 }
 
 void CTFGameMovement::CheckFootStepsSound(bool CSliding, const CBaseEntity *hook)
