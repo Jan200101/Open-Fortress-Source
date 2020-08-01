@@ -12,9 +12,16 @@
 #include <vgui/ISurface.h>
 #include "c_baseplayer.h"
 #include "hud.h"
+#ifdef OF_CLIENT_DLL
+#include "of_shared_schemas.h"
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+#ifdef OF_CLIENT_DLL
+extern ConVar of_weapon_testing;
+#endif
 
 WeaponsResource gWR;
 
@@ -103,6 +110,24 @@ void WeaponsResource::LoadWeaponSprites( WEAPON_FILE_INFO_HANDLE hWeaponFileInfo
 	pWeaponInfo->iconAutoaim = NULL;
 	pWeaponInfo->iconSmall = NULL;
 
+#ifdef OF_CLIENT_DLL
+	bool bUsingItemsGame = false;
+		
+	KeyValues *pKV;
+	
+	pKV = GetWeaponFromSchema( pWeaponInfo->szClassName );
+	if( pKV )
+	{
+		if( of_weapon_testing.GetBool() && GetWeaponFromSchema( VarArgs( "%s_beta", pWeaponInfo->szClassName ) ) )
+			pKV = GetWeaponFromSchema( VarArgs( "%s_beta", pWeaponInfo->szClassName ) );
+
+		pKV = pKV->FindKey("WeaponData");
+		if( pKV )
+		{
+			bUsingItemsGame = true;
+		}
+	}
+#endif
 	char sz[128];
 	
 #ifdef OF_CLIENT_DLL
@@ -112,8 +137,14 @@ void WeaponsResource::LoadWeaponSprites( WEAPON_FILE_INFO_HANDLE hWeaponFileInfo
 #endif
 
 	CUtlDict< CHudTexture *, int > tempList;
-
-	LoadHudTextures( tempList, sz, g_pGameRules->GetEncryptionKey() );
+#ifdef OF_CLIENT_DLL
+	if ( !bUsingItemsGame )
+#endif
+		LoadHudTextures( tempList, sz, g_pGameRules->GetEncryptionKey() );
+#ifdef OF_CLIENT_DLL
+	else
+		LoadHudTextures( tempList, pKV->FindKey( "TextureData" ) );
+#endif
 
 	if ( !tempList.Count() )
 	{

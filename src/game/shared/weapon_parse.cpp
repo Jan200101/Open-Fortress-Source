@@ -15,6 +15,9 @@
 #endif
 #include "ammodef.h"
 
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#include "of_shared_schemas.h"
+#endif
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -278,7 +281,16 @@ KeyValues* ReadEncryptedKVFile( IFileSystem *filesystem, const char *szFilenameW
 // Output:  true  - if data2 successfully read
 //			false - if data load fails
 //-----------------------------------------------------------------------------
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 
+#ifdef CLIENT_DLL
+#define Shared_VarArgs VarArgs
+#else
+#define Shared_VarArgs UTIL_VarArgs
+#endif
+
+ConVar of_weapon_testing("of_weapon_testing", "0", FCVAR_REPLICATED, "Enables using beta weapons.\n");
+#endif
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeaponName, WEAPON_FILE_INFO_HANDLE *phandle, const unsigned char *pICEKey, bool bReParse )
 #else
@@ -296,28 +308,54 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 	Assert( pFileInfo );
 
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	if ( pFileInfo->bParsedScript && !bReParse )
+	if ( pFileInfo->bParsedScript && !bReParse && pFileInfo->bIsBeta == of_weapon_testing.GetBool() )
 #else
 	if ( pFileInfo->bParsedScript )
 #endif
 		return true;
-
-	char sz[128];
-	
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	Q_snprintf( sz, sizeof( sz ), "scripts/weapons/%s", szWeaponName );
+	bool bUsingItemsGame = false;
+		
+	KeyValues *pKV;
+	
+	pKV = GetWeaponFromSchema( szWeaponName );
+	if( pKV )
+	{
+		if( of_weapon_testing.GetBool() && GetWeaponFromSchema( Shared_VarArgs( "%s_beta",szWeaponName ) ) )
+			pKV = GetWeaponFromSchema( Shared_VarArgs( "%s_beta", szWeaponName ) );
+
+		pKV = pKV->FindKey("WeaponData");
+		if( pKV )
+			bUsingItemsGame = true;
+	}
+
+	if( !bUsingItemsGame )
+	{
+#endif
+		char sz[128];
+
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+		Q_snprintf( sz, sizeof( sz ), "scripts/weapons/%s", szWeaponName );
 #else
-	Q_snprintf( sz, sizeof( sz ), "scripts/%s", szWeaponName );
+		Q_snprintf( sz, sizeof( sz ), "scripts/%s", szWeaponName );
 #endif
 
-	KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey, false );
-
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+		pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey, false );
+#else
+		KeyValues *pKV = ReadEncryptedKVFile( filesystem, sz, pICEKey, false );
+#endif
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	}
+#endif
 	if ( !pKV )
 		return false;
 
 	pFileInfo->Parse( pKV, szWeaponName );
-
-	pKV->deleteThis();
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	if( !bUsingItemsGame ) // Dont remove from the items game
+#endif
+		pKV->deleteThis();
 
 	return true;
 }
@@ -330,6 +368,9 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 FileWeaponInfo_t::FileWeaponInfo_t()
 {
 	bParsedScript = false;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	bIsBeta = false;
+#endif
 	bLoadedHudElements = false;
 	szClassName[0] = 0;
 	szPrintName[0] = 0;
@@ -384,7 +425,9 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 {
 	// Okay, we tried at least once to look this up...
 	bParsedScript = true;
-
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	bIsBeta = of_weapon_testing.GetBool();
+#endif
 	// Classname
 	Q_strncpy( szClassName, szWeaponName, MAX_WEAPON_STRING );
 	// Printable name

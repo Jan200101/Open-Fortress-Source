@@ -200,6 +200,7 @@ extern CHud gHUD;
 extern vgui::HFont g_hFontTrebuchet24;
 
 void LoadHudTextures( CUtlDict< CHudTexture *, int >& list, const char *szFilenameWithoutExtension, const unsigned char *pICEKey );
+void LoadHudTextures( CUtlDict< CHudTexture *, int >& list, KeyValues *pTextureSection );
 
 void GetHudSize( int& w, int &h );
 

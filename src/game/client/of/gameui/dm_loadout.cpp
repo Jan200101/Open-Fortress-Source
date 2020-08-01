@@ -549,7 +549,10 @@ void DMLoadout::SelectWeapon( int iSlot, const char *szWeapon, bool bChangeSelec
 				KeyValues *pKey = pWeapon->FindKey( "WeaponData" );
 				if (pKey)
 				{
-					GetClassModel()->SetWeaponModel(pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl"), pWeapon->GetInt("loadout_anim", 0));
+					int iWeaponAnim = pWeapon->GetInt("loadout_anim", 0);
+					char *szWeaponModel = iWeaponAnim ? pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl") : "models/weapons/w_models/w_supershotgun.mdl";
+					
+					GetClassModel()->SetWeaponModel(szWeaponModel, iWeaponAnim);
 
 					if( !engine->IsInGame() )
 					{
