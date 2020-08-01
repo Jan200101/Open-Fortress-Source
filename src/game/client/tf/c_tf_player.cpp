@@ -2871,8 +2871,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 	bool bAliveNotStealth = !m_Shared.InCondInvis() && IsAlive();
 
 	// update the chat bubble on the player (when he is typing a chat message)
-	if ( bAliveNotStealth && m_bChatting && !m_pChattingEffect )
-		CreateChattingEffect();
+	CreateChattingEffect();
 
 	if ( bAliveNotStealth && m_Shared.InCond(TF_COND_POISON) && !m_pPoisonEffect )
 		CreatePoisonEffect();
@@ -5138,10 +5137,21 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 void C_TFPlayer::CreateChattingEffect(void)
 {
 	// Don't create them for the local player
-	if ( IsLocalPlayer() )
+	if (IsLocalPlayer())
 		return;
 
-	m_pChattingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
+	// If I'm disguised as the enemy, don't create
+	if (!m_Shared.InCondInvis() && m_bChatting && IsAlive())
+	{
+		// this uses the unused particle
+		if (!m_pChattingEffect)
+			m_pChattingEffect = ParticleProp()->Create("speech_typing", PATTACH_POINT_FOLLOW, "head");
+	}
+	else if (m_pChattingEffect)
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately(m_pChattingEffect);
+		m_pChattingEffect = NULL;
+	}
 }
 
 //-----------------------------------------------------------------------------

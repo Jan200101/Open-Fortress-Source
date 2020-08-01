@@ -47,6 +47,7 @@ public:
 	void			RemoveHook(void);
 	CBaseEntity		*GetHookEntity();
 	bool			HookLOS();
+	bool			CanSoftZoom() { return false; }
 
 #ifdef GAME_DLL
 	void			NotifyHookAttached(void);
