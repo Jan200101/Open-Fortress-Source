@@ -13,6 +13,11 @@ $Project "Shaders (Open Fortress)"
 {
     $Folder	"Source Files"
     {
+        $Folder "Shared"
+        {
+            $File "of_cloak_blended_pass_helper.cpp"
+            $File "of_cloak_blended_pass_helper.h"
+        }
         $Folder	"VertexLitGeneric"
         {
             $File "of_vertexlitgeneric_dx9.cpp"

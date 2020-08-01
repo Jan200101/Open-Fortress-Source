@@ -20,6 +20,7 @@
 
 #include "BaseVSShader.h"
 #include "of_vertexlitgeneric_dx9_helper.h"
+#include "of_cloak_blended_pass_helper.h"
 
 
 BEGIN_VS_SHADER( OF_VertexLitGeneric, "Help for VertexLitGeneric (Open Fortress)" )
@@ -223,34 +224,45 @@ BEGIN_VS_SHADER( OF_VertexLitGeneric, "Help for VertexLitGeneric (Open Fortress)
 		info.m_nTintReplacesBaseColor = BLENDTINTCOLOROVERBASE;
 	}
 
-	bool NeedsPowerOfTwoFrameBufferTexture( IMaterialVar **params, bool bCheckSpecificToThisFrame ) const 
-	{ 
-		if ( params[CLOAKPASSENABLED]->GetIntValue() ) // If material supports cloaking
+	// Cloak Pass
+	void SetupVarsCloakBlendedPass(CloakBlendedPassVars_t &info)
+	{
+		info.m_nCloakFactor = CLOAKFACTOR;
+		info.m_nCloakColorTint = CLOAKCOLORTINT;
+		info.m_nRefractAmount = REFRACTAMOUNT;
+
+		// Delete these lines if not bump mapping!
+		info.m_nBumpmap = BUMPMAP;
+		info.m_nBumpFrame = BUMPFRAME;
+		info.m_nBumpTransform = BUMPTRANSFORM;
+	}
+
+	bool NeedsPowerOfTwoFrameBufferTexture(IMaterialVar **params, bool bCheckSpecificToThisFrame) const
+	{
+		if (params[CLOAKPASSENABLED]->GetIntValue()) // If material supports cloaking
 		{
-			if ( bCheckSpecificToThisFrame == false ) // For setting model flag at load time
+			if (bCheckSpecificToThisFrame == false) // For setting model flag at load time
 				return true;
-			else if ( ( params[CLOAKFACTOR]->GetFloatValue() > 0.0f ) && ( params[CLOAKFACTOR]->GetFloatValue() < 1.0f ) ) // Per-frame check
+			else if ((params[CLOAKFACTOR]->GetFloatValue() > 0.0f) && (params[CLOAKFACTOR]->GetFloatValue() < 1.0f)) // Per-frame check
 				return true;
 			// else, not cloaking this frame, so check flag2 in case the base material still needs it
 		}
-		if ( params[SHEENPASSENABLED]->GetIntValue() ) // If material supports weapon sheen
-			return true;
 
 		// Check flag2 if not drawing cloak pass
-		return IS_FLAG2_SET( MATERIAL_VAR2_NEEDS_POWER_OF_TWO_FRAME_BUFFER_TEXTURE ); 
+		return IS_FLAG2_SET(MATERIAL_VAR2_NEEDS_POWER_OF_TWO_FRAME_BUFFER_TEXTURE);
 	}
 
-	bool IsTranslucent( IMaterialVar **params ) const
+	bool IsTranslucent(IMaterialVar **params) const
 	{
-		if ( params[CLOAKPASSENABLED]->GetIntValue() ) // If material supports cloaking
+		if (params[CLOAKPASSENABLED]->GetIntValue()) // If material supports cloaking
 		{
-			if ( ( params[CLOAKFACTOR]->GetFloatValue() > 0.0f ) && ( params[CLOAKFACTOR]->GetFloatValue() < 1.0f ) ) // Per-frame check
+			if ((params[CLOAKFACTOR]->GetFloatValue() > 0.0f) && (params[CLOAKFACTOR]->GetFloatValue() < 1.0f)) // Per-frame check
 				return true;
 			// else, not cloaking this frame, so check flag in case the base material still needs it
 		}
 
 		// Check flag if not drawing cloak pass
-		return IS_FLAG_SET( MATERIAL_VAR_TRANSLUCENT ); 
+		return IS_FLAG_SET(MATERIAL_VAR_TRANSLUCENT);
 	}
 
 	SHADER_INIT_PARAMS()
@@ -259,7 +271,17 @@ BEGIN_VS_SHADER( OF_VertexLitGeneric, "Help for VertexLitGeneric (Open Fortress)
 		SetupVars( vars );
 		InitParamsVertexLitGeneric_DX9( this, params, pMaterialName, true, vars );
 
-		// TODO: Re-implement cloak!!
+		// Cloak Pass
+		if (!params[CLOAKPASSENABLED]->IsDefined())
+		{
+			params[CLOAKPASSENABLED]->SetIntValue(0);
+		}
+		else if (params[CLOAKPASSENABLED]->GetIntValue())
+		{
+			CloakBlendedPassVars_t info;
+			SetupVarsCloakBlendedPass(info);
+			InitParamsCloakBlendedPass(this, params, pMaterialName, info);
+		}
 	}
 
 	SHADER_FALLBACK
@@ -285,7 +307,13 @@ BEGIN_VS_SHADER( OF_VertexLitGeneric, "Help for VertexLitGeneric (Open Fortress)
 		SetupVars( vars );
 		InitVertexLitGeneric_DX9( this, params, true, vars );
 
-		// TODO: Re-implement cloak!!
+		// Cloak Pass
+		if (params[CLOAKPASSENABLED]->GetIntValue())
+		{
+			CloakBlendedPassVars_t info;
+			SetupVarsCloakBlendedPass(info);
+			InitCloakBlendedPass(this, params, info);
+		}
 	}
 
 	SHADER_DRAW
@@ -294,7 +322,9 @@ BEGIN_VS_SHADER( OF_VertexLitGeneric, "Help for VertexLitGeneric (Open Fortress)
 		bool bDrawStandardPass = true;
 		if ( params[CLOAKPASSENABLED]->GetIntValue() && ( pShaderShadow == NULL ) ) // && not snapshotting
 		{
-			if (params[CLOAKFACTOR]->GetFloatValueFast() >= 0.5f)
+			CloakBlendedPassVars_t info;
+			SetupVarsCloakBlendedPass(info);
+			if (CloakBlendedPassIsFullyOpaque(params, info))
 			{
 				bDrawStandardPass = false;
 			}
@@ -313,6 +343,21 @@ BEGIN_VS_SHADER( OF_VertexLitGeneric, "Help for VertexLitGeneric (Open Fortress)
 			Draw( false );
 		}
 
-		// TODO: Re-implement cloak!!
+		// Cloak Pass
+		if (params[CLOAKPASSENABLED]->GetIntValue())
+		{
+			// If ( snapshotting ) or ( we need to draw this frame )
+			if ((pShaderShadow != NULL) || ((params[CLOAKFACTOR]->GetFloatValue() > 0.0f) && (params[CLOAKFACTOR]->GetFloatValue() < 1.0f)))
+			{
+				CloakBlendedPassVars_t info;
+				SetupVarsCloakBlendedPass(info);
+				DrawCloakBlendedPass(this, params, pShaderAPI, pShaderShadow, info, vertexCompression);
+			}
+			else // We're not snapshotting and we don't need to draw this frame
+			{
+				// Skip this pass!
+				Draw(false);
+			}
+		}
 	}
 END_SHADER
