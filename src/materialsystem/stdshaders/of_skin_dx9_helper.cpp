@@ -21,6 +21,8 @@ static ConVarRef mat_fullbright( "mat_fullbright");
 static ConVarRef r_lightwarpidentity("r_lightwarpidentity");
 static ConVarRef r_rimlight("r_rimlight");
 
+ConVar of_half_lambertian_lighting("of_half_lambertian_lighting", "1", FCVAR_ARCHIVE, "Should we use half-lambert for phong materials with bumpmaps? 1 is vanilla behaviour (on), 0 disables half-lambert completely and 2 will enable it on a per-material basis");
+
 // Textures may be bound to the following samplers:
 //	SHADER_SAMPLER0	 Base (Albedo) / Gloss in alpha
 //	SHADER_SAMPLER1	 Specular warp (including iridescence)
@@ -249,6 +251,8 @@ void DrawSkin_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** params, IShad
 	bool bHasDiffuseWarp = (info.m_nDiffuseWarpTexture != -1) && params[info.m_nDiffuseWarpTexture]->IsTexture();
 	bool bHasPhongWarp = (info.m_nPhongWarpTexture != -1) && params[info.m_nPhongWarpTexture]->IsTexture();
 	bool bHasNormalMapAlphaEnvmapMask = IS_FLAG_SET( MATERIAL_VAR_NORMALMAPALPHAENVMAPMASK );
+
+	bool bHalfLambert = of_half_lambertian_lighting.GetInt() == 2 ? IS_FLAG_SET(MATERIAL_VAR_HALFLAMBERT) : of_half_lambertian_lighting.GetBool();
 
 #if !defined( _X360 )
 	bool bIsDecal = IS_FLAG_SET( MATERIAL_VAR_DECAL );
@@ -641,7 +645,7 @@ void DrawSkin_DX9_Internal( CBaseVSShader *pShader, IMaterialVar** params, IShad
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( PIXELFOGTYPE, pShaderAPI->GetPixelFogCombo() );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( FLASHLIGHTSHADOWS, bFlashlightShadows );
 			SET_DYNAMIC_PIXEL_SHADER_COMBO( PHONG_USE_EXPONENT_FACTOR, bHasPhongExponentFactor );
-			SET_DYNAMIC_PIXEL_SHADER_COMBO( HALF_LAMBERT, 0 );
+			SET_DYNAMIC_PIXEL_SHADER_COMBO( HALF_LAMBERT, bHalfLambert);
 			SET_DYNAMIC_PIXEL_SHADER( of_skin_ps30 );
 
 			bool bUnusedTexCoords[3] = { false, false, !pShaderAPI->IsHWMorphingEnabled() || !bIsDecal };

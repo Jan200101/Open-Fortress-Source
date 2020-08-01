@@ -30,6 +30,6 @@ void DrawSkin_DX9( CBaseVSShader *pShader, IMaterialVar** params, IShaderDynamic
 				   VertexLitGeneric_DX9_Vars_t &info, VertexCompressionType_t vertexCompression,
 				   CBasePerMaterialContextData **pContextDataPtr );
 
-				   
+extern ConVar of_half_lambertian_lighting;
 
 #endif // SKIN_DX9_HELPER_H

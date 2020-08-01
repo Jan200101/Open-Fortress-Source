@@ -471,7 +471,8 @@ static void DrawVertexLitGeneric_DX9_Internal( CBaseVSShader *pShader, IMaterial
 				bHasNormal = true;
 			}
 
-			bool bHalfLambert = IS_FLAG_SET( MATERIAL_VAR_HALFLAMBERT );
+			// Leaving it like this to keep vanilla behaviour when having it set to 1
+			bool bHalfLambert = of_half_lambertian_lighting.GetInt() > 0 ? IS_FLAG_SET(MATERIAL_VAR_HALFLAMBERT) : false;
 			// Alpha test: FIXME: shouldn't this be handled in CBaseVSShader::SetInitialShadowState
 			pShaderShadow->EnableAlphaTest( bIsAlphaTested );
 
