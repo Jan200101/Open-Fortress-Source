@@ -92,7 +92,7 @@ VS_OUTPUT main( const VS_INPUT v )
 	float4 vTangent;
 	DecompressVertex_NormalTangent( v.vNormal, v.vUserData, vNormal, vTangent );
 
-#if !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
+#if 1 || !defined( SHADER_MODEL_VS_3_0 ) || !MORPHING
 	ApplyMorph( v.vPosFlex, v.vNormalFlex, 
 		vPosition.xyz, vNormal, vTangent.xyz, o.projPos_fWrinkleWeight.w );
 #else
@@ -112,7 +112,7 @@ VS_OUTPUT main( const VS_INPUT v )
 	worldTangentS = normalize( worldTangentS );
 	worldTangentT = normalize( worldTangentT );
 
-#if defined( SHADER_MODEL_VS_3_0 ) && MORPHING && DECAL
+#if 0 && defined( SHADER_MODEL_VS_3_0 ) && MORPHING && DECAL
 	// Avoid z precision errors
 	worldPos += worldNormal * 0.05f * v.vTexCoord2.z;
 #endif

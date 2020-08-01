@@ -294,7 +294,7 @@ BEGIN_VS_SHADER( OF_VertexLitGeneric, "Help for VertexLitGeneric (Open Fortress)
 		bool bDrawStandardPass = true;
 		if ( params[CLOAKPASSENABLED]->GetIntValue() && ( pShaderShadow == NULL ) ) // && not snapshotting
 		{
-			if (params[CLOAKFACTOR]->GetFloatValueFast() <= 0.01f)
+			if (params[CLOAKFACTOR]->GetFloatValueFast() >= 0.5f)
 			{
 				bDrawStandardPass = false;
 			}
