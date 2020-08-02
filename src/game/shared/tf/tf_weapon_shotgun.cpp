@@ -15,8 +15,8 @@
 	#include "gamestats.h"
 #endif
 
-#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
-																	\
+#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )	\
+															\
 	IMPLEMENT_NETWORKCLASS_ALIASED( WpnName, DT_##WpnName )	\
 															\
 	BEGIN_NETWORK_TABLE( C##WpnName, DT_##WpnName )			\
@@ -28,7 +28,7 @@
 	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
 	//PRECACHE_WEAPON_REGISTER( entityname );
 
-#define CREATE_SIMPLE_WEAPON_TABLE_OLD(WpnName, entityname)			    \
+#define CREATE_SIMPLE_WEAPON_TABLE_OLD(WpnName, entityname)			\
 																	\
 	IMPLEMENT_NETWORKCLASS_ALIASED( ##WpnName##, DT_##WpnName## )	\
 																	\
@@ -578,7 +578,7 @@ bool CTFEternalShotgun::HookLOS(Vector hookPos)
 
 	//Msg("%f %f %f %f\n", hookPos.Length(), playerCenter.Length(), tr.endpos.Length(), (tr.endpos - playerCenter).Length());
 
-	return (tr.endpos - playerCenter).Length() < 40.f;
+	return (tr.endpos - playerCenter).Length() < 200.f;
 }
 
 void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
@@ -713,8 +713,7 @@ void CTFMeatHook::HookTouch(CBaseEntity *pOther)
 		m_hOwner->RemoveHook();
 		return;
 	}
-
-	//hooked an entity that can be damaged
+	
 	EmitSound("Weapon_AR2.Reload_Push");
 
 	SetTouch(NULL);
