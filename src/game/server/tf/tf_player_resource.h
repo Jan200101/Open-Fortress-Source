@@ -11,6 +11,10 @@
 #pragma once
 #endif
 
+#include "player_resource.h"
+
+class CTFPlayer;
+
 class CTFPlayerResource : public CPlayerResource
 {
 	DECLARE_CLASS( CTFPlayerResource, CPlayerResource );
@@ -25,12 +29,17 @@ public:
 
 	int	GetTotalScore( int iIndex );
 	Color GetPlayerColor( int iIndex );
+	void UpdatePlayerCosmetics( CTFPlayer *pPlayer );
 
 protected:
 	CNetworkArray( int,	m_iTotalScore, MAX_PLAYERS+1 );
 	CNetworkArray( int, m_iMaxHealth, MAX_PLAYERS+1 );
 	CNetworkArray( int, m_iPlayerClass, MAX_PLAYERS+1 );
 	CNetworkArray( Vector, m_vecColors, MAX_PLAYERS + 1 );
+	CNetworkArray( int, m_iCosmetics,  16 * 33 );
+	CNetworkArray( int, m_iCosmetics2, 16 * 33 );
+	CNetworkArray( int, m_iCosmetics3, 16 * 33 );
+	CNetworkArray( int, m_iCosmetics4, 17 * 33 );	
 };
 
 inline CTFPlayerResource *GetTFPlayerResource( void )

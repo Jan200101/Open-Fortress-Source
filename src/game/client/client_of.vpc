@@ -13,12 +13,11 @@ $Configuration
 {
 	$Compiler
 	{
-		$AdditionalIncludeDirectories	".\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;$BASE;.\of;.\of\vgui;$SRCDIR\game\shared\of;$SRCDIR\fmod_studio\api\core\inc;$SRCDIR\fmod_studio\api\studio\inc"
+		$AdditionalIncludeDirectories	".\tf;.\tf\vgui;$SRCDIR\game\shared\Multiplayer;$SRCDIR\game\shared\tf;$BASE;.\of;.\of\vgui;$SRCDIR\game\shared\of;$SRCDIR\fmod_studio\api\core\inc"
 		$PreprocessorDefinitions		"$BASE;GLOWS_ENABLE;OF_CLIENT_DLL"
 	}
 	$Linker
 	{
-		$AdditionalLibraryDirectories	"$SRCDIR\fmod\api\lib"
 	}
 }
 
@@ -58,20 +57,21 @@ $Project "Client (Open Fortress)"
                     }
                 }
             }
-			
-			$File	"of\of_hud_speedometer.cpp"
+					
 			$File	"of\of_hud_weaponwheel.cpp"
-			$File   "of\of_hud_keydisplay.cpp"
+			$File	"of\of_hud_weaponwheel.h"
+			$File	"of\of_hud_speedometer.cpp"
+			$File "of\of_hud_keydisplay.cpp"
 			$File	"of\of_hud_account.cpp"
 			$File	"of\of_hud_account.h"
 			$File	"of\c_of_dropped_weapon.cpp"
 			$File	"of\c_of_dropped_powerup.cpp"
 			$File	"of\c_entity_weapon_spawner.cpp"
-            $File	"of\c_entity_condpowerup.cpp"
-			$File	"of\c_weapon_grapple.cpp"
-			$File	"of\c_weapon_grapple.h"
+      $File	"of\c_entity_condpowerup.cpp"
 			$File	"of\of_hud_dom.cpp"
 			$File	"of\of_hud_dom.h"
+			$File	"of\of_hud_duel.cpp"
+			$File	"of\of_hud_duel.h"			
 			$File	"of\of_hud_tdm.cpp"
 			$File	"of\of_hud_tdm.h"
 			$File	"of\of_hud_kills.cpp"
@@ -80,6 +80,8 @@ $Project "Client (Open Fortress)"
 			$File	"of\of_hud_powerups.h"
 			$File	"of\of_hud_medals.cpp"
 			$File	"of\of_hud_medals.h"
+			$File	"of\of_hud_nowplaying.cpp"
+			$File	"of\of_hud_nowplaying.h"
 			$File	"tf\tf_hud_shieldcharge.cpp"
 			$File	"tf\tf_hud_swapweapons.cpp"
 			$File	"tf\tf_hud_lungemeter.cpp"
@@ -149,10 +151,6 @@ $Project "Client (Open Fortress)"
 		{
 			$File	"NextBot\c_NextBot.cpp"
 			$File	"NextBot\c_NextBot.h"
-			$File	"tf\c_headless_hatman.cpp"
-			$File	"tf\c_headless_hatman.h"
-			$File	"tf\c_eyeball_boss.cpp"
-			$File	"tf\c_eyeball_boss.h"
 		}
 
 		$Folder	"TF"
@@ -265,8 +263,6 @@ $Project "Client (Open Fortress)"
 			$File	"tf\tf_tips.h"
 			$File	"tf\tf_viewrender.cpp"
 			$File	"tf\tf_viewrender.h"
-			$File	"tf\tf_hud_bosshealthmeter.cpp"
-			$File	"tf\tf_hud_bosshealthmeter.h"
 			$File	"$SRCDIR\game\shared\tf\tf_item.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_item.h"
 			$File	"$SRCDIR\game\shared\tf\tf_obj_baseupgrade_shared.cpp"
@@ -291,17 +287,13 @@ $Project "Client (Open Fortress)"
 			$File	"$SRCDIR\game\shared\tf\tf_viewmodel.cpp"
 			$File	"$SRCDIR\game\shared\tf\tf_viewmodel.h"
 			$File	"$SRCDIR\game\shared\tf\tf_gamestats_shared.cpp"
-			$File	"$SRCDIR\game\shared\tf\entity_bossresource.cpp"
-			$File	"$SRCDIR\game\shared\tf\entity_bossresource.h"
 			$File	"$SRCDIR\game\shared\tf\entity_teleportvortex.cpp"
 			$File	"$SRCDIR\game\shared\tf\entity_teleportvortex.h"
-			$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.cpp"
-			$File	"$SRCDIR\game\shared\tf\tf_halloween_boss.h"
-			$File	"$SRCDIR\game\shared\tf\tf_zombie.cpp"
-			$File	"$SRCDIR\game\shared\tf\tf_zombie.h"
 
 			$Folder	"Weapon"
 			{
+				$File	"$SRCDIR\game\shared\tf\tf_weapon_grapple.cpp"
+				$File	"$SRCDIR\game\shared\tf\tf_weapon_grapple.h"
 				$File	"tf\c_tf_projectile_rocket.cpp"
 				$File	"tf\c_tf_projectile_rocket.h"
 				$File	"tf\c_tf_weapon_builder.cpp"
@@ -514,12 +506,8 @@ $Project "Client (Open Fortress)"
 			$File	"of\gameui\VMainMenu.cpp"
 			$File	"of\gameui\VSliderControl.cpp"
 			$File	"of\gameui\vmenubackground.cpp"
-			
-			$Folder "OF"
-			{
-				$File	"of\gameui\of\dm_loadout.h"				
-				$File	"of\gameui\of\dm_loadout.cpp"
-			}
+			$File	"of\gameui\dm_loadout.h"				
+			$File	"of\gameui\dm_loadout.cpp"
 		}
 	}
 	$Folder "Link Libraries"

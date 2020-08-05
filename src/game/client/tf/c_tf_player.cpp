@@ -6,82 +6,49 @@
 
 #include "cbase.h"
 #include "c_tf_player.h"
-#include "c_user_message_register.h"
 #include "view.h"
 #include "iclientvehicle.h"
-#include "ivieweffects.h"
 #include "input.h"
 #include "IEffects.h"
 #include "fx.h"
 #include "c_basetempentity.h"
-#include "hud_macros.h"
-#include "engine/ivdebugoverlay.h"
-#include "smoke_fog_overlay.h"
-#include "playerandobjectenumerator.h"
-#include "bone_setup.h"
-#include "in_buttons.h"
-#include "r_efx.h"
-#include "dlight.h"
-#include "shake.h"
-#include "cl_animevent.h"
-#include "tf_weaponbase.h"
 #include "c_tf_playerresource.h"
 #include "toolframework/itoolframework.h"
-#include "tier1/KeyValues.h"
-#include "tier0/vprof.h"
 #include "prediction.h"
-#include "effect_dispatch_data.h"
-#include "c_te_effect_dispatch.h"
-#include "tf_fx_muzzleflash.h"
 #include "tf_gamerules.h"
 #include "of_shared_schemas.h"
 #include "view_scene.h"
 #include "ai_debug_shared.h"
-#include "c_baseobject.h"
-#include "toolframework_client.h"
 #include "soundenvelope.h"
 #include "voice_status.h"
 #include "clienteffectprecachesystem.h"
 #include "functionproxy.h"
 #include "toolframework_client.h"
 #include "choreoevent.h"
-#include "vguicenterprint.h"
 #include "eventlist.h"
 #include "tf_hud_statpanel.h"
-#include "input.h"
 #include "tf_weapon_medigun.h"
 #include "tf_weapon_pipebomblauncher.h"
 #include "tf_hud_mediccallers.h"
 #include "in_main.h"
-#include "basemodelpanel.h"
-#include "c_team.h"
 #include "collisionutils.h"
-#include "tf_viewmodel.h"
-#include "cdll_int.h"
-#include "filesystem.h"
-
 #include "dt_utlvector_recv.h"
+#include "filesystem.h"
+#include "gamevars_shared.h"
 
 // for spy material proxy
 #include "proxyentity.h"
-#include "materialsystem/imaterial.h"
-#include "materialsystem/imaterialvar.h"
 #include "c_tf_team.h"
-#include "c_entitydissolve.h"
 
 #if defined( CTFPlayer )
 #undef CTFPlayer
 #endif
 
-#include "materialsystem/imesh.h"		//for materials->FindMaterial
-#include "iviewrender.h"				//for view->
-
 #include "cam_thirdperson.h"
 #include "tf_hud_chat.h"
 #include "iclientmode.h"
 #include "tf_viewmodel.h"
-
-#include "gameui/of/dm_loadout.h"
+#include "gameui/dm_loadout.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -2197,7 +2164,21 @@ public:
 		
 		if ( !pC_BaseEntity )
 		{
-
+			if( GetMaterial() )
+			{
+				bool bSuccess;
+				IMaterialVar *m_pPlayerIndexVar = GetMaterial()->FindVar( "$playerindex", &bSuccess );
+				if( m_pPlayerIndexVar && bSuccess && m_pPlayerIndexVar->GetIntValue() > -1 )
+				{
+					C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
+					if( tf_PR )
+					{
+						Vector vecColor = tf_PR->GetPlayerColorVector(m_pPlayerIndexVar->GetIntValue());
+						m_pResult->SetVecValue( vecColor.x, vecColor.y, vecColor.z );
+						return;
+					}
+				}
+			}
 			float r = floorf( of_color_r.GetFloat() ) / 255.0f;
 			float g = floorf( of_color_g.GetFloat() ) / 255.0f;
 			float b = floorf( of_color_b.GetFloat() ) / 255.0f;
@@ -2557,8 +2538,7 @@ END_PREDICTION_DATA()
 // C_TFPlayer implementation.
 // ------------------------------------------------------------------------------------------ //
 
-C_TFPlayer::C_TFPlayer() : 
-	m_iv_angEyeAngles( "C_TFPlayer::m_iv_angEyeAngles" )
+C_TFPlayer::C_TFPlayer() : m_iv_angEyeAngles( "C_TFPlayer::m_iv_angEyeAngles" )
 {
 	m_PlayerAnimState = CreateTFPlayerAnimState( this );
 	m_Shared.Init( this );
@@ -2569,11 +2549,14 @@ C_TFPlayer::C_TFPlayer() :
 
 	m_pTeleporterEffect = NULL;
 	m_pBurningSound = NULL;
+	m_pTranqSound = NULL;
 	m_pBurningEffect = NULL;
 	m_flBurnEffectStartTime = 0;
 	m_flBurnEffectEndTime = 0;
 	m_pDisguisingEffect = NULL;
 	m_pSaveMeEffect = NULL;
+	m_pTranqEffect = NULL;
+	m_pPoisonEffect = NULL;
 
 	m_pChattingEffect = NULL;
 	m_bChatting = false;
@@ -2768,6 +2751,10 @@ void C_TFPlayer::SetDormant( bool bDormant )
 		{
 			StopBurningSound();
 		}
+		if (m_pTranqSound)
+		{
+			StopTranqSound();
+		}
 		if ( m_bIsDisplayingNemesisIcon )
 		{
 			ShowNemesisIcon( false );
@@ -2792,6 +2779,7 @@ void C_TFPlayer::OnPreDataChanged( DataUpdateType_t updateType )
 	BaseClass::OnPreDataChanged( updateType );
 
 	m_iOldHealth = m_iHealth;
+	m_nOldBody = m_nBody;
 	m_iOldPlayerClass = m_PlayerClass.GetClassIndex();
 	m_iOldState = m_Shared.GetCond();
 	m_iOldSpawnCounter = m_iSpawnCounter;
@@ -2818,7 +2806,7 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 	// C_BaseEntity assumes we're networking the entity's angles, so pretend that it
 	// networked the same value we already have.
 	SetNetworkAngles( GetLocalAngles() );
-	
+
 	BaseClass::OnDataChanged( updateType );
 
 	if ( updateType == DATA_UPDATE_CREATED )
@@ -2854,6 +2842,11 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 
 	bool bJustSpawned = false;
 
+	if( m_nBody != m_nOldBody )
+	{
+		m_bUpdateCosmetics = true;
+	}
+	
 	if ( m_iOldSpawnCounter != m_iSpawnCounter )
 	{
 		ClientPlayerRespawn();
@@ -2875,19 +2868,22 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		bCosmeticsDisabled = of_disable_cosmetics.GetBool();
 	}
 	
+	bool bAliveNotStealth = !m_Shared.InCondInvis() && IsAlive();
+
 	// update the chat bubble on the player (when he is typing a chat message)
 	CreateChattingEffect();
 
+	if ( bAliveNotStealth && m_Shared.InCond(TF_COND_POISON) && !m_pPoisonEffect )
+		CreatePoisonEffect();
+
+	if ( bAliveNotStealth && m_Shared.InCond(TF_COND_TRANQ) && !m_pTranqEffect )
+		CreateTranqEffect();
+
 	if ( m_bSaveMeParity != m_bOldSaveMeParity )
-	{
-		// Player has triggered a save me command
 		CreateSaveMeEffect();
-	}
 
 	if ( m_Shared.InCond( TF_COND_BURNING ) && !m_pBurningSound )
-	{
 		StartBurningSound();
-	}
 
 	// See if we should show or hide nemesis icon for this player
 	bool bShouldDisplayNemesisIcon = ShouldShowNemesisIcon();
@@ -3086,7 +3082,6 @@ void C_TFPlayer::StartBurningSound( void )
 	controller.Play( m_pBurningSound, 0.0, 100 );
 	controller.SoundChangeVolume( m_pBurningSound, 1.0, 0.1 );
 }
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -3096,6 +3091,33 @@ void C_TFPlayer::StopBurningSound( void )
 	{
 		CSoundEnvelopeController::GetController().SoundDestroy( m_pBurningSound );
 		m_pBurningSound = NULL;
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFPlayer::StartTranqSound(void)
+{
+	CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
+
+	if (!m_pTranqSound)
+	{
+		CLocalPlayerFilter filter;
+		m_pTranqSound = controller.SoundCreate(filter, entindex(), "PlayerTranqed");
+	}
+
+	controller.Play(m_pTranqSound, 0.0, 100);
+	controller.SoundChangeVolume(m_pTranqSound, 1.0, 0.1);
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFPlayer::StopTranqSound(void)
+{
+	if (m_pTranqSound)
+	{
+		CSoundEnvelopeController::GetController().SoundDestroy(m_pTranqSound);
+		m_pTranqSound = NULL;
 	}
 }
 
@@ -3330,7 +3352,7 @@ void C_TFPlayer::UpdatePlayerAttachedModels( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdatePartyHat( void )
 {
-	if ( TFGameRules() && TFGameRules()->IsBirthday() && ( m_Shared.WearsHat( 0 ) || GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY ) ) // If the game is in Birthday mode and we don't already wear anything give us a cool hat
+	if ( TFGameRules() && TFGameRules()->IsBirthday() && ( GetPlayerClass()->GetClassIndex() != TF_CLASS_MERCENARY ) ) // If the game is in Birthday mode and we don't already wear anything give us a cool hat
 	{
 		if ( m_hPartyHat )
 		{
@@ -3417,7 +3439,6 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 }
 void C_TFPlayer::UpdateWearables( void )
 {
-	DevMsg("UpdateWearables: Triggered Update Wearables\n");
 	for( int i = 0; i < GetNumBodyGroups(); i++ )
 	{
 		SetBodygroup( i, 0 );
@@ -3434,7 +3455,7 @@ void C_TFPlayer::UpdateWearables( void )
 
 	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
 	{
-		DevMsg("UpdateWearables: Mismatching cosmetic count\n");
+		DevWarning("UpdateWearables: Mismatching cosmetic count\n");
 		return;
 	}
 
@@ -3443,18 +3464,25 @@ void C_TFPlayer::UpdateWearables( void )
 		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
 		if( !pCosmetic )
 		{
-			DevMsg("UpdateWearables: Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
+			DevWarning("UpdateWearables: Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
 			continue;
 		}
+
+		
 		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
 		if( pBodygroups )
 		{
+			if( m_Shared.IsZombie() )
+				continue;
+
 			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
 			{
 				int m_Bodygroup = FindBodygroupByName( sub->GetName() );
 
 				if ( m_Bodygroup >= 0 )
+				{
 					SetBodygroup( m_Bodygroup, sub->GetInt() );
+				}
 			}
 		}
 
@@ -3475,10 +3503,6 @@ void C_TFPlayer::UpdateWearables( void )
 
 				m_hCosmetic.AddToTail(handle);
 			}
-		}
-		else
-		{
-			DevMsg("UpdateWearables: Blank model\n");
 		}
 	}
 }
@@ -3700,7 +3724,7 @@ void C_TFPlayer::ClientThink()
 	// Ugh, this check is getting ugly
 
 	// Start smoke if we're not invisible or disguised
-	if ( !m_bRetroMode && IsPlayerClass( TF_CLASS_SPY ) && IsAlive() &&									// only on spy model when not with TFC model
+	if ( !m_bRetroMode && IsPlayerClass( TF_CLASS_SPY ) && IsAlive() &&		// only on spy model when not with TFC model
 		( !m_Shared.InCond( TF_COND_DISGUISED ) || !IsEnemyPlayer() ) &&	// disguise doesn't show for teammates
 		GetPercentInvisible() <= 0 &&										// don't start if invis
 		( pLocalPlayer != this ) && 										// don't show to local player
@@ -3739,32 +3763,37 @@ void C_TFPlayer::ClientThink()
 		UpdateWearables();
 		m_bUpdateCosmetics = false;
 	}
-	
-	if ( m_pSaveMeEffect )
-	{
-		// Kill the effect if either
-		// a) the player is dead
-		// b) the enemy disguised spy is now invisible
 
-		if ( !IsAlive() ||
-			( m_Shared.InCond( TF_COND_DISGUISED ) && IsEnemyPlayer() && ( GetPercentInvisible() > 0 ) ) )
-		{
-			ParticleProp()->StopEmissionAndDestroyImmediately( m_pSaveMeEffect );
-			m_pSaveMeEffect = NULL;
-		}
+	bool bRemoveEffect = !IsAlive();
+
+	// Kill the effect if either the player is dead or the enemy disguised spy is now invisible
+	if (m_pSaveMeEffect && ( bRemoveEffect || ( m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer() && GetPercentInvisible() > 0 ) ) )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately( m_pSaveMeEffect );
+		m_pSaveMeEffect = NULL;
+	}
+	
+	bRemoveEffect = bRemoveEffect || GetPercentInvisible() > 0;
+
+	// Kill the effect if either the player is dead or the enemy disguised spy is now invisible
+	if ( m_pChattingEffect && bRemoveEffect )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately(m_pChattingEffect);
+		m_pChattingEffect = NULL;
 	}
 
-	if ( m_pChattingEffect )
+	// Kill the effect if either the player is dead, the spy is now invisible, if player is no longer poisoned
+	if ( m_pPoisonEffect && ( bRemoveEffect || !m_Shared.InCond(TF_COND_POISON) ) )
 	{
-		// Kill the effect if either
-		// a) the player is dead
-		// b) the enemy disguised spy is now invisible
+		ParticleProp()->StopEmissionAndDestroyImmediately(m_pPoisonEffect);
+		m_pPoisonEffect = NULL;
+	}
 
-		if ( !IsAlive() && ( GetPercentInvisible() > 0 ) )
-		{
-			ParticleProp()->StopEmissionAndDestroyImmediately( m_pChattingEffect );
-			m_pChattingEffect = NULL;
-		}
+	// Kill the effect if either the player is dead, the spy is now invisible, if player is no longer tranqed
+	if ( m_pTranqEffect && ( bRemoveEffect || !m_Shared.InCond(TF_COND_TRANQ) ) )
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately(m_pTranqEffect);
+		m_pTranqEffect = NULL;
 	}
 }
 
@@ -5055,16 +5084,9 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	// If I'm disguised as the enemy, play to all players
-	if ( m_Shared.InCond( TF_COND_DISGUISED ) && m_Shared.GetDisguiseTeam() != GetTeamNumber() )
-	{
-		// play to all players
-	}
-	else
-	{
-		// only play to teammates
-		if ( pLocalPlayer && pLocalPlayer->GetTeamNumber() != GetTeamNumber() )
-			return;
-	}
+	bool bDisguised = m_Shared.InCond(TF_COND_DISGUISED) && m_Shared.GetDisguiseTeam() != GetTeamNumber();
+	if ( !bDisguised && pLocalPlayer && pLocalPlayer->GetTeamNumber() != GetTeamNumber() )
+		return;
 
 	if ( m_pSaveMeEffect )
 	{
@@ -5083,7 +5105,7 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 	}
 
 	// If the local player has a medigun, add this player to our list of medic callers
-	if ( pLocalPlayer && pLocalPlayer->IsAlive() == true )
+	if ( pLocalPlayer && pLocalPlayer->IsAlive() )
 	{
 		CTFWeaponBase *pWpn = (CTFWeaponBase *)Weapon_OwnsThisID( TF_WEAPON_MEDIGUN );
 		CTFWeaponBase *pWpn2 = (CTFWeaponBase *)Weapon_OwnsThisID( TFC_WEAPON_MEDKIT );
@@ -5106,39 +5128,57 @@ void C_TFPlayer::CreateSaveMeEffect( void )
 				CTFMedicCallerPanel::AddMedicCaller( this, 5.0, vecPos );
 			}
 		}
-		else
-		{
-			return;
-		}
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:  Creation Of Chatting Overhead Effect
+//-----------------------------------------------------------------------------
 void C_TFPlayer::CreateChattingEffect(void)
 {
 	// Don't create them for the local player
-	// if ( IsLocalPlayer() && !ShouldDrawLocalPlayer() )
-	if ( IsLocalPlayer() )
+	if (IsLocalPlayer())
 		return;
 
 	// If I'm disguised as the enemy, don't create
-	// if ( !m_Shared.InCond( TF_COND_DISGUISED ) && m_bChatting )
-	if ( ( !m_Shared.InCondInvis() ) && m_bChatting && IsAlive() )
+	if (!m_Shared.InCondInvis() && m_bChatting && IsAlive())
 	{
-		if ( !m_pChattingEffect ) 
-		{
-			// this uses the unused particle
-			m_pChattingEffect = ParticleProp()->Create( "speech_typing", PATTACH_POINT_FOLLOW, "head" );
-		}
+		// this uses the unused particle
+		if (!m_pChattingEffect)
+			m_pChattingEffect = ParticleProp()->Create("speech_typing", PATTACH_POINT_FOLLOW, "head");
 	}
-	// kill the chat bubble if we aren't typing anymore
+	else if (m_pChattingEffect)
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately(m_pChattingEffect);
+		m_pChattingEffect = NULL;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:  Creation Of Poison Overhead Effect
+//-----------------------------------------------------------------------------
+void C_TFPlayer::CreatePoisonEffect(void)
+{
+	// Don't create them for the local player
+	if ( IsLocalPlayer() )
+		return;
+
+	m_pPoisonEffect = ParticleProp()->Create("poison_overhead", PATTACH_POINT_FOLLOW, "head");
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:  Creation Of Tranq Overhead Effect
+//-----------------------------------------------------------------------------
+void C_TFPlayer::CreateTranqEffect(void)
+{
+	// Don't create them for the local player
+	if ( IsLocalPlayer() )
+		return;
+
+	if (!m_Shared.m_bTranqEffects)
+		m_pTranqEffect = ParticleProp()->Create("sleepy_overhead", PATTACH_POINT_FOLLOW, "head");
 	else
-	{
-		if ( m_pChattingEffect )
-		{
-			ParticleProp()->StopEmissionAndDestroyImmediately( m_pChattingEffect );
-			m_pChattingEffect = NULL;
-		}
-	}
+		m_pTranqEffect = ParticleProp()->Create("mark_for_death", PATTACH_POINT_FOLLOW, "head");
 }
 
 //-----------------------------------------------------------------------------
@@ -5315,60 +5355,54 @@ void C_TFPlayer::Simulate( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void C_TFPlayer::FireEvent( const Vector& origin, const QAngle& angles, int event, const char *options )
+void C_TFPlayer::FireEvent(const Vector& origin, const QAngle& angles, int event, const char *options)
 {
-	if ( event == 7001 )
+	Vector vel(0.f, 0.f, 0.f);
+	CEffectData data;
+	C_BaseAnimating *pWeapon;
+	CTFWeaponBase *pTFWeapon;
+
+	switch (event)
 	{
+	case 7001:
 		// Force a footstep sound
 		m_flStepSoundTime = 0;
-		Vector vel;
-		EstimateAbsVelocity( vel );
-		UpdateStepSound( GetGroundSurface(), GetAbsOrigin(), vel );
-	}
-	else if ( event == AE_WPN_HIDE )
-	{
-		if ( GetActiveWeapon() )
-		{
-			GetActiveWeapon()->SetWeaponVisible( false );
-		}
-	}
-	else if ( event == AE_WPN_UNHIDE )
-	{
-		if ( GetActiveWeapon() )
-		{
-			GetActiveWeapon()->SetWeaponVisible( true );
-		}
-	}
-	else if ( event == AE_CL_BODYGROUP_SET_VALUE )
-	{
-		CTFWeaponBase *pTFWeapon = GetActiveTFWeapon();
-		
-		if ( pTFWeapon )
+		EstimateAbsVelocity(vel);
+		UpdateStepSound(GetGroundSurface(), GetAbsOrigin(), vel);
+		break;
+
+	case AE_WPN_HIDE:
+		if (GetActiveWeapon())
+			GetActiveWeapon()->SetWeaponVisible(false);
+		break;
+
+	case AE_WPN_UNHIDE:
+		if (GetActiveWeapon())
+			GetActiveWeapon()->SetWeaponVisible(true);
+		break;
+
+	case AE_CL_BODYGROUP_SET_VALUE:
+		pTFWeapon = GetActiveTFWeapon();
+		if (pTFWeapon)
 		{
 			// hacky!
-			C_BaseAnimating *pWeapon = pTFWeapon->GetOwnModel();
-
-			if ( pWeapon )
-			{
-				pTFWeapon->FireEvent( origin, angles, AE_CL_BODYGROUP_SET_VALUE, options );
-			}
+			pWeapon = pTFWeapon->GetOwnModel();
+			if (pWeapon)
+				pTFWeapon->FireEvent(origin, angles, AE_CL_BODYGROUP_SET_VALUE, options);
 		}
-	}
+		break;
 
-	else if ( event == TF_AE_CIGARETTE_THROW )
-	{
-		CEffectData data;
-		int iAttach = LookupAttachment( options );
-		GetAttachment( iAttach, data.m_vOrigin, data.m_vAngles );
-
+	case TF_AE_CIGARETTE_THROW:
+		GetAttachment(LookupAttachment(options), data.m_vOrigin, data.m_vAngles);
 		data.m_vAngles = GetRenderAngles();
+		data.m_hEntity = ClientEntityList().EntIndexToHandle(entindex());
+		DispatchEffect("TF_ThrowCigarette", data);
+		break;
 
-		data.m_hEntity = ClientEntityList().EntIndexToHandle( entindex() );
-		DispatchEffect( "TF_ThrowCigarette", data );
-		return;
+	default:
+		BaseClass::FireEvent(origin, angles, event, options);
+		break;
 	}
-	else
-		BaseClass::FireEvent( origin, angles, event, options );
 }
 
 void C_TFPlayer::FireGameEvent( IGameEvent *event )
@@ -5376,17 +5410,16 @@ void C_TFPlayer::FireGameEvent( IGameEvent *event )
 	if( C_TFPlayer::GetLocalTFPlayer() && C_TFPlayer::GetLocalTFPlayer() == this )
 		return;
 
-	const char *eventname = event->GetName();
-
-	if ( !Q_strcmp( "player_jump", eventname ))
+	if ( !Q_strcmp( "player_jump", event->GetName() ) )
 	{
-		if( !of_jumpsound.GetBool() )
+		int iJumpSoundVar = of_jumpsound.GetInt();
+		if ( !iJumpSoundVar )
 			return;
 		
 		if ( event->GetInt("playerid") != entindex() )
 			return;
 		
-		if ( GetPlayerClass()->GetClassIndex() > 9 || of_jumpsound.GetInt() == 2 )
+		if ( GetPlayerClass()->GetClassIndex() > 9 || iJumpSoundVar == 2 )
 			EmitSound( GetPlayerClass()->GetJumpSound() );
 	}
 }

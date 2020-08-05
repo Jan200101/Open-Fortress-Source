@@ -771,6 +771,13 @@ ConVarRef suitcharger( "sk_suitcharger" );
 	{
 		DeathNotice( pVictim, info );
 
+#ifdef OF_DLL
+		//if warmup or game over don't award frags
+		int iTFRulesState = TFGameRules()->State_Get();
+		if (iTFRulesState == GR_STATE_TEAM_WIN || TFGameRules()->IsInWaitingForPlayers() || iTFRulesState <= GR_STATE_PREGAME)
+			return;
+#endif
+
 		// Find the killer & the scorer
 		CBaseEntity *pInflictor = info.GetInflictor();
 		CBaseEntity *pKiller = info.GetAttacker();
@@ -783,7 +790,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 		// g_EventQueue.AddEvent( "game_playerdie", "Use", value, 0, pVictim, pVictim );
 		FireTargets( "game_playerdie", pVictim, pVictim, USE_TOGGLE, 0 );
 
-#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+#ifdef OF_DLL
 		CTFPlayer *pPlayer = ToTFPlayer( pVictim );
 
 		if ( TFGameRules() && TFGameRules()->IsESCGamemode() && pPlayer && pPlayer->IsPlayerClass( TF_CLASS_CIVILIAN ) )
@@ -796,7 +803,7 @@ ConVarRef suitcharger( "sk_suitcharger" );
 
 		// Did the player kill himself?
 		if ( pVictim == pScorer )  
-		{			
+		{
 			if ( UseSuicidePenalty() )
 			{
 				// Players lose a frag for killing themselves

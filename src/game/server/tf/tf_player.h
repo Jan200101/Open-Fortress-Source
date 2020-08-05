@@ -5,19 +5,13 @@
 #define TF_PLAYER_H
 #pragma once
 
-#include "basemultiplayerplayer.h"
-#include "server_class.h"
-#include "tf_playeranimstate.h"
-#include "tf_shareddefs.h"
 #include "tf_player_shared.h"
-#include "tf_weaponbase.h"
 #include "tf_weaponbase_gun.h"
 #include "tf_playerclass.h"
 #include "entity_tfstart.h"
 #include "trigger_area_capture.h"
 #include "nav_mesh/tf_nav_area.h"
 #include "Path/NextBotPathFollow.h"
-#include "NextBotUtil.h"
 #include "tf_powerup.h"
 
 class CTFPlayer;
@@ -141,7 +135,7 @@ public:
 
 	virtual int			OnTakeDamage( const CTakeDamageInfo &inputInfo );
 	virtual int			OnTakeDamage_Alive( const CTakeDamageInfo &info );
-	void				ApplyDamageKnockback( const CTakeDamageInfo &info );
+	void				ApplyDamageKnockback( const CTakeDamageInfo &info, bool noKnockback = false, Vector *dir = NULL );
 	void				AddDamagerToHistory( EHANDLE hDamager );
 	void				ClearDamagerHistory();
 	DamagerHistory_t	&GetDamagerHistory( int i ) { return m_DamagerHistory[i]; }
@@ -176,7 +170,7 @@ public:
 
 	virtual	void		RemoveAllItems( bool removeSuit );
 
-	bool				DropCurrentWeapon( void );
+	//bool				DropCurrentWeapon( void ); Ivory: this is not used anywhere
 	void				DropFlag( void );
 	void				TFWeaponRemove( int iWeaponID );
 	bool				TFWeaponDrop( CTFWeaponBase *pWeapon, bool bThrowForward );
@@ -465,6 +459,7 @@ public:
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageRocketArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageArsenalWeapons(TFPlayerClassData_t *pData);
+	void				ManageEternalWeapons(TFPlayerClassData_t *pData);
 	void				ManageBuilderWeapons( TFPlayerClassData_t *pData, bool bSwitch = true );
 	bool				ManageRandomizerWeapons( TFPlayerClassData_t *pData );
 	void				ManageCustomSpawnWeapons( TFPlayerClassData_t *pData );
@@ -540,6 +535,12 @@ public:
 	CUtlVector< PowerupHandle >	m_hPowerups;
 	CUtlVector< WeaponHandle >	m_hSuperWeapons;
 
+	void				ResetShieldDamage();
+
+private:
+	int					m_iShieldDamage;
+
+public:
 	WeaponHandle m_hWeaponInSlot[10][20]; // 20 pos cuz melee my ass
 
 	//medals
@@ -721,6 +722,8 @@ public:
 	void				InputSpeakResponseConcept( inputdata_t &inputdata );
 	void				InputIgnitePlayer( inputdata_t &inputdata );
 	void				InputExtinguishPlayer( inputdata_t &inputdata );
+	void				InputPoisonPlayer( inputdata_t &inputdata );
+	void				InputDePoisonPlayer( inputdata_t &inputdata );
 	void				InputSetZombie( inputdata_t &inputdata );
 	void				InputSetTeamNoKill( inputdata_t &inputdata );
 	bool				m_bNotAlreadyPlayingMusic;

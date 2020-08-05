@@ -5,18 +5,8 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
-#include "shareddefs.h"
-#include "eiface.h"
-#include "team.h"
-#include "gameinterface.h"
-#include "fmtstr.h"
-
-#include "tf_shareddefs.h"
 #include "tf_voteissues.h"
 #include "tf_gamerules.h"
-#include "tf_player.h"
-
-#include "tf_gamestats.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -469,6 +459,12 @@ const char *CChangeMutatorIssue::GetDetailsString( void )
 		case GUN_GAME:
 			return "#TF_vote_mutator_gungame";
 			break;
+		case ARSENAL:
+			return "#TF_vote_mutator_arsenal";
+			break;
+		case ETERNAL:
+			return "#TF_vote_mutator_eternal";
+			break;
 	}
 
 	return m_szDetailsString;
@@ -490,7 +486,7 @@ bool CChangeMutatorIssue::CanCallVote( int nEntIndex, const char *pszDetails, vo
 {
 	int iMutator = ( atoi( m_szDetailsString ) );
 
-	if ( iMutator < NO_MUTATOR || iMutator > GUN_GAME )
+	if ( iMutator < NO_MUTATOR || iMutator >= OF_MUTATOR_COUNT )
 	{
 		nFailCode = VOTE_FAILED_MUTATOR_INVALID;
 		nTime = m_flNextCallTime - gpGlobals->curtime;

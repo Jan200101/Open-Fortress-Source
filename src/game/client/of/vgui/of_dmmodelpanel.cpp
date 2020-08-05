@@ -6,38 +6,9 @@
 //=============================================================================
 
 #include "cbase.h"
-
-#include <vgui_controls/Label.h>
-#include <vgui_controls/Button.h>
-#include <vgui_controls/ComboBox.h>
-#include <vgui_controls/ImagePanel.h>
-#include <vgui_controls/RichText.h>
-#include <vgui_controls/Frame.h>
-#include <vgui_controls/QueryBox.h>
-#include <vgui/IScheme.h>
-#include <vgui/ILocalize.h>
-#include <vgui/ISurface.h>
-#include "ienginevgui.h"
-#include <game/client/iviewport.h>
-#include "tf_tips.h"
-#include "renderparm.h"
-#include "animation.h"
-#include "tf_controls.h"
-#include "cvartogglecheckbutton.h"
-#include "datacache/imdlcache.h"
-
 #include "of_dmmodelpanel.h"
-
-#include "engine/IEngineSound.h"
-#include "basemodelpanel.h"
-#include "tf_gamerules.h"
 #include "of_shared_schemas.h"
-#include <convar.h>
-#include <vgui_controls/ScrollBarSlider.h>
-#include <vgui_controls/Slider.h>
-#include "fmtstr.h"
-
-#include "tier0/dbg.h"
+#include "gameui/basemodui.h"
 
 using namespace BaseModUI;
 using namespace vgui;
@@ -53,6 +24,7 @@ DECLARE_BUILD_FACTORY(DMModelPanel);
 //-----------------------------------------------------------------------------
 DMModelPanel::DMModelPanel(Panel *parent, const char *panelName) : BaseClass(parent, panelName) 
 {
+	iWeaponAnim = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -61,6 +33,7 @@ DMModelPanel::DMModelPanel(Panel *parent, const char *panelName) : BaseClass(par
 void DMModelPanel::ApplySettings( KeyValues *inResourceData )
 {
 	BaseClass::ApplySettings(inResourceData);
+	SetWeaponModel("models/weapons/w_models/w_supershotgun.mdl", 0);
 }
 
 //-----------------------------------------------------------------------------
@@ -71,6 +44,28 @@ void DMModelPanel::ApplySchemeSettings(IScheme *pScheme)
 	BaseClass::ApplySchemeSettings( pScheme );
 
 	SetLoadoutCosmetics();
+	KeyValues *pWeapons = GetLoadout()->FindKey("Weapons");
+	if( pWeapons )
+	{
+		KeyValues *pMercenary = pWeapons->FindKey("mercenary");
+		if( pMercenary )
+		{
+			int i = 1;
+			while( i < 3 )
+			{
+				KeyValues *pWeapon = GetWeaponFromSchema( pMercenary->GetString( VarArgs("%d", i) ) );
+				if( pWeapon )
+				{
+					if( pWeapon->GetInt( "loadout_anim", -1 ) != -1 )
+					{
+						SetWeaponModel( pWeapon->FindKey( "WeaponData" )->GetString( "playermodel" ), pWeapon->GetInt( "loadout_anim" ) );
+						break;
+					}
+				}
+				i++;
+			}
+		}
+	}
 
 	SetPaintBackgroundEnabled(true);
 
@@ -129,7 +124,7 @@ void DMModelPanel::PaintBackground()
 			SetBodygroup(i, 0);
 		}
 		// Set the animation.
-		SetMergeMDL( "models/weapons/w_models/w_supershotgun.mdl", NULL, 2 );
+		SetMergeMDL( szWeaponModel, NULL, 2 );
 		for( int i = 0; i < m_iCosmetics.Count(); i++ )
 		{
 			KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
@@ -154,6 +149,7 @@ void DMModelPanel::PaintBackground()
 			}
 		}
 		Update();
+		SetModelAnim( iWeaponAnim );
 		
 		m_bUpdateCosmetics = false;
 	}
@@ -184,6 +180,14 @@ void DMModelPanel::SetCosmetic(int iCosmeticID, bool bSelected)
 			}
 		}
 	}
+	m_bUpdateCosmetics = true;
+}
+
+void DMModelPanel::SetWeaponModel( const char *szWeapon, int iAnim )
+{
+	Q_strncpy(szWeaponModel, szWeapon, sizeof(szWeaponModel));
+	SetModelAnim( iAnim );
+	iWeaponAnim = iAnim;
 	m_bUpdateCosmetics = true;
 }
 

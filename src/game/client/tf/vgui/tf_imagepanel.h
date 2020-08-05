@@ -12,9 +12,7 @@
 #endif
 
 #include "tf_shareddefs.h"
-#include <vgui/IScheme.h>
 #include <vgui_controls/ImagePanel.h>
-#include "GameEventListener.h"
 
 #define MAX_BG_LENGTH		128
 
@@ -29,13 +27,21 @@ public:
 	void UpdateBGImage( void );
 
 	virtual Color GetDrawColor( void );
+	virtual void PaintBackground();
+	void	SetPlayerOwner( int iPlayerIndex );
+	void	OnSizeChanged(int wide, int tall);
 
 public: // IGameEventListener Interface
 	virtual void FireGameEvent( IGameEvent * event );
 
 public:
 	char	m_szTeamBG[TF_TEAM_COUNT][MAX_BG_LENGTH];
+	char	m_szCompensateBG[MAX_BG_LENGTH];
 	int		m_iBGTeam;
+	
+	int		m_iPlayerIndex;
+	
+	vgui::ImagePanel *pCompensate;
 };
 
 

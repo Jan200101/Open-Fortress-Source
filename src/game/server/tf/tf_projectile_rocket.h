@@ -42,7 +42,7 @@ public:
 
 private:
 	CBaseHandle m_Scorer;
-	CNetworkVar( int,	m_bCritical );
+	CNetworkVar( int, m_bCritical );
 };
 
 class CTFCProjectile_IncendRocket : public CTFProjectile_Rocket
@@ -52,6 +52,24 @@ public:
 	DECLARE_CLASS(CTFCProjectile_IncendRocket, CTFProjectile_Rocket);
 	
 	static CTFCProjectile_IncendRocket *Create( CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );	
+};
+
+class CTFProjectile_BouncyRocket : public CTFProjectile_Rocket
+{
+public:
+
+	DECLARE_CLASS(CTFProjectile_BouncyRocket, CTFProjectile_Rocket);
+	DECLARE_NETWORKCLASS();
+
+	static CTFProjectile_BouncyRocket *Create(CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL);
+
+	virtual void Precache(void);
+	virtual void FlyThink(void);
+	virtual void RocketTouch(CBaseEntity *pOther);
+	virtual void BounceSound(void);
+
+private:
+	int iOldWaterLevel;
 };
 
 #endif	//TF_PROJECTILE_ROCKET_H

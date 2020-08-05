@@ -10,15 +10,9 @@
 #pragma once
 #endif
 
-#include "tf_playeranimstate.h"
-#include "c_baseplayer.h"
-#include "tf_shareddefs.h"
-#include "baseparticleentity.h"
 #include "tf_player_shared.h"
 #include "c_tf_playerclass.h"
 #include "tf_item.h"
-#include "props_shared.h"
-#include "hintsystem.h"
 #include "c_playerattachedmodel.h"
 #include "iinput.h"
 #include "physpropclientside.h"
@@ -161,8 +155,10 @@ public:
 
 	void CreateSaveMeEffect( void );
 	void CreateChattingEffect(void);
+	void CreatePoisonEffect(void);
+	void CreateTranqEffect(void);
 
-	CGlowObject		   *m_pGlowEffect;
+	CGlowObject			*m_pGlowEffect;
 
 	virtual void	GetGlowEffectColor( float *r, float *g, float *b );
 
@@ -176,6 +172,8 @@ public:
 
 	void			StartBurningSound( void );
 	void			StopBurningSound( void );
+	void			StartTranqSound(void);
+	void			StopTranqSound(void);
 	void			OnAddTeleported( void );
 	void			OnRemoveTeleported( void );
 	
@@ -334,6 +332,7 @@ private:
 	float				m_flHealerChargeLevel;
 	int					m_iOldHealth;
 	bool				m_bOldJumping;
+	int					m_nOldBody;
 
 	CNetworkVar( int, m_iPlayerModelIndex );
 
@@ -357,6 +356,10 @@ private:
 	CNewParticleEffect	*m_pSaveMeEffect;
 	// Player typing particle effect
 	CNewParticleEffect	*m_pChattingEffect;
+	// Poison particle effect
+	CNewParticleEffect	*m_pPoisonEffect;
+	// Tranq particle effect
+	CNewParticleEffect	*m_pTranqEffect;
 
 	bool m_bUpdateObjectHudState;
 
@@ -401,6 +404,9 @@ public:
 	CNewParticleEffect	*m_pBurningEffect;
 	float				m_flBurnEffectStartTime;
 	float				m_flBurnEffectEndTime;
+
+	//Tranq
+	CSoundPatch			*m_pTranqSound;
 
 	CNewParticleEffect	*m_pDisguisingEffect;
 	float m_flDisguiseEffectStartTime;

@@ -7,16 +7,8 @@
 #include "cbase.h"
 #include "tf_hud_chat.h"
 #include "hud_macros.h"
-#include "text_message.h"
-#include "vguicenterprint.h"
-#include "vgui/ILocalize.h"
-#include "engine/IEngineSound.h"
-#include "c_tf_team.h"
-#include "c_playerresource.h"
 #include "c_tf_playerresource.h"
-#include "c_tf_player.h"
 #include "tf_gamerules.h"
-#include "ihudlcd.h"
 #include "tf_hud_freezepanel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -172,10 +164,10 @@ Color CHudChat::GetClientColor( int clientIndex )
 		C_TFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( clientIndex ) );
 		C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 		
-		if (pPlayer && TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay())
+		if (TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay())
 		{
 			C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>(g_PR);
-			return tf_PR->GetPlayerColor(pPlayer->entindex());
+			return tf_PR->GetPlayerColor(clientIndex);
 		}
 
 		if ( IsVoiceSubtitle() == true )

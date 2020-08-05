@@ -1,21 +1,15 @@
-
 #include "cbase.h"
 #include "movevars_shared.h"
 
 #ifdef GAME_DLL
-
-#include "of_trigger_jump.h"
-#include "tf_player.h"
-#include "tf_bot.h"
+	#include "of_trigger_jump.h"
+	#include "tf_player.h"
+	#include "tf_bot.h"
 #else
+	#include "c_of_trigger_jump.h"
+	#include "c_tf_player.h"
 
-#include "engine/ivdebugoverlay.h"
-#include "c_of_trigger_jump.h"
-#include "c_tf_player.h"
-#include "prediction.h"
-
-#define COFDTriggerJump C_OFDTriggerJump
-
+	#define COFDTriggerJump C_OFDTriggerJump
 #endif
 
 
@@ -34,67 +28,54 @@ void COFDTriggerJump::StartTouch( CBaseEntity *pOther )
 			return;
 	}
 
-	float flGravScale = 1.0f;
-
+	// Just slam any projectiles to 1, not pretty but no big reason not to.
 	if( pOther->GetMoveType() == MOVETYPE_FLYGRAVITY )
-	{
-		pOther->SetGravity( 1.0 ); // Just slam any projectiles to 1, not pretty but no big reason not to.
-	}
+		pOther->SetGravity( 1.0 );
 
 	Vector startPos = pOther->GetAbsOrigin();
 	Vector endPos = m_vecTarget;
-	float flGravity = GetCurrentGravity() * flGravScale;
-	trace_t tr;
+	float flGravity = GetCurrentGravity();
 
-	Vector vecMidPoint = startPos + ( endPos - startPos ) * 0.5;
+	//assume a peak for our air travel, this is conceptually garbage but there is no other way
+	//without getting a second value set from the mapper
+	float flPeak = max( endPos.z, startPos.z ) + 720.f;
 
-	// Ensure the midpoint is > the Z of both start/end.
-	vecMidPoint.z = MAX( vecMidPoint.z, startPos.z );
-	vecMidPoint.z = MAX( vecMidPoint.z, endPos.z );
+	//assume a time depending on what it takes to fall from the peak to the lowest point
+	float flTime = sqrt( 2.f * abs(min( endPos.z, startPos.z ) - flPeak) / flGravity );
 
-	UTIL_TraceHull( vecMidPoint, vecMidPoint + Vector( 0, 0, 128 + m_flApexBoost ), VEC_HULL_MIN, VEC_HULL_MAX, MASK_SOLID_BRUSHONLY, pOther, COLLISION_GROUP_NONE, &tr );
-	vecMidPoint = tr.endpos + Vector( 0, 0, -6 );
+	Vector2D vecTargetVelXY = ( Vector2D( endPos.x, endPos.y ) - Vector2D( startPos.x, startPos.y ) ) / flTime;
+	Vector vecTargetVel = Vector( vecTargetVelXY.x, vecTargetVelXY.y, ( endPos.z - startPos.z ) / flTime + ( flGravity * flTime ) / 2.f );
 
-	vecMidPoint.z = MAX( vecMidPoint.z, startPos.z );
-	vecMidPoint.z = MAX( vecMidPoint.z, endPos.z );
+	pOther->SetGroundEntity(NULL);
 
-	// How high should we travel to reach the apex
-	float distance1 = ( vecMidPoint.z - startPos.z );
-	float distance2 = ( vecMidPoint.z - endPos.z );
-
-	// How long will it take to travel this distance
-	float time1 = sqrt( distance1 / ( 0.5 * flGravity ) );
-	float time2 = sqrt( distance2 / ( 0.5 * flGravity ) );
-	if ( time1 < 0.1 )
-		return;
-
-	// how hard to launch to get there in time.
-	Vector vecTargetVel = ( endPos - startPos ) / ( time1 + time2 );
-	vecTargetVel.z = flGravity * time1;
-
-	Vector vecFinal = vecTargetVel;
-	
+	//add the current player velocity to the jumppad output
 	if( m_bNoCompensation )
 	{
 		Vector vecCurrentVel = pOther->GetAbsVelocity();
 		vecTargetVel.x += vecCurrentVel.x;
 		vecTargetVel.y += vecCurrentVel.y;
 	}
-	
-	pOther->SetGroundEntity( NULL );
-
-	if ( vecFinal.IsValid() )
+	else
 	{
-		if( !pOther->IsCombatCharacter() && pOther->VPhysicsGetObject() )
-		{
-			pOther->VPhysicsGetObject()->SetVelocityInstantaneous( &vecFinal, NULL );
-		}
-		else
-		{
-			pOther->SetAbsVelocity( vecFinal );
-		}
+		//for safety
+		pOther->SetAbsVelocity( Vector(0.f, 0.f, 0.f) );
 	}
 
+	//remove air control while in the air
+	if (m_bNoAirControl)
+	{
+		CTFPlayer *pPlayer = ToTFPlayer(pOther);
+		if (pPlayer)
+			pPlayer->m_Shared.SetNoAirControl(true);
+	}
+
+	if ( vecTargetVel.IsValid() )
+	{
+		if( !pOther->IsCombatCharacter() && pOther->VPhysicsGetObject() )
+			pOther->VPhysicsGetObject()->SetVelocityInstantaneous( &vecTargetVel, NULL );
+		else
+			pOther->SetAbsVelocity( vecTargetVel );
+	}
 
 #ifdef GAME_DLL
 	m_OnJump.FireOutput( pOther, this );

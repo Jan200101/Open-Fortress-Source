@@ -6,10 +6,7 @@
 
 #include "cbase.h"
 #include "c_tf_projectile_rocket.h"
-#include "tf_weaponbase.h"
-#include "particles_new.h"
 #include "tf_gamerules.h"
-#include "tempent.h"
 #include "iefx.h"
 #include "dlight.h"
 #include "c_te_legacytempents.h"
@@ -59,16 +56,14 @@ void C_TFProjectile_Rocket::CreateRocketTrails(void)
 		return;
 
 	if (enginetrace->GetPointContents(GetAbsOrigin()) & MASK_WATER)
-	{
 		ParticleProp()->Create("rockettrail_underwater", PATTACH_POINT_FOLLOW, "trail");
-	}
 	else
-	{
 		ParticleProp()->Create(GetTrailParticleName(), PATTACH_POINT_FOLLOW, "trail");
-	}
+
 	C_TFPlayer *pPlayer = ToTFPlayer( GetOwnerEntity() );
 	if ( !pPlayer )
 		return;
+
 	if (m_bCritical)
 	{
 		switch (GetTeamNumber())
@@ -159,3 +154,21 @@ void C_TFProjectile_Rocket::CreateLightEffects(void)
 	}
 }
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
+
+BEGIN_NETWORK_TABLE( C_TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
+END_NETWORK_TABLE()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_TFProjectile_BouncyRocket::C_TFProjectile_BouncyRocket(void)
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_TFProjectile_BouncyRocket::~C_TFProjectile_BouncyRocket(void)
+{
+}

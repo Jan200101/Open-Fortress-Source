@@ -4,18 +4,12 @@
 //
 //=============================================================================
 #include "cbase.h"
-#include "tf_gamerules.h"
 #include "tf_weapon_medkit.h"
-#include "decals.h"
+#include "tf_gamerules.h"
 
-// Client specific.
-#ifdef CLIENT_DLL
-#include "c_tf_player.h"
-// Server specific.
-#else
-#include "tf_player.h"
-#include "tf_gamestats.h"
-#include "ilagcompensationmanager.h"
+#ifdef GAME_DLL
+	#include "tf_gamestats.h"
+	#include "ilagcompensationmanager.h"
 #endif
 
 //=============================================================================
@@ -104,7 +98,7 @@ void CTFMedkit::PrimaryAttack( void )
 //-----------------------------------------------------------------------------
 void CTFMedkit::Swing( CTFPlayer *pPlayer )
 {
-#ifndef CLIENT_DLL
+#ifdef GAME_DLL
 	pPlayer->m_Shared.RemoveCond( TF_COND_SPAWNPROTECT );
 #endif
 
@@ -131,7 +125,7 @@ if ( GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0
 //-----------------------------------------------------------------------------
 void CTFMedkit::SwingMiss( CTFPlayer *pPlayer )
 {
-#ifndef CLIENT_DLL
+#ifdef GAME_DLL
 	pPlayer->m_Shared.RemoveCond( TF_COND_SPAWNPROTECT );
 #endif
 
@@ -166,6 +160,12 @@ float CTFMedkit::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 			{
 #ifdef GAME_DLL
 				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_ATTACKER_PAIN );
+
+				CTakeDamageInfo info;
+				info.SetAttacker(GetOwnerEntity());		// the player who operated the thing that emitted nails
+				info.SetInflictor(pPlayer);				// the weapon that emitted this projectile
+
+				pTFPlayer->m_Shared.Poison( pPlayer, GetTFWpnData().m_flEffectDuration );
 #endif
 			}
 			else if ( pTarget->GetTeamNumber() == pPlayer->GetTeamNumber() )
@@ -184,6 +184,13 @@ float CTFMedkit::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 
 				pPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MEDIC_STOPPEDHEALING, pTFPlayer->IsAlive() ? "healtarget:alive" : "healtarget:dead" );
 				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_HEALTARGET_STOPPEDHEALING );
+
+				if (pTFPlayer->m_Shared.InCond(TF_COND_BURNING))
+					pTFPlayer->m_Shared.RemoveCond(TF_COND_BURNING);
+				if(pTFPlayer->m_Shared.InCond(TF_COND_POISON))
+					pTFPlayer->m_Shared.RemoveCond(TF_COND_POISON);
+				if (pTFPlayer->m_Shared.InCond(TF_COND_TRANQ))
+					pTFPlayer->m_Shared.RemoveCond(TF_COND_TRANQ);
 #endif
 			}
 		}

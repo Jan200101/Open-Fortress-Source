@@ -681,7 +681,7 @@ void CBasePlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, flo
 		return;
 
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	if (m_bIsCSliding)
+	if (m_bNoFootStepsSound)
 		return;
 #endif
 
@@ -740,9 +740,7 @@ void CBasePlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, flo
 #else
 	if ( gpGlobals->maxClients > 1 )
 #endif
-	{
 		filter.RemoveRecipientsByPVS( vecOrigin );
-	}
 #endif
 
 	EmitSound_t ep;
@@ -750,13 +748,9 @@ void CBasePlayer::PlayStepSound( Vector &vecOrigin, surfacedata_t *psurface, flo
 	ep.m_pSoundName = params.soundname;
 #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL )
 	if( TFGameRules()->IsMannVsMachineMode() )
-	{
 		ep.m_flVolume = params.volume;
-	}
 	else
-	{
 		ep.m_flVolume = fvol;
-	}
 #else
 	ep.m_flVolume = fvol;
 #endif

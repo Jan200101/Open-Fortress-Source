@@ -256,7 +256,10 @@ public:
 	IClientUnknown*					GetIClientUnknown()	{ return this; }
 	virtual C_BaseAnimating*		GetBaseAnimating() { return NULL; }
 	virtual void					SetClassname( const char *className );
-
+#ifdef OF_CLIENT_DLL
+	virtual void					SetKillIcon( const char *killIcon );
+	CNetworkString( m_szKillIcon, 64 );
+#endif
 	string_t						m_iClassname;
 
 // IClientUnknown overrides.
@@ -863,6 +866,9 @@ public:
 public:
 	void							SetSize( const Vector &vecMin, const Vector &vecMax ); // UTIL_SetSize( pev, mins, maxs );
 	char const						*GetClassname( void );
+#ifdef OF_CLIENT_DLL
+	char const						*GetKillIcon( void );
+#endif
 	char const						*GetDebugName( void );
 	static int						PrecacheModel( const char *name ); 
 	static bool						PrecacheSound( const char *name );

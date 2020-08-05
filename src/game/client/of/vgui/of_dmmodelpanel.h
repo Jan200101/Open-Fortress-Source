@@ -11,12 +11,6 @@
 #pragma once
 #endif
 
-#include "gameui/basemodui.h"
-
-#include "tf_controls.h"
-#include "basemodel_panel.h"
-#include <vgui_controls/Slider.h>
-
 #include "of_modelpanel.h"
 
 namespace vgui
@@ -36,6 +30,7 @@ namespace vgui
 
 		void SetLoadoutCosmetics();
 		void SetCosmetic(int iCosmeticID, bool bSelected);
+		void SetWeaponModel( const char *szWeapon, int iAnim );
 
 		CUtlVector<int> m_iCosmetics;
 		bool m_bUpdateCosmetics;
@@ -43,6 +38,8 @@ namespace vgui
 
 	private:
 		bool m_bTennisball;
+		char szWeaponModel[128];
+		int iWeaponAnim;
 	};
 }
 

@@ -724,18 +724,13 @@ bool CBaseCombatWeapon::HasAmmo( void )
 		return true;
 	if ( GetWeaponFlags() & ITEM_FLAG_SELECTONEMPTY )
 		return true;
-	
-#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	if ( m_iReserveAmmo <= 0 )
-		return false;
-#endif
 
 	CBasePlayer *player = ToBasePlayer( GetOwner() );
 	if ( !player )
 		return false;
 
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	return ( m_iClip1 > 0 || m_iReserveAmmo || m_iClip2 > 0 || player->GetAmmoCount( m_iSecondaryAmmoType ) );
+	return ( m_iClip1 > 0 || m_iReserveAmmo > 0 || m_iClip2 > 0 || player->GetAmmoCount( m_iSecondaryAmmoType ) );
 #else
 	return ( m_iClip1 > 0 || player->GetAmmoCount( m_iPrimaryAmmoType ) || m_iClip2 > 0 || player->GetAmmoCount( m_iSecondaryAmmoType ) );
 #endif

@@ -1,5 +1,3 @@
-#include "cbase.h"
-#include "c_tf_player.h"
 //====== Copyright � 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: Powerup spawner
@@ -7,12 +5,8 @@
 //=============================================================================//
 
 #include "cbase.h"
-#include "c_tf_player.h"
 #include "view.h"
-#include "tier0/memdbgon.h"
-#include "glow_outline_effect.h"
 #include "tf_gamerules.h"
-#include "teamplayroundbased_gamerules.h"
 
 extern ConVar building_cubemaps;
 extern ConVar of_glow_alpha;
@@ -85,7 +79,9 @@ void C_CondPowerup::Spawn( void )
 
 	m_pGlowEffect = new CGlowObject( this, TFGameRules()->GetTeamGlowColor(GetLocalPlayerTeam()), of_glow_alpha.GetFloat(), true, true );
 
-	UpdateGlowEffect();
+	//this value may not sync with the server immediately on spawn,
+	//so to prevent the first Mega from having an outline we set it here for safety
+	m_bDisableShowOutline = TFGameRules()->IsDuelGamemode() ? true : false;
 	
 	ClientThink();
 }
@@ -294,7 +290,7 @@ int C_CondPowerup::DrawModel( int flags )
 	meshBuilder.End();
 
 	pMesh->Draw();
-	float RespawnTime =( bInitialDelay ) ? fl_RespawnDelay : fl_RespawnTime;
+	float RespawnTime = bInitialDelay ? fl_RespawnDelay : fl_RespawnTime;
 	float flProgress = ( m_flRespawnTick - gpGlobals->curtime ) / RespawnTime;
 	pRenderContext->Bind( m_pReturnProgressMaterial_Full );
 	pMesh = pRenderContext->GetDynamicMesh();
@@ -305,8 +301,7 @@ int C_CondPowerup::DrawModel( int flags )
 	// Next we're drawing the circular progress bar, in 8 segments
 	// For each segment, we calculate the vertex position that will draw
 	// the slice.
-	int i;
-	for ( i=0;i<8;i++ )
+	for ( int i = 0; i < 8; i++ )
 	{
 		if ( flProgress < Segments[i].maxProgress )
 		{
@@ -331,13 +326,14 @@ int C_CondPowerup::DrawModel( int flags )
 			// vert 1 is calculated from progress
 			meshBuilder_Full.Color4ubv( ubColor );
 			meshBuilder_Full.TexCoord2f( 0, swipe_x, swipe_y );
-			meshBuilder_Full.Position3fv( (vOrigin + (vRight * ( swipe_x - 0.5 ) ) + (vUp *( swipe_y - 0.5 ) ) ).Base() );
+			meshBuilder_Full.Position3fv( ( vOrigin + vRight * (swipe_x - 0.5) + vUp * (swipe_y - 0.5) ).Base() );
+
 			meshBuilder_Full.AdvanceVertex();
 
 			// vert 2 is ( Segments[i].vert1x, Segments[i].vert1y )
 			meshBuilder_Full.Color4ubv( ubColor );
 			meshBuilder_Full.TexCoord2f( 0, Segments[i].vert2x, Segments[i].vert2y );
-			meshBuilder_Full.Position3fv( (vOrigin + (vRight * ( Segments[i].vert2x - 0.5 ) ) + (vUp *( Segments[i].vert2y - 0.5 ) ) ).Base() );
+			meshBuilder_Full.Position3fv( ( vOrigin + vRight * (Segments[i].vert2x - 0.5) + vUp * (Segments[i].vert2y - 0.5) ).Base() );
 			meshBuilder_Full.AdvanceVertex();
 
 			meshBuilder_Full.End();

@@ -71,6 +71,8 @@ public:
 		INTERPOLATOR_FLICKER,
 		INTERPOLATOR_SIMPLESPLINE, // ease in / out
 		INTERPOLATOR_BOUNCE,	   // gravitational bounce
+		INTERPOLATOR_BIAS,
+		INTERPOLATOR_GAIN,
 	};
 
 	// runs the specific animation command (doesn't use script file at all)
@@ -102,6 +104,7 @@ private:
 		CMD_RUNEVENTCHILD,
 		CMD_FIRECOMMAND,
 		CMD_SETVISIBLE,
+		CMD_RESET_MODEL_ANIM,
 	};
 
 	enum RelativeAlignment
@@ -230,6 +233,8 @@ private:
 	UtlSymId_t m_sPosition, m_sSize, m_sFgColor, m_sBgColor;
 	UtlSymId_t m_sXPos, m_sYPos, m_sWide, m_sTall;
 	UtlSymId_t m_sModelPos;
+	UtlSymId_t m_sModelAng;
+	UtlSymId_t m_sResetAnim;
 
 	// file name
 	CUtlVector<UtlSymId_t>	m_ScriptFileNames;

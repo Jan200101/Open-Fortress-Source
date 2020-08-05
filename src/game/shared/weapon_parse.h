@@ -76,6 +76,9 @@ public:
 	
 public:	
 	bool					bParsedScript;
+#if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
+	bool					bIsBeta;
+#endif
 	bool					bLoadedHudElements;
 
 // SHARED

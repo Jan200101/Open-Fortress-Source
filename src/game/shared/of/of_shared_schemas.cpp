@@ -522,7 +522,7 @@ void ParseLoadout( void )
 	}
 }
 
-CTFLoadoutHandler *gLoadoutHandle;
+CTFLoadoutHandler *gLoadoutHandle = NULL;
 CTFLoadoutHandler *GetLoadoutHandle()
 {
 	return gLoadoutHandle;
@@ -530,7 +530,10 @@ CTFLoadoutHandler *GetLoadoutHandle()
 
 void InitLoadoutHandle()
 {
-	gLoadoutHandle = new CTFLoadoutHandler();
+	if( !gLoadoutHandle )
+		gLoadoutHandle = new CTFLoadoutHandler();
+	else
+		DevWarning("Loadout handle re-initialized, blocked for now because the loadout panel keeps re-initializing itself\n");
 }
 
 

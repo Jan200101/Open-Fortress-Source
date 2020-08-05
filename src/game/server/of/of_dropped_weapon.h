@@ -12,13 +12,16 @@
 
 #include "items.h"
 
-class CTFDroppedWeapon : public CItem
+//needed to remove dropped weapons at the end of every round
+DECLARE_AUTO_LIST( ICondDroppedWeaponAutoList );
+
+class CTFDroppedWeapon : public CItem, public ICondDroppedWeaponAutoList
 {
 public:
 	DECLARE_CLASS( CTFDroppedWeapon, CItem );
 	DECLARE_SERVERCLASS();
 
-	CTFDroppedWeapon() {}
+	CTFDroppedWeapon();
 
 	virtual void Spawn();
 	virtual void Precache();	
@@ -28,26 +31,32 @@ public:
 
 	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
 
-	const char *pszWeaponName;
-	CTFWeaponInfo *pWeaponInfo;
-	int WeaponID;
-
-	static CTFDroppedWeapon *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname );
+	static CTFDroppedWeapon *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname, bool bThrown = false );
 
 	float GetCreationTime( void ) { return m_flCreationTime; }
 	void  SetInitialVelocity( Vector &vecVelocity );
+	
+	int GetTeamNum(){ return m_iTeamNum; }
+	void SetTeamNum( int iTeam ) { m_iTeamNum = iTeam; }
 
 public:
 	CNetworkVar( int, m_iReserveAmmo );
 	CNetworkVar( int, m_iClip );
 	CNetworkVar( bool, m_bFlamethrower );
-private:
-	float m_flCreationTime;
+	
+	CTFWeaponInfo	*pWeaponInfo;
+	const char		*pszWeaponName;
+	int				WeaponID;
 
+private:
 	bool m_bAllowOwnerPickup;
+	bool m_bThrown;
+	float m_flCreationTime;
+	float m_flNextPickupTime;
+	int m_iTeamNum;
+
 	CNetworkVector( m_vecInitialVelocity );
 
-private:
 	CTFDroppedWeapon( const CTFDroppedWeapon & );
 
 	DECLARE_DATADESC();
