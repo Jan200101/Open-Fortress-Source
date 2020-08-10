@@ -316,9 +316,9 @@ void CTFEternalShotgun::ItemPostFrame()
 			if (HookLOS(hookPos))
 				flLOSGauge = gpGlobals->curtime;
 
-			if ( gpGlobals->curtime > flLOSGauge + 0.15f || (pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 72.f)
+			if ( gpGlobals->curtime > flLOSGauge + 0.15f || (pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 360.f)
 #else
-			if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 72.f)
+			if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 360.f)
 #endif
 				RemoveHook();
 			else if (m_iAttached == 2) //notify player how it should behave
