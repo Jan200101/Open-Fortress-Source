@@ -221,7 +221,7 @@ void CTFSniperRifle::HandleZooms( void )
 	// Handle the zoom when taunting.
 	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
 	{
-		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) )
+		if ((GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && pPlayer->m_Shared.InCond(TF_COND_AIMING))
 		{
 			ToggleZoom();
 		}
@@ -268,12 +268,12 @@ void CTFSniperRifle::HandleZooms( void )
 			m_flNextSecondaryAttack = m_flRezoomTime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 			m_flRezoomTime = -1;
 		}
-		else if ( !pPlayer->m_Shared.InCond( TF_COND_AIMING ) || HoldToZoom == 0 )
+		else if ( (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && !pPlayer->m_Shared.InCond(TF_COND_AIMING) || HoldToZoom == 0)
 		{
 			Zoom();
 		}
 	}
-	else if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !( pPlayer->m_nButtons & IN_ATTACK2 ) && HoldToZoom == 1 )
+	else if ( (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && pPlayer->m_Shared.InCond(TF_COND_AIMING) && !(pPlayer->m_nButtons & IN_ATTACK2) && HoldToZoom == 1)
 	{
 		Zoom();
 	}
@@ -579,7 +579,7 @@ float CTFSniperRifle::GetProjectileDamage( void )
 //-----------------------------------------------------------------------------
 int	CTFSniperRifle::GetDamageType( void ) const
 {
-	if ( GetWeaponID() == TF_WEAPON_RAILGUN )
+	if ((GetWeaponID() == TF_WEAPON_RAILGUN) || (GetWeaponID() == TFC_WEAPON_SNIPER_RIFLE))
 		return BaseClass::GetDamageType();
 
 	// Only do hit location damage if we're zoomed
@@ -688,13 +688,15 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 	if ( pPlayer )
 	{
 		// no crits if they're not zoomed
-		if ( GetWeaponID() != TF_WEAPON_RAILGUN && ( pPlayer->GetFOV() >= pPlayer->GetDefaultFOV() ) )
+		if (((GetWeaponID() != TF_WEAPON_RAILGUN) && (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE)) 
+			&& (pPlayer->GetFOV() >= pPlayer->GetDefaultFOV()))
 		{
 			return false;
 		}
 
 		// no crits for 0.2 seconds after starting to zoom
-		if ( GetWeaponID() != TF_WEAPON_RAILGUN && (( gpGlobals->curtime - pPlayer->GetFOVTime() ) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME ))
+		if (((GetWeaponID() != TF_WEAPON_RAILGUN) && (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE))
+			&& ((gpGlobals->curtime - pPlayer->GetFOVTime()) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME))
 		{
 			return false;
 		}
@@ -702,7 +704,195 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 
 	return true;
 }
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::ItemPostFrame(void)
+{
+	if (m_bLowered)
+		return;
 
+	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
+	if (!pPlayer)
+		return;
+
+	if (!CanAttack())
+	{
+		if (IsZoomed())
+		{
+			ToggleZoom();
+		}
+		return;
+	}
+
+	HandleZooms();
+
+#ifdef GAME_DLL
+	if (m_hSniperDot)
+	{
+		UpdateSniperDot();
+	}
+#endif
+
+	// Fire.
+	if (pPlayer->m_afButtonReleased & IN_ATTACK)
+	{
+		Fire(pPlayer);
+		pPlayer->m_Shared.RemoveCond(TF_COND_AIMING);
+		pPlayer->TeamFortress_SetSpeed();
+	}
+
+	//if (!pPlayer->m_Shared.InCond(TF_COND_AIMING))
+	//	SoftZoomCheck();
+
+	if (!((pPlayer->m_afButtonReleased & IN_ATTACK) || (pPlayer->m_nButtons & IN_ATTACK2)))
+	{
+		if (!ReloadOrSwitchWeapons() && (m_bInReload == false))
+		{
+			WeaponIdle();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::Fire(CTFPlayer *pPlayer)
+{
+	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
+	if ( ReserveAmmo() <= 0 )
+	{
+		HandleFireOnEmpty();
+		return;
+	}
+
+	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		return;
+
+	// Fire the sniper shot.
+	PrimaryAttack();
+
+	if ( IsZoomed() )
+	{
+		// If we have more bullets, zoom out, play the bolt animation and zoom back in
+		if( ReserveAmmo() < 0 )
+		{
+			//just zoom out
+			SetRezoom( false, 0.5f );	// just zoom out in 0.5 seconds
+		}
+	}
+	else
+	{
+		// Prevent primary fire preventing zooms
+		m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+	}
+
+	m_flChargedDamage = 0.0f;
+
+#ifdef GAME_DLL
+	if ( m_hSniperDot )
+	{
+		m_hSniperDot->ResetChargeTime();
+	}
+#endif
+}
+//-----------------------------------------------------------------------------
+// Purpose: Secondary attack.
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::Zoom(void)
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (pPlayer)
+	{
+		pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+	}
+
+	ToggleZoom();
+
+	// at least 0.1 seconds from now, but don't stomp a previous value
+	m_flNextPrimaryAttack = max(m_flNextPrimaryAttack, gpGlobals->curtime + 0.1);
+
+	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::ZoomOutIn(void)
+{
+	ZoomOut();
+
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (pPlayer && pPlayer->ShouldAutoRezoom())
+	{
+		m_flRezoomTime = gpGlobals->curtime + 0.9;
+	}
+	else
+	{
+		m_flNextSecondaryAttack = gpGlobals->curtime + 1.0f;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::ZoomIn(void)
+{
+	// Start aiming.
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if (!pPlayer)
+		return;
+
+	if (ReserveAmmo() <= 0)
+		return;
+
+	CTFWeaponBaseGun::ZoomIn();
+
+	//pPlayer->m_Shared.AddCond(TF_COND_AIMING);
+	//pPlayer->TeamFortress_SetSpeed();
+	pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+
+/*#ifdef GAME_DLL
+	// Create the sniper dot.
+	CreateSniperDot();
+	pPlayer->ClearExpression();
+#endif*/
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::ZoomOut(void)
+{
+	CTFWeaponBaseGun::ZoomOut();
+
+	// Stop aiming
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if (!pPlayer)
+		return;
+
+	pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+
+/*#ifdef GAME_DLL
+	// Destroy the sniper dot.
+	DestroySniperDot();
+	pPlayer->ClearExpression();
+#endif*/
+
+	// if we are thinking about zooming, cancel it
+	m_flUnzoomTime = -1;
+	m_flRezoomTime = -1;
+	m_bRezoomAfterShot = false;
+	m_flChargedDamage = 0.0f;
+}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::SetRezoom(bool bRezoom, float flDelay)
+{
+	BaseClass::SetRezoom(bRezoom, flDelay);
+}
 //=============================================================================
 //
 // Client specific functions.
