@@ -736,8 +736,11 @@ void CTFCSniperRifle::ItemPostFrame(void)
 
 	if (pPlayer->m_nButtons & IN_ATTACK)
 	{
-		pPlayer->m_Shared.AddCond(TF_COND_AIMING);
-		pPlayer->TeamFortress_SetSpeed();
+		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+		{
+			pPlayer->m_Shared.AddCond(TF_COND_AIMING);
+			pPlayer->TeamFortress_SetSpeed();
+		}
 	}
 
 	// Fire.
