@@ -316,9 +316,9 @@ void CTFEternalShotgun::ItemPostFrame()
 			if (HookLOS(hookPos))
 				flLOSGauge = gpGlobals->curtime;
 
-			if ( gpGlobals->curtime > flLOSGauge + 0.15f || (pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 360.f)
+			if ( gpGlobals->curtime > flLOSGauge + 0.15f || (pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 140.f)
 #else
-			if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 360.f)
+			if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 140.f)
 #endif
 				RemoveHook();
 			else if (m_iAttached == 2) //notify player how it should behave
@@ -463,24 +463,23 @@ void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 	//Tell target it has been hooked
 	ToTFPlayer(pHook)->m_Shared.AddCond(TF_COND_HOOKED);
 
-	//player velocity
-	Vector pVel = pPlayer->GetAbsVelocity();
-
 	//rope vector
 	Vector playerCenter = pPlayer->WorldSpaceCenter() - (pPlayer->WorldSpaceCenter() - pPlayer->GetAbsOrigin()) * .25;
 	playerCenter += (pPlayer->EyePosition() - playerCenter) * 0.5;
 	Vector pRope = pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin();
 
+	//Push player a bit upward (only here at the start)
+	if (pPlayer->GetGroundEntity())
+		pPlayer->SetAbsOrigin(pPlayer->GetAbsOrigin() + Vector(0.f, 0.f, 10.f));
 	pPlayer->SetGroundEntity(NULL);
 
+	//Pull velocity
 	VectorNormalize(pRope);
 	pRope = pRope * HOOK_PULL;
-
-	//Resulting velocity
+	Vector pVel = pPlayer->GetAbsVelocity();
 	Vector newVel = pVel + pRope;
 	float velLength = max(pVel.Length() + 200.f, HOOK_PULL);
 	float newVelLength = clamp(newVel.Length(), HOOK_PULL, velLength);
-
 	pPlayer->m_Shared.SetHookProperty(newVelLength);
 
 	m_iAttached = 1;
