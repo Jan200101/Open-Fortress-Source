@@ -15,8 +15,8 @@
 	#include "gamestats.h"
 #endif
 
-#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )			\
-																	\
+#define CREATE_SIMPLE_WEAPON_TABLE( WpnName, entityname )	\
+															\
 	IMPLEMENT_NETWORKCLASS_ALIASED( WpnName, DT_##WpnName )	\
 															\
 	BEGIN_NETWORK_TABLE( C##WpnName, DT_##WpnName )			\
@@ -28,7 +28,7 @@
 	LINK_ENTITY_TO_CLASS( entityname, C##WpnName );			\
 	//PRECACHE_WEAPON_REGISTER( entityname );
 
-#define CREATE_SIMPLE_WEAPON_TABLE_OLD(WpnName, entityname)			    \
+#define CREATE_SIMPLE_WEAPON_TABLE_OLD(WpnName, entityname)			\
 																	\
 	IMPLEMENT_NETWORKCLASS_ALIASED( ##WpnName##, DT_##WpnName## )	\
 																	\
@@ -235,6 +235,7 @@ CTFEternalShotgun::CTFEternalShotgun(void)
 #ifdef GAME_DLL
 	m_hHook = NULL;
 	pBeam = NULL;
+	flLOSGauge = 0.f;
 #endif
 }
 
@@ -312,9 +313,12 @@ void CTFEternalShotgun::ItemPostFrame()
 		if(m_iAttached)
 		{
 #ifdef GAME_DLL
-			if ( !HookLOS(hookPos) || ( pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin() ).Length() <= 72.f )
+			if (HookLOS(hookPos))
+				flLOSGauge = gpGlobals->curtime;
+
+			if ( gpGlobals->curtime > flLOSGauge + 0.15f || (pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 140.f)
 #else
-			if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 72.f)
+			if ((pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin()).Length() <= 140.f)
 #endif
 				RemoveHook();
 			else if (m_iAttached == 2) //notify player how it should behave
@@ -446,16 +450,9 @@ void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 	if ( ShouldDrawUsingViewModel() )
 	{
 #endif
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		if ( pOwner != NULL )	
-		{
-			CBaseViewModel *vm =pOwner->GetViewModel();
-			
-			if ( vm != NULL )
-			{
-				vm->SetPoseParameter( "reel_direction", 1 );
-			}
-		}
+		CBaseViewModel *vm = pPlayer->GetViewModel();
+		if ( vm )
+			vm->SetPoseParameter( "reel_direction", 1 );
 #ifdef CLIENT_DLL
 	}
 #endif
@@ -466,24 +463,23 @@ void CTFEternalShotgun::InitiateHook(CTFPlayer *pPlayer, CBaseEntity *pHook)
 	//Tell target it has been hooked
 	ToTFPlayer(pHook)->m_Shared.AddCond(TF_COND_HOOKED);
 
-	//player velocity
-	Vector pVel = pPlayer->GetAbsVelocity();
-
 	//rope vector
 	Vector playerCenter = pPlayer->WorldSpaceCenter() - (pPlayer->WorldSpaceCenter() - pPlayer->GetAbsOrigin()) * .25;
 	playerCenter += (pPlayer->EyePosition() - playerCenter) * 0.5;
 	Vector pRope = pHook->GetAbsOrigin() - pPlayer->GetAbsOrigin();
 
+	//Push player a bit upward (only here at the start)
+	if (pPlayer->GetGroundEntity())
+		pPlayer->SetAbsOrigin(pPlayer->GetAbsOrigin() + Vector(0.f, 0.f, 10.f));
 	pPlayer->SetGroundEntity(NULL);
 
+	//Pull velocity
 	VectorNormalize(pRope);
 	pRope = pRope * HOOK_PULL;
-
-	//Resulting velocity
+	Vector pVel = pPlayer->GetAbsVelocity();
 	Vector newVel = pVel + pRope;
 	float velLength = max(pVel.Length() + 200.f, HOOK_PULL);
 	float newVelLength = clamp(newVel.Length(), HOOK_PULL, velLength);
-
 	pPlayer->m_Shared.SetHookProperty(newVelLength);
 
 	m_iAttached = 1;
@@ -578,7 +574,7 @@ bool CTFEternalShotgun::HookLOS(Vector hookPos)
 
 	//Msg("%f %f %f %f\n", hookPos.Length(), playerCenter.Length(), tr.endpos.Length(), (tr.endpos - playerCenter).Length());
 
-	return (tr.endpos - playerCenter).Length() < 40.f;
+	return (tr.endpos - playerCenter).Length() < 200.f;
 }
 
 void CTFEternalShotgun::DrawBeam(const Vector &endPos, const float width)
@@ -705,26 +701,35 @@ bool CTFMeatHook::CreateVPhysics(void)
 
 void CTFMeatHook::HookTouch(CBaseEntity *pOther)
 {
-	if (pOther->IsSolidFlagSet(FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS))
+	//pass through triggers
+	if ( pOther->IsSolidFlagSet( FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS ) )
 		return;
 
-	if (pOther == m_hOwner || !pOther->IsPlayer() || !GetOwnerEntity())
+	//do not hook the owner and not-players
+	if ( pOther == m_hOwner || !pOther->IsPlayer() )
 	{
 		m_hOwner->RemoveHook();
 		return;
 	}
 
-	//hooked an entity that can be damaged
+	//do not hook if either target or owner player do not exist, or if players are on the same team
+	CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
+	CTFPlayer *pHooked = ToTFPlayer(pOther);
+	int iTeam = pOwner->GetTeamNumber();
+	if ( !pHooked || !pOwner || ( iTeam != TF_TEAM_MERCENARY && iTeam == pHooked->GetTeamNumber() ) )
+	{
+		m_hOwner->RemoveHook();
+		return;
+	}
+	
 	EmitSound("Weapon_AR2.Reload_Push");
 
 	SetTouch(NULL);
 	SetThink(NULL);
-
-	CTFPlayer *pOwner = (CTFPlayer *)GetOwnerEntity();
+	
 	pOwner->SetPhysicsFlag(PFLAG_VPHYSICS_MOTIONCONTROLLER, true);
 	pOwner->DoAnimationEvent(PLAYERANIMEVENT_CUSTOM, ACT_GRAPPLE_PULL_START);
-
-	CTFPlayer *pHooked = ToTFPlayer(pOther);
+	
 	m_hOwner->NotifyHookAttached(pHooked);
 	
 	UTIL_Remove(this);

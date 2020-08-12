@@ -658,6 +658,20 @@ void CTFClientScoreBoardDialog::UpdatePlayerDetails()
 			}
 		}
 
+		//no medals earned yet, show an explicative message on the first label
+		if (j == 1)
+		{
+			pLabel = dynamic_cast<CExLabel *>(FindChildByName("Label01"));
+			pLabel->SetVisible(true);
+			pLabel->SetText("No medals");
+
+			pLabel = dynamic_cast<CExLabel *>(FindChildByName("Count01"));
+			pLabel->SetVisible(true);
+			pLabel->SetText("earned, get killing!");
+
+			j++;
+		}
+
 		//hide the possibly unused slots
 		for (; j <= PLAYERINFO_ELEMENTS; j++)
 		{
