@@ -24,8 +24,9 @@
 
 #define TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME	0.2f
 
-#define SNIPER_DOT_SPRITE_RED		"effects/sniperdot_red.vmt"
-#define SNIPER_DOT_SPRITE_BLUE		"effects/sniperdot_blue.vmt"
+#define SNIPER_DOT_SPRITE_RED			"effects/sniperdot_red.vmt"
+#define SNIPER_DOT_SPRITE_BLUE			"effects/sniperdot_blue.vmt"
+#define SNIPER_DOT_SPRITE_PURPLE		"effects/sniperdot_purple.vmt"
 
 #ifdef CLIENT_DLL
 	ConVar of_holdtozoom( "of_holdtozoom", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hold Mouse2 to zoom instead of Toggling it." );
@@ -138,6 +139,7 @@ void CTFSniperRifle::Precache()
 	BaseClass::Precache();
 	PrecacheModel( SNIPER_DOT_SPRITE_RED );
 	PrecacheModel( SNIPER_DOT_SPRITE_BLUE );
+	PrecacheModel( SNIPER_DOT_SPRITE_PURPLE);
 }
 
 //-----------------------------------------------------------------------------
@@ -740,6 +742,12 @@ void CTFCSniperRifle::ItemPostFrame(void)
 		{
 			pPlayer->m_Shared.AddCond(TF_COND_AIMING);
 			pPlayer->TeamFortress_SetSpeed();
+			#ifdef GAME_DLL
+				// Create the sniper dot.
+				CreateSniperDot(); 
+				pPlayer->ClearExpression();
+			#endif
+
 		}
 	}
 
@@ -749,6 +757,11 @@ void CTFCSniperRifle::ItemPostFrame(void)
 		Fire(pPlayer);
 		pPlayer->m_Shared.RemoveCond(TF_COND_AIMING);
 		pPlayer->TeamFortress_SetSpeed();
+		#ifdef GAME_DLL
+			// Create the sniper dot.
+			DestroySniperDot();
+			pPlayer->ClearExpression();
+		#endif
 	}
 
 	//if (!pPlayer->m_Shared.InCond(TF_COND_AIMING))
@@ -858,15 +871,7 @@ void CTFCSniperRifle::ZoomIn(void)
 
 	CTFWeaponBaseGun::ZoomIn();
 
-	//pPlayer->m_Shared.AddCond(TF_COND_AIMING);
-	//pPlayer->TeamFortress_SetSpeed();
 	pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
-
-/*#ifdef GAME_DLL
-	// Create the sniper dot.
-	CreateSniperDot();
-	pPlayer->ClearExpression();
-#endif*/
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -882,12 +887,6 @@ void CTFCSniperRifle::ZoomOut(void)
 		return;
 
 	pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
-
-/*#ifdef GAME_DLL
-	// Destroy the sniper dot.
-	DestroySniperDot();
-	pPlayer->ClearExpression();
-#endif*/
 
 	// if we are thinking about zooming, cancel it
 	m_flUnzoomTime = -1;
@@ -1168,13 +1167,17 @@ void CSniperDot::OnDataChanged( DataUpdateType_t updateType )
 {
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		if ( GetTeamNumber() == TF_TEAM_BLUE )
+		if (GetTeamNumber() == TF_TEAM_MERCENARY)
 		{
-			m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS );
+			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_PURPLE, TEXTURE_GROUP_CLIENT_EFFECTS);
+		}
+		else if (GetTeamNumber() == TF_TEAM_RED)
+		{
+			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS);
 		}
 		else
 		{
-			m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS );
+			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS);
 		}
 	}
 }

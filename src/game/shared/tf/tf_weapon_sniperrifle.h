@@ -118,8 +118,14 @@ public:
 	// Auto-rezooming handling
 	void SetRezoom(bool bRezoom, float flDelay);
 
+	CNetworkVar(float, m_flChargedDamage);
+
 #ifdef CLIENT_DLL
 	float GetHUDDamagePerc( void );
+#endif
+
+#ifdef GAME_DLL
+	CHandle<CSniperDot>		m_hSniperDot;
 #endif
 
 	bool IsZoomed( void );
@@ -132,12 +138,6 @@ private:
 	void ZoomOutIn( void );
 
 	void Fire( CTFPlayer *pPlayer );
-
-	CNetworkVar( float,	m_flChargedDamage );
-
-#ifdef GAME_DLL
-	CHandle<CSniperDot>		m_hSniperDot;
-#endif
 
 	// Handles rezooming after the post-fire unzoom
 	float m_flUnzoomTime;
@@ -185,16 +185,10 @@ private:
 
 	virtual void ItemPostFrame(void);
 
-
-#ifdef GAME_DLL
-	CHandle<CSniperDot>		m_hSniperDot;
-#endif
-
 	// Handles rezooming after the post-fire unzoom
 	float m_flUnzoomTime;
 	float m_flRezoomTime;
 	bool m_bRezoomAfterShot;
-
 
 };
 
