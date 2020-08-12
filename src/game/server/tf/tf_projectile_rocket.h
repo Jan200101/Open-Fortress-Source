@@ -36,6 +36,7 @@ public:
 
 	void	SetScorer( CBaseEntity *pScorer );
 
+	int		GetCritical() { return m_bCritical; }
 	void	SetCritical( int bCritical ) { m_bCritical = bCritical; }
 	virtual int		GetDamageType();
 	virtual int		GetCustomDamageType();
@@ -61,14 +62,19 @@ public:
 	DECLARE_CLASS(CTFProjectile_BouncyRocket, CTFProjectile_Rocket);
 	DECLARE_NETWORKCLASS();
 
-	static CTFProjectile_BouncyRocket *Create(CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL);
+	static CTFProjectile_BouncyRocket *Create(CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles,
+											  CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, float creationTime = 0.f, Vector velocity = Vector(0.f,0.f,0.f));
 
 	virtual void Precache(void);
+	virtual void Spawn(void);
 	virtual void FlyThink(void);
 	virtual void RocketTouch(CBaseEntity *pOther);
 	virtual void BounceSound(void);
 
+	float creationTime;
+
 private:
+	QAngle RotationVector;
 	int iOldWaterLevel;
 };
 
