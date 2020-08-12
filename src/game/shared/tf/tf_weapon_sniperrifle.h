@@ -168,13 +168,15 @@ public:
 	DECLARE_CLASS(CTFCSniperRifle, CTFSniperRifle);
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
+    CNetworkVar(float, m_flChargedDamage);
+    virtual float GetProjectileDamage( void );
 
 	virtual int	GetWeaponID(void) const { return TFC_WEAPON_SNIPER_RIFLE; }
 
 private:
 
 	void Fire(CTFPlayer *pPlayer);
-	CNetworkVar(float, m_flChargedDamage);
+
 
 	virtual void SetRezoom(bool bRezoom, float flDelay);
 
