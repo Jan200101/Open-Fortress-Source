@@ -287,7 +287,7 @@ void CTFWeaponBase::Spawn()
 	SetCollisionGroup( COLLISION_GROUP_WEAPON );
 
 	// Get the weapon information.
-	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( GetClassname() );
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( GetSchemaName() );
 	Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
 	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 	Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
@@ -670,6 +670,21 @@ const CTFWeaponInfo &CTFWeaponBase::GetTFWpnData() const
 	return *pTFInfo;
 }
 
+void CTFWeaponBase::OnLoadWeaponScript()
+{
+	BaseClass::OnLoadWeaponScript();
+
+	if( GetTFWpnData().m_iReloadTypeOverride > -1 )
+		m_bReloadsSingly = GetTFWpnData().m_iReloadTypeOverride > 0;
+
+	// Get the weapon information.
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( GetSchemaName() );
+	Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
+	CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+	Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in weapon spawn" );
+	m_pWeaponInfo = pWeaponInfo;	
+}
+
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
@@ -685,6 +700,14 @@ int CTFWeaponBase::GetWeaponID( void ) const
 bool CTFWeaponBase::IsWeapon( int iWeapon ) const
 { 
 	return GetWeaponID() == iWeapon; 
+}
+
+int	CTFWeaponBase::GetDamageType() const
+{
+	int iAdditional = 0;
+	if( GetTFWpnData().m_bCanHeadshot )
+		iAdditional |= DMG_USE_HITLOCATIONS;
+	return g_aWeaponDamageTypes[ GetWeaponID() ] | iAdditional;
 }
 
 // -----------------------------------------------------------------------------
@@ -876,7 +899,7 @@ bool CTFWeaponBase::CanHolster( void ) const
 	if( !pPlayer )
 		return false;
 	
-	if ( ( m_iShotsDue > 0 || m_bInBarrage || m_bWindingUp ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK )  )
+	if ( ( m_iShotsDue > 0 || m_bWindingUp || m_bInBarrage ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK )  )
 		return false;
 
 	if ( pPlayer->m_Shared.InCond( TF_COND_JAUGGERNAUGHT ) )
@@ -947,8 +970,6 @@ void CTFWeaponBase::BurstFire( void )
 	m_iShotsDue--;
 	if ( FiresInBursts() )
 		m_flNextShotTime = gpGlobals->curtime + GetFireRate();
-	else if ( LoadsManualy() )
-		m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 }
 
 //-----------------------------------------------------------------------------
@@ -990,7 +1011,7 @@ void CTFWeaponBase::PrimaryAttack( void )
 
 	BaseClass::PrimaryAttack();
 
-	if ( !InBarrage() && !InBurst() )
+	if ( !InBurst() )
 		m_bWindingUp = false;
 	
 	if ( m_bReloadsSingly )
@@ -1120,6 +1141,9 @@ float CTFWeaponBase::GetFireRate()
 //-----------------------------------------------------------------------------
 bool CTFWeaponBase::Reload( void )
 {
+	if( LoadsManualy() && InBarrage() )
+		return false;
+
 	// If we're not already reloading, check to see if we have ammo to reload and check to see if we are max ammo.
 	if ( m_iReloadMode == TF_RELOAD_START ) 
 	{
@@ -1176,7 +1200,7 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons( void )
 	else
 	{
 		// Weapon is useable. Reload if empty and weapon has waited as long as it has to after firing
-		if ( UsesClipsForAmmo1() && !LoadsManualy() && 
+		if ( !LoadsManualy() && UsesClipsForAmmo1() && 
 			 (GetWeaponFlags() & ITEM_FLAG_NOAUTORELOAD) == false && 
 			 m_flNextPrimaryAttack < gpGlobals->curtime && 
 			 m_flNextSecondaryAttack < gpGlobals->curtime )
@@ -1563,9 +1587,9 @@ void CTFWeaponBase::ItemBusyFrame( void )
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
 	if ( pPlayer )
 	{
-		if ( pPlayer->m_nButtons & IN_ATTACK )
+		if ( pPlayer->m_nButtons & IN_ATTACK ) // Cant abort manual loading
 		{
-			if ( ( m_bInReload || ( ReloadsSingly() && m_iReloadMode!=TF_RELOAD_START ) ) && Clip1() > 0 )
+			if ( !LoadsManualy() && ( m_bInReload || ( ReloadsSingly() && m_iReloadMode != TF_RELOAD_START ) ) && Clip1() > 0 )
 			{
 				AbortReload();
 				
@@ -1636,9 +1660,7 @@ void CTFWeaponBase::ItemPostFrame( void )
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
-	{
 		return;
-	}
 
 	if ( m_bWindingUp && gpGlobals->curtime >= m_flWindTick )
 		PrimaryAttack();
@@ -1726,7 +1748,7 @@ void CTFWeaponBase::ItemPostFrame( void )
 	
 	SoftZoomCheck();
 	
-	if ( !bFired && !LoadsManualy() && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
+	if ( !bFired && (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
 		// Clip empty? Or out of ammo on a no-clip weapon?
 		if ( !IsMeleeWeapon() &&  
@@ -1782,7 +1804,7 @@ void CTFWeaponBase::ItemPostFrame( void )
 	// -----------------------
 	//  No buttons down
 	// -----------------------
-	if (!((pOwner->m_nButtons & IN_ATTACK) || (pOwner->m_nButtons & IN_ATTACK2) || (CanReload() && pOwner->m_nButtons & IN_RELOAD) || InBarrage()))
+	if (!((pOwner->m_nButtons & IN_ATTACK) || (pOwner->m_nButtons & IN_ATTACK2) || (CanReload() && pOwner->m_nButtons & IN_RELOAD) ))
 	{
 		// no fire buttons down or reloading
 		if ( !ReloadOrSwitchWeapons() && ( m_bInReload == false ) )
@@ -1798,11 +1820,19 @@ void CTFWeaponBase::ItemPostFrame( void )
 //====================================================================================
 void CTFWeaponBase::CheckReload( void )
 {
+	
 	if ( m_bReloadsSingly )
 	{
 		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
 		if ( !pOwner )
 			return;
+		
+		if( LoadsManualy() && !( pOwner->m_nButtons & (IN_ATTACK | IN_RELOAD) ) && m_iClip1 > 0 )
+		{
+			AbortReload();
+			m_bInBarrage = true;
+			return;
+		}
 
 		if ((m_bInReload) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 		{
