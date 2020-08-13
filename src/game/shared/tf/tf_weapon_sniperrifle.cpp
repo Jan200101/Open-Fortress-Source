@@ -738,8 +738,20 @@ void CTFCSniperRifle::ItemPostFrame(void)
 
 	if (pPlayer->m_nButtons & IN_ATTACK)
 	{
+	    //Added the charge statement here to allow the charge to start on primary hold. So now the charge after float will go up with the dot until both reach the correct float number and then on the release the float will send the multiplied damage to fire
+
+        float flChargeAfter = m_flNextPrimaryAttack;
+        if ( flChargeAfter <= gpGlobals->curtime) {
+            // Don't start charging in the time just after a shot before we unzoom to play rack anim.
+            if (pPlayer->m_Shared.InCond(TF_COND_AIMING) && !m_bRezoomAfterShot && !GetTFWpnData().m_bNoSniperCharge) {
+                m_flChargedDamage = min(m_flChargedDamage + gpGlobals->frametime * GetDamage(), GetDamage() * 3);
+            } else {
+                m_flChargedDamage = max(0,m_flChargedDamage - gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC);
+            }
+        }
 		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
-		{
+        {
+
 			pPlayer->m_Shared.AddCond(TF_COND_AIMING);
 			pPlayer->TeamFortress_SetSpeed();
 			#ifdef GAME_DLL
@@ -754,6 +766,7 @@ void CTFCSniperRifle::ItemPostFrame(void)
 	// Fire.
 	if (pPlayer->m_afButtonReleased & IN_ATTACK)
 	{
+
 		Fire(pPlayer);
 		pPlayer->m_Shared.RemoveCond(TF_COND_AIMING);
 		pPlayer->TeamFortress_SetSpeed();
@@ -901,6 +914,14 @@ void CTFCSniperRifle::SetRezoom(bool bRezoom, float flDelay)
 {
 	BaseClass::SetRezoom(bRezoom, flDelay);
 }
+
+// We need to set the damage amount that is stored to the charge float which is what the Primary attack in fire reads- Sir Matrix
+float CTFCSniperRifle::GetProjectileDamage( void )
+{
+    // Uncharged? Min damage.
+    return max( m_flChargedDamage, GetDamage() );
+}
+
 //=============================================================================
 //
 // Client specific functions.
