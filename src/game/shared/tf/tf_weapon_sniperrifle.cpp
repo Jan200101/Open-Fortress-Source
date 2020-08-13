@@ -26,7 +26,6 @@
 
 #define SNIPER_DOT_SPRITE_RED			"effects/sniperdot_red.vmt"
 #define SNIPER_DOT_SPRITE_BLUE			"effects/sniperdot_blue.vmt"
-#define SNIPER_DOT_SPRITE_PURPLE		"effects/sniperdot_purple.vmt"
 
 #ifdef CLIENT_DLL
 	ConVar of_holdtozoom( "of_holdtozoom", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hold Mouse2 to zoom instead of Toggling it." );
@@ -139,7 +138,6 @@ void CTFSniperRifle::Precache()
 	BaseClass::Precache();
 	PrecacheModel( SNIPER_DOT_SPRITE_RED );
 	PrecacheModel( SNIPER_DOT_SPRITE_BLUE );
-	PrecacheModel( SNIPER_DOT_SPRITE_PURPLE);
 }
 
 //-----------------------------------------------------------------------------
@@ -744,7 +742,7 @@ void CTFCSniperRifle::ItemPostFrame(void)
         if ( flChargeAfter <= gpGlobals->curtime) {
             // Don't start charging in the time just after a shot before we unzoom to play rack anim.
             if (pPlayer->m_Shared.InCond(TF_COND_AIMING) && !m_bRezoomAfterShot && !GetTFWpnData().m_bNoSniperCharge) {
-                m_flChargedDamage = min(m_flChargedDamage + gpGlobals->frametime * GetDamage(), GetDamage() * 3);
+                m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage())+0.5, GetDamage() * 6);
             } else {
                 m_flChargedDamage = max(0,m_flChargedDamage - gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC);
             }
@@ -905,7 +903,6 @@ void CTFCSniperRifle::ZoomOut(void)
 	m_flUnzoomTime = -1;
 	m_flRezoomTime = -1;
 	m_bRezoomAfterShot = false;
-	m_flChargedDamage = 0.0f;
 }
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -934,7 +931,13 @@ float CTFSniperRifle::GetHUDDamagePerc( void )
 {
 	return ( m_flChargedDamage / ( GetDamage() * 3 ));
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFCSniperRifle::GetHUDDamagePerc(void)
+{
+	return (m_flChargedDamage / (GetDamage() * 6));
+}
 //-----------------------------------------------------------------------------
 // Returns the sniper chargeup from 0 to 1
 //-----------------------------------------------------------------------------
@@ -957,34 +960,71 @@ void CProxySniperRifleCharge::OnBind( void *pC_BaseEntity )
 
 	if ( pPlayer )
 	{
-		CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
-		if ( pWeapon )
+		//can someone please find a better way of doing this
+		CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
+		if (pWpn->GetWeaponID() == TFC_WEAPON_SNIPER_RIFLE)
 		{
-			float flChargeValue = ( ( 1.0 - pWeapon->GetHUDDamagePerc() ) * 0.8 ) + 0.6;
-
-			VMatrix mat, temp;
-
-			Vector2D center( 0.5, 0.5 );
-			MatrixBuildTranslation( mat, -center.x, -center.y, 0.0f );
-
-			// scale
+			CTFCSniperRifle *pWeapon = assert_cast<CTFCSniperRifle*>(pPlayer->GetActiveTFWeapon());
+			if (pWeapon)
 			{
-				Vector2D scale( 1.0f, 0.25f );
-				MatrixBuildScale( temp, scale.x, scale.y, 1.0f );
-				MatrixMultiply( temp, mat, mat );
+				float flChargeValue = ((1.0 - pWeapon->GetHUDDamagePerc()) * 0.8) + 0.6;
+
+				VMatrix mat, temp;
+
+				Vector2D center(0.5, 0.5);
+				MatrixBuildTranslation(mat, -center.x, -center.y, 0.0f);
+
+				// scale
+				{
+					Vector2D scale(1.0f, 0.25f);
+					MatrixBuildScale(temp, scale.x, scale.y, 1.0f);
+					MatrixMultiply(temp, mat, mat);
+				}
+
+				MatrixBuildTranslation(temp, center.x, center.y, 0.0f);
+				MatrixMultiply(temp, mat, mat);
+
+				// translation
+				{
+					Vector2D translation(0.0f, flChargeValue);
+					MatrixBuildTranslation(temp, translation.x, translation.y, 0.0f);
+					MatrixMultiply(temp, mat, mat);
+				}
+
+				m_pResult->SetMatrixValue(mat);
 			}
-
-			MatrixBuildTranslation( temp, center.x, center.y, 0.0f );
-			MatrixMultiply( temp, mat, mat );
-
-			// translation
+		}
+		else
+		{
+			CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+			if (pWeapon)
 			{
-				Vector2D translation( 0.0f, flChargeValue );
-				MatrixBuildTranslation( temp, translation.x, translation.y, 0.0f );
-				MatrixMultiply( temp, mat, mat );
-			}
+				float flChargeValue = ((1.0 - pWeapon->GetHUDDamagePerc()) * 0.8) + 0.6;
 
-			m_pResult->SetMatrixValue( mat );
+				VMatrix mat, temp;
+
+				Vector2D center(0.5, 0.5);
+				MatrixBuildTranslation(mat, -center.x, -center.y, 0.0f);
+
+				// scale
+				{
+					Vector2D scale(1.0f, 0.25f);
+					MatrixBuildScale(temp, scale.x, scale.y, 1.0f);
+					MatrixMultiply(temp, mat, mat);
+				}
+
+				MatrixBuildTranslation(temp, center.x, center.y, 0.0f);
+				MatrixMultiply(temp, mat, mat);
+
+				// translation
+				{
+					Vector2D translation(0.0f, flChargeValue);
+					MatrixBuildTranslation(temp, translation.x, translation.y, 0.0f);
+					MatrixMultiply(temp, mat, mat);
+				}
+
+				m_pResult->SetMatrixValue(mat);
+			}
 		}
 	}
 
@@ -1188,17 +1228,13 @@ void CSniperDot::OnDataChanged( DataUpdateType_t updateType )
 {
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		if (GetTeamNumber() == TF_TEAM_MERCENARY)
+		if (GetTeamNumber() == TF_TEAM_BLUE)
 		{
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_PURPLE, TEXTURE_GROUP_CLIENT_EFFECTS);
-		}
-		else if (GetTeamNumber() == TF_TEAM_RED)
-		{
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS);
+			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS);
 		}
 		else
 		{
-			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS);
+			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS);
 		}
 	}
 }

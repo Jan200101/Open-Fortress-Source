@@ -4360,6 +4360,19 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 				break;
 			}
+		case HITGROUP_RIGHTLEG:
+		case HITGROUP_LEFTLEG:
+		{
+			CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
+
+			if (pWpn->GetWeaponID() == TFC_WEAPON_SNIPER_RIFLE)
+			{
+				//Someone needs to make it so it takes the vars from the weapon's script file
+				m_Shared.Tranq(pAttacker, 12.0, 0.5, 0);
+				info_modified.SetDamageCustom(TF_DMG_CUSTOM_LEGSHOT);
+			}
+			break;
+		}
 		default:
 			break;
 		}
@@ -4837,7 +4850,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( pAttacker != this && !(bitsDamage & (DMG_DROWN | DMG_FALL)) ) 
 	{
 		float flDamage = 0.f;
-		
+
 		if ( bitsDamage & DMG_CRITICAL )
 		{
 			if ( bDebug )
@@ -4946,6 +4959,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( !(bitsDamage & DMG_BURN ) )
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 		}
+		
+		if (bitsCustomDamage == TF_DMG_CUSTOM_LEGSHOT)
+			flDamage = info.GetDamage() * 0.5f;
 
 		info.SetDamage( flDamage );
 	}

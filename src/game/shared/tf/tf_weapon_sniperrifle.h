@@ -169,7 +169,12 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
     CNetworkVar(float, m_flChargedDamage);
+
     virtual float GetProjectileDamage( void );
+
+#ifdef CLIENT_DLL
+	float GetHUDDamagePerc(void);
+#endif
 
 	virtual int	GetWeaponID(void) const { return TFC_WEAPON_SNIPER_RIFLE; }
 

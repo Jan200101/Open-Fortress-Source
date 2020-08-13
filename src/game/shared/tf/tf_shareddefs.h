@@ -1054,6 +1054,7 @@ enum
 	// open fortress
 	TF_DMG_CUSTOM_CRIT_POWERUP,
 	TF_DMG_CUSTOM_POISON,
+	TF_DMG_CUSTOM_LEGSHOT,
 };
 
 enum
