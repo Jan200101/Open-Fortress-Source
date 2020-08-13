@@ -113,9 +113,7 @@ CTFCProjectile_IncendRocket *CTFCProjectile_IncendRocket::Create ( CTFWeaponBase
 	CTFCProjectile_IncendRocket *pRocket = static_cast<CTFCProjectile_IncendRocket*>( CTFBaseRocket::Create( pWeapon, "tfc_projectile_incendrocket", vecOrigin, vecAngles, pOwner ) );
 
 	if ( pRocket )
-	{
 		pRocket->SetScorer( pScorer );
-	}
 
 	return pRocket;
 }
@@ -134,7 +132,7 @@ IMPLEMENT_NETWORKCLASS_ALIASED(TFProjectile_BouncyRocket, DT_TFProjectile_Bouncy
 BEGIN_NETWORK_TABLE(CTFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket)
 END_NETWORK_TABLE()
 
-#define BOUNCYROCKET_TIMER 2.5f
+#define BOUNCYROCKET_TIMER 2.f
 #define BOUNCYROCKET_SPEED 750.f
 #define BOUNCYROCKET_MODEL "models/weapons/w_models/w_grenade_bouncer.mdl"
 
@@ -160,7 +158,7 @@ CTFProjectile_BouncyRocket *CTFProjectile_BouncyRocket::Create(CTFWeaponBase *pW
 		VectorNormalize(vel);
 		QAngle angle;
 		VectorAngles(vel, angle);
-		angle.x -= 10.f;
+		angle.x -= 15.f;
 		if (angle.x < 270.f && angle.x > 180.f)
 			angle.x = 270.f;
 		AngleVectors(angle, &vel);
@@ -175,7 +173,11 @@ CTFProjectile_BouncyRocket *CTFProjectile_BouncyRocket::Create(CTFWeaponBase *pW
 void CTFProjectile_BouncyRocket::Precache(void)
 {
 	PrecacheModel(BOUNCYROCKET_MODEL);
+	PrecacheParticleSystem("stickybombtrail_blue");
+	PrecacheParticleSystem("stickybombtrail_red");
+	PrecacheParticleSystem("stickybombtrail_dm");
 	PrecacheScriptSound("BouncerGrenade.ImpactHard");
+	PrecacheScriptSound("BouncerGrenade.ImpactSoft");
 	CTFBaseRocket::Precache();
 }
 
@@ -184,7 +186,7 @@ void CTFProjectile_BouncyRocket::Spawn(void)
 	SetModel(BOUNCYROCKET_MODEL);
 	Vector angle = Vector(RandomFloat(-1.f, 1.f), RandomFloat(-1.f, 1.f), RandomFloat(-1.f, 1.f));
 	VectorNormalize(angle);
-	RotationVector = QAngle(angle.x, angle.y, angle.z) * 20.f;
+	m_rotationVector = QAngle(angle.x, angle.y, angle.z) * 20.f;
 	CTFBaseRocket::Spawn();
 }
 
@@ -204,7 +206,7 @@ void CTFProjectile_BouncyRocket::FlyThink(void)
 		Detonate();
 
 	//rotation
-	QAngle angles = GetAbsAngles() + RotationVector;
+	QAngle angles = GetAbsAngles() + m_rotationVector;
 	SetAbsAngles(angles);
 
 	//Water behavior
@@ -214,7 +216,7 @@ void CTFProjectile_BouncyRocket::FlyThink(void)
 	{
 		SetGravity(0.5f);
 
-		if ( waterLevel != iOldWaterLevel )
+		if ( waterLevel != m_iOldWaterLevel )
 			SetAbsVelocity( Vel / 2.f );
 		else if ( Vector2D(Vel.x, Vel.y).Length() > 10.f )
 			SetAbsVelocity( Vector( Vel.x * 0.8f, Vel.y * 0.8f, Vel.z ) );
@@ -222,13 +224,16 @@ void CTFProjectile_BouncyRocket::FlyThink(void)
 	else
 		SetGravity(1.5f);
 
-	iOldWaterLevel = waterLevel;
+	m_iOldWaterLevel = waterLevel;
 	SetNextThink(gpGlobals->curtime + 0.05f);
 }
 
-void CTFProjectile_BouncyRocket::BounceSound(void)
+void CTFProjectile_BouncyRocket::BounceSound(const short data)
 {
-	EmitSound("BouncerGrenade.ImpactHard");
+	if (data == 14) //wooden surface
+		EmitSound("BouncerGrenade.ImpactSoft");
+	else
+		EmitSound("BouncerGrenade.ImpactHard");
 }
 
 void CTFProjectile_BouncyRocket::RocketTouch(CBaseEntity *pOther)
@@ -244,32 +249,51 @@ void CTFProjectile_BouncyRocket::RocketTouch(CBaseEntity *pOther)
 		return;
 	}
 
-	//entity breaks if shot on a downward slopes
-	//delete this projectile and make a new one
 	if (pTrace->m_pEnt->IsWorld())
 	{
 		if (GetAbsVelocity().Length() > 200.f)
 		{
 			Vector vecAbsVelocity = GetAbsVelocity();
 
+			//projectile becomes uncapable of moving vertically under this odd circumstances
+			//spawn a new bouncer to take its place if they occur
+			Vector vec = GetAbsVelocity();
+			VectorNormalize(vec);
+			float dot3D = DotProduct(vec, pTrace->plane.normal);
+			vec = Vector(vec.x, vec.y, 0.f);
+			float dot2D = DotProduct(vec, pTrace->plane.normal);
+
+			//do the bounce
 			float backoff = DotProduct(vecAbsVelocity, pTrace->plane.normal) * 2.0f;
 			Vector change = pTrace->plane.normal * backoff;
 			vecAbsVelocity -= change;
 			vecAbsVelocity *= GetWaterLevel() == WL_Eyes ? 0.6f : GetElasticity();
-			BounceSound();
 
-			QAngle angle;
-			VectorAngles(vecAbsVelocity, angle);
-			CTFProjectile_BouncyRocket *pProjectile = CTFProjectile_BouncyRocket::Create((CTFWeaponBase *)GetOriginalLauncher(), GetAbsOrigin(), angle,
-				GetOwnerEntity(), GetOwnerEntity(), m_flCreationTime, vecAbsVelocity);
-			if (pProjectile)
+			if (gpGlobals->curtime > m_flLastBounce + 0.1f)
 			{
-				pProjectile->SetCritical(GetCritical());
-				pProjectile->SetDamage(GetDamage());
-				pProjectile->SetLauncher(this);
+				BounceSound(pTrace->surface.surfaceProps);
+				m_flLastBounce = gpGlobals->curtime;
 			}
 
-			UTIL_Remove(this);
+			if (dot3D < 0.f && dot2D > 0.f)
+			{
+				QAngle angle;
+				VectorAngles(vecAbsVelocity, angle);
+				CTFProjectile_BouncyRocket *pProjectile = CTFProjectile_BouncyRocket::Create((CTFWeaponBase *)GetOriginalLauncher(), GetAbsOrigin(), angle,
+																							 GetOwnerEntity(), GetOwnerEntity(), m_flCreationTime, vecAbsVelocity);
+				if (pProjectile)
+				{
+					pProjectile->SetCritical(GetCritical());
+					pProjectile->SetDamage(GetDamage());
+					pProjectile->SetLauncher(this);
+				}
+
+				UTIL_Remove(this);
+			}
+			else
+			{
+				SetAbsVelocity(vecAbsVelocity);
+			}
 		}
 
 		return;
