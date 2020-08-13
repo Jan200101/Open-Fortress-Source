@@ -33,7 +33,6 @@ public:
 	virtual void	CreateLightEffects(void);
 	virtual const char *GetTrailParticleName( void ) { return "rockettrail"; }
 
-private:
 	int			m_bCritical;
 };
 
@@ -46,12 +45,11 @@ class C_TFProjectile_BouncyRocket : public C_TFProjectile_Rocket
 public:
 	DECLARE_NETWORKCLASS();
 
-	C_TFProjectile_BouncyRocket();
-	~C_TFProjectile_BouncyRocket();
+	C_TFProjectile_BouncyRocket() {};
+	~C_TFProjectile_BouncyRocket() {};
 
-	virtual void	CreateRocketTrails(void) {}
-	virtual void	CreateLightEffects(void) {}
-
+	virtual const char *GetTrailParticleName();
+	virtual void	CreateRocketTrails(void);
 	virtual int		DrawModel(int flags);
 };
 

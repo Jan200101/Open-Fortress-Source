@@ -69,13 +69,14 @@ public:
 	virtual void Spawn(void);
 	virtual void FlyThink(void);
 	virtual void RocketTouch(CBaseEntity *pOther);
-	virtual void BounceSound(void);
+	void BounceSound(const short data);
 
 	float creationTime;
 
 private:
-	QAngle RotationVector;
-	int iOldWaterLevel;
+	QAngle	m_rotationVector;
+	float	m_flLastBounce;
+	int		m_iOldWaterLevel;
 };
 
 #endif	//TF_PROJECTILE_ROCKET_H

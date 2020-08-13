@@ -159,6 +159,10 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_BouncyRocket, DT_TFProjectile_Bounc
 BEGIN_NETWORK_TABLE( C_TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
 END_NETWORK_TABLE()
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+
 int C_TFProjectile_BouncyRocket::DrawModel(int flags)
 {
 	return C_BaseAnimating::DrawModel(flags);
@@ -167,13 +171,48 @@ int C_TFProjectile_BouncyRocket::DrawModel(int flags)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-C_TFProjectile_BouncyRocket::C_TFProjectile_BouncyRocket(void)
+
+const char *C_TFProjectile_BouncyRocket::GetTrailParticleName(void)
 {
+	if (GetTeamNumber() == TF_TEAM_BLUE)
+		return "pipebombtrail_blue";
+	else if (GetTeamNumber() == TF_TEAM_RED)
+		return "pipebombtrail_red";
+	else
+		return "pipebombtrail_dm";
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-C_TFProjectile_BouncyRocket::~C_TFProjectile_BouncyRocket(void)
+void C_TFProjectile_BouncyRocket::CreateRocketTrails(void)
 {
+	CreateLightEffects();
+
+	CNewParticleEffect *pParticle = ParticleProp()->Create(GetTrailParticleName(), PATTACH_ABSORIGIN_FOLLOW);
+	C_TFPlayer *pPlayer = ToTFPlayer(GetOwnerEntity());
+
+	if (pPlayer && pParticle)
+		pPlayer->m_Shared.UpdateParticleColor(pParticle);
+
+	if (m_bCritical)
+	{
+		switch (GetTeamNumber())
+		{
+		case TF_TEAM_BLUE:
+			ParticleProp()->Create("critical_pipe_blue", PATTACH_ABSORIGIN_FOLLOW);
+			break;
+		case TF_TEAM_RED:
+			ParticleProp()->Create("critical_pipe_red", PATTACH_ABSORIGIN_FOLLOW);
+			break;
+		case TF_TEAM_MERCENARY:
+			if (pPlayer)
+				pPlayer->m_Shared.UpdateParticleColor(ParticleProp()->Create("critical_pipe_dm", PATTACH_ABSORIGIN_FOLLOW));
+			else
+				ParticleProp()->Create("critical_pipe_dm", PATTACH_ABSORIGIN_FOLLOW);
+			break;
+		default:
+			break;
+		}
+	}
 }
