@@ -51,6 +51,8 @@ public:
 
 	virtual void	CreateRocketTrails(void) {}
 	virtual void	CreateLightEffects(void) {}
+
+	virtual int		DrawModel(int flags);
 };
 
 #endif // C_TF_PROJECTILE_ROCKET_H

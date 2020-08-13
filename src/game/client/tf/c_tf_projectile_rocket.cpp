@@ -159,6 +159,11 @@ IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_BouncyRocket, DT_TFProjectile_Bounc
 BEGIN_NETWORK_TABLE( C_TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
 END_NETWORK_TABLE()
 
+int C_TFProjectile_BouncyRocket::DrawModel(int flags)
+{
+	return C_BaseAnimating::DrawModel(flags);
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
