@@ -134,6 +134,12 @@ bool CHealthKit::MyTouch( CBasePlayer *pPlayer )
 		//...and poison
 		if (pTFPlayer->m_Shared.InCond(TF_COND_POISON))
 			pTFPlayer->m_Shared.RemoveCond(TF_COND_POISON);
+		//...and Tranqed
+		if (pTFPlayer->m_Shared.InCond(TF_COND_TRANQ))
+			pTFPlayer->m_Shared.RemoveCond(TF_COND_TRANQ);
+		//...and Fucked Up Legs
+		if (pTFPlayer->m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
+			pTFPlayer->m_Shared.RemoveCond(TF_COND_FUCKEDUP_LEGS);
 		AddEffects( EF_NODRAW );
 	}
 

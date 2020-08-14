@@ -157,6 +157,7 @@ public:
 	void CreateChattingEffect(void);
 	void CreatePoisonEffect(void);
 	void CreateTranqEffect(void);
+	void CreateFuckedUpLegsEffect(void);
 
 	CGlowObject			*m_pGlowEffect;
 
@@ -360,6 +361,8 @@ private:
 	CNewParticleEffect	*m_pPoisonEffect;
 	// Tranq particle effect
 	CNewParticleEffect	*m_pTranqEffect;
+	// Tranq particle effect
+	CNewParticleEffect	*m_pFuckedUpLegsEffect;
 
 	bool m_bUpdateObjectHudState;
 

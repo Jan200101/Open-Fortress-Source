@@ -2557,6 +2557,7 @@ C_TFPlayer::C_TFPlayer() : m_iv_angEyeAngles( "C_TFPlayer::m_iv_angEyeAngles" )
 	m_pSaveMeEffect = NULL;
 	m_pTranqEffect = NULL;
 	m_pPoisonEffect = NULL;
+	m_pFuckedUpLegsEffect = NULL;
 
 	m_pChattingEffect = NULL;
 	m_bChatting = false;
@@ -2871,13 +2872,17 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 	bool bAliveNotStealth = !m_Shared.InCondInvis() && IsAlive();
 
 	// update the chat bubble on the player (when he is typing a chat message)
-	CreateChattingEffect();
+	if (bAliveNotStealth && m_bChatting && !m_pChattingEffect)
+		CreateChattingEffect();
 
 	if ( bAliveNotStealth && m_Shared.InCond(TF_COND_POISON) && !m_pPoisonEffect )
 		CreatePoisonEffect();
 
 	if ( bAliveNotStealth && m_Shared.InCond(TF_COND_TRANQ) && !m_pTranqEffect )
 		CreateTranqEffect();
+
+	if (bAliveNotStealth && m_Shared.InCond(TF_COND_FUCKEDUP_LEGS) && !m_pFuckedUpLegsEffect)
+		CreateFuckedUpLegsEffect();
 
 	if ( m_bSaveMeParity != m_bOldSaveMeParity )
 		CreateSaveMeEffect();
@@ -3776,7 +3781,7 @@ void C_TFPlayer::ClientThink()
 	bRemoveEffect = bRemoveEffect || GetPercentInvisible() > 0;
 
 	// Kill the effect if either the player is dead or the enemy disguised spy is now invisible
-	if ( m_pChattingEffect && bRemoveEffect )
+	if (m_pChattingEffect && (bRemoveEffect || m_bChatting))
 	{
 		ParticleProp()->StopEmissionAndDestroyImmediately(m_pChattingEffect);
 		m_pChattingEffect = NULL;
@@ -3794,6 +3799,13 @@ void C_TFPlayer::ClientThink()
 	{
 		ParticleProp()->StopEmissionAndDestroyImmediately(m_pTranqEffect);
 		m_pTranqEffect = NULL;
+	}
+
+	// Kill the effect if either the player is dead, the spy is now invisible, if player is no longer tranqed
+	if (m_pFuckedUpLegsEffect && (bRemoveEffect || !m_Shared.InCond(TF_COND_FUCKEDUP_LEGS)))
+	{
+		ParticleProp()->StopEmissionAndDestroyImmediately(m_pFuckedUpLegsEffect);
+		m_pFuckedUpLegsEffect = NULL;
 	}
 }
 
@@ -5141,17 +5153,9 @@ void C_TFPlayer::CreateChattingEffect(void)
 		return;
 
 	// If I'm disguised as the enemy, don't create
-	if (!m_Shared.InCondInvis() && m_bChatting && IsAlive())
-	{
-		// this uses the unused particle
-		if (!m_pChattingEffect)
-			m_pChattingEffect = ParticleProp()->Create("speech_typing", PATTACH_POINT_FOLLOW, "head");
-	}
-	else if (m_pChattingEffect)
-	{
-		ParticleProp()->StopEmissionAndDestroyImmediately(m_pChattingEffect);
-		m_pChattingEffect = NULL;
-	}
+	// this uses the unused particle
+	if (!m_pChattingEffect)
+		m_pChattingEffect = ParticleProp()->Create("speech_typing", PATTACH_POINT_FOLLOW, "head");
 }
 
 //-----------------------------------------------------------------------------
@@ -5175,16 +5179,19 @@ void C_TFPlayer::CreateTranqEffect(void)
 	if ( IsLocalPlayer() )
 		return;
 
-	if (!m_Shared.m_bTranqEffects)
-	{
-		m_pTranqEffect = ParticleProp()->Create("sleepy_overhead", PATTACH_POINT_FOLLOW, "head");
-	}
-	else
-	{
-		m_pTranqEffect = ParticleProp()->Create("mark_for_death", PATTACH_POINT_FOLLOW, "head");
-	}
+	m_pTranqEffect = ParticleProp()->Create("sleepy_overhead", PATTACH_POINT_FOLLOW, "head");
 }
+//-----------------------------------------------------------------------------
+// Purpose:  Creation Of Tranq Overhead Effect
+//-----------------------------------------------------------------------------
+void C_TFPlayer::CreateFuckedUpLegsEffect(void)
+{
+	// Don't create them for the local player
+	if (IsLocalPlayer())
+		return;
 
+	m_pFuckedUpLegsEffect = ParticleProp()->Create("mark_for_death", PATTACH_POINT_FOLLOW, "head");
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

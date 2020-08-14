@@ -187,7 +187,8 @@ public:
 
 	void	Burn( CTFPlayer *pPlayer, float flTime );
 	void	Poison(CTFPlayer *pPlayer, float flTime);
-	void	Tranq(CTFPlayer *pPlayer, float flTime, float flSpeed, bool bEffects);
+	void	Tranq(CTFPlayer *pPlayer, float flTime, float flSpeed);
+	void	FuckUpLegs(CTFPlayer *pPlayer, float flTime, float flSpeed);
 
 	// Weapons.
 	CTFWeaponBase *GetActiveTFWeapon() const;
@@ -278,6 +279,7 @@ private:
 	void OnAddJauggernaught( void );
 	void OnAddPoison(void);
 	void OnAddTranq(void);
+	void OnAddFuckedUpLegs(void);
 
 	void OnRemoveZoomed( void );
 	void OnRemoveBurning( void );
@@ -295,6 +297,7 @@ private:
 	void OnRemoveJauggernaught( void );
 	void OnRemovePoison(void);
 	void OnRemoveTranq(void);
+	void OnRemoveFuckedUpLegs(void);
 
 	float GetCritMult( void );
 
@@ -373,16 +376,20 @@ private:
 	float					m_flFlameBurnTime;
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
-
+	//Poison Var Stuff
 	CHandle<CTFPlayer>		m_hPoisonAttacker;
 	float					m_flPoisonTime;
 	float					m_flPoisonRemoveTime;
 
+	//Tranq Stuff
 	float					m_flTranqTime;
 	float					m_flTranqRemoveTime;
 	float					m_flTranqSlowness;
-	bool					m_bTranqEffects;
 
+	//Fucked Up Legs Stuff
+	float					m_flFuckedUpLegsTime;
+	float					m_flFuckedUpLegsRemoveTime;
+	float					m_flFuckedUpLegsSlowness;
 
 	float m_flDisguiseCompleteTime;
 

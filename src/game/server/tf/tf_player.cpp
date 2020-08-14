@@ -1486,6 +1486,9 @@ void CTFPlayer::Regenerate( void )
 
 	if (m_Shared.InCond(TF_COND_TRANQ))
 		m_Shared.RemoveCond(TF_COND_TRANQ);
+
+	if (m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
+		m_Shared.RemoveCond(TF_COND_FUCKEDUP_LEGS);
 }
 
 //-----------------------------------------------------------------------------
@@ -4368,7 +4371,9 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 			if (pWpn->GetWeaponID() == TFC_WEAPON_SNIPER_RIFLE)
 			{
 				//Someone needs to make it so it takes the vars from the weapon's script file
-				m_Shared.Tranq(pAttacker, 12.0, 0.5, 0);
+				CTakeDamageInfo info;
+
+				m_Shared.FuckUpLegs(pAttacker, pWpn->GetTFWpnData().m_flEffectDuration, pWpn->GetTFWpnData().m_flSpeedReduction);
 				info_modified.SetDamageCustom(TF_DMG_CUSTOM_LEGSHOT);
 			}
 			break;

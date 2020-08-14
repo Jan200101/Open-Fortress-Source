@@ -148,10 +148,12 @@ public:
 
 	// Effect Duration Amount
 	float 	m_flEffectDuration;
-	bool 	m_bTranqOrLeg;
+	//Movement Speed Reduction, Higher = Less Reduction
 	float 	m_flSpeedReduction;
-
+	//Turn Speed Reduction
+	float 	m_flTurnSpeedReduction;
 	// Mag
+
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function
 	bool    m_bDropsMag;
