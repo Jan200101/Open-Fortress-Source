@@ -151,7 +151,7 @@ public:
 	//Movement Speed Reduction, Higher = Less Reduction
 	float 	m_flSpeedReduction;
 	//Turn Speed Reduction
-	float 	m_flTurnSpeedReduction;
+	float 	m_flWeaponSpeedReduction;
 	// Mag
 
 	char    m_szMagModel[128];

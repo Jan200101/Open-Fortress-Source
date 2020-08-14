@@ -382,12 +382,11 @@ private:
 	float					m_flPoisonRemoveTime;
 
 	//Tranq Stuff
-	float					m_flTranqTime;
 	float					m_flTranqRemoveTime;
-	float					m_flTranqSlowness;
+	float					m_flTranqMovementSlowness;
+	float					m_flTranqExtraSlowness;
 
 	//Fucked Up Legs Stuff
-	float					m_flFuckedUpLegsTime;
 	float					m_flFuckedUpLegsRemoveTime;
 	float					m_flFuckedUpLegsSlowness;
 
