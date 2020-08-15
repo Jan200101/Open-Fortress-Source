@@ -335,8 +335,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bAlwaysDrop = ( pKeyValuesData->GetInt( "AlwaysDrop", 0 ) != 0 );
 	m_bCanSoftZoom = ( pKeyValuesData->GetInt( "CanSoftZoom", 1 ) != 0 );
 	m_flEffectDuration = pKeyValuesData->GetFloat("EffectDuration", 0.0f);
+	m_flWeaponSpeedReduction = pKeyValuesData->GetFloat("WeaponSpeedReduction", 0.0f);
 	m_flSpeedReduction = pKeyValuesData->GetFloat("SpeedReduction", 0.0f);
-	m_flTurnSpeedReduction = pKeyValuesData->GetFloat("m_flTurnSpeedReductionn", 0.0f);
 
 	m_flDespawnTime	= pKeyValuesData->GetFloat( "DespawnTime", 30.0f );
 
