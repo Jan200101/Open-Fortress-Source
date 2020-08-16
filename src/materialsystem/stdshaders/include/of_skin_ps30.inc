@@ -38,7 +38,7 @@ class of_skin_ps30_Static_Index
 	unsigned int m_nFLASHLIGHT : 2;
 	unsigned int m_nLIGHTWARPTEXTURE : 2;
 	unsigned int m_nPHONGWARPTEXTURE : 2;
-	unsigned int m_nWRINKLEMAP : 2;
+	unsigned int m_nWRINKLEMAP : 1;
 	unsigned int m_nDETAIL_BLEND_MODE : 3;
 	unsigned int m_nDETAILTEXTURE : 2;
 	unsigned int m_nRIMLIGHT : 2;
@@ -117,7 +117,7 @@ public:
 
 	void SetWRINKLEMAP( int i )
 	{
-		Assert( i >= 0 && i <= 1 );
+		Assert( i >= 0 && i <= 0 );
 		m_nWRINKLEMAP = i;
 #ifdef _DEBUG
 		m_bWRINKLEMAP = true;
@@ -213,7 +213,7 @@ public:
 	int GetIndex() const
 	{
 		Assert( m_bCUBEMAP && m_bSELFILLUM && m_bSELFILLUMFRESNEL && m_bFLASHLIGHT && m_bLIGHTWARPTEXTURE && m_bPHONGWARPTEXTURE && m_bWRINKLEMAP && m_bDETAIL_BLEND_MODE && m_bDETAILTEXTURE && m_bRIMLIGHT && m_bFLASHLIGHTDEPTHFILTERMODE && m_bFASTPATH_NOBUMP && m_bBLENDTINTBYBASEALPHA );
-		return ( 320 * m_nCUBEMAP ) + ( 640 * m_nSELFILLUM ) + ( 1280 * m_nSELFILLUMFRESNEL ) + ( 2560 * m_nFLASHLIGHT ) + ( 5120 * m_nLIGHTWARPTEXTURE ) + ( 10240 * m_nPHONGWARPTEXTURE ) + ( 20480 * m_nWRINKLEMAP ) + ( 40960 * m_nDETAIL_BLEND_MODE ) + ( 286720 * m_nDETAILTEXTURE ) + ( 573440 * m_nRIMLIGHT ) + ( 1146880 * m_nFLASHLIGHTDEPTHFILTERMODE ) + ( 3440640 * m_nFASTPATH_NOBUMP ) + ( 6881280 * m_nBLENDTINTBYBASEALPHA ) + 0;
+		return ( 320 * m_nCUBEMAP ) + ( 640 * m_nSELFILLUM ) + ( 1280 * m_nSELFILLUMFRESNEL ) + ( 2560 * m_nFLASHLIGHT ) + ( 5120 * m_nLIGHTWARPTEXTURE ) + ( 10240 * m_nPHONGWARPTEXTURE ) + ( 20480 * m_nWRINKLEMAP ) + ( 20480 * m_nDETAIL_BLEND_MODE ) + ( 143360 * m_nDETAILTEXTURE ) + ( 286720 * m_nRIMLIGHT ) + ( 573440 * m_nFLASHLIGHTDEPTHFILTERMODE ) + ( 1720320 * m_nFASTPATH_NOBUMP ) + ( 3440640 * m_nBLENDTINTBYBASEALPHA ) + 0;
 	}
 };
 

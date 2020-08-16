@@ -295,7 +295,7 @@ BEGIN_VS_SHADER( OF_VertexLitGeneric, "Help for VertexLitGeneric (Open Fortress)
 		if (g_pHardwareConfig->GetDXSupportLevel() < 90)
 			return "VertexLitGeneric_DX8";
 
-		if (!g_pHardwareConfig->SupportsShaderModel_3_0())
+		if (!g_pHardwareConfig->SupportsShaderModel_3_0() && !g_pHardwareConfig->ActuallySupportsPixelShaders_2_b())
 			return "VertexLitGeneric";
 
 		return 0;

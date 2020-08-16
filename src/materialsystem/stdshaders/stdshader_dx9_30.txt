@@ -13,3 +13,7 @@ of_vertexlit_and_unlit_generic_vs30.fxc
 // Cloak effect
 of_cloak_blended_pass_ps30.fxc
 of_cloak_blended_pass_vs30.fxc
+
+// Post Processing effects
+BlurDOF_ps30.fxc
+ToxicOverlay_ps30.fxc

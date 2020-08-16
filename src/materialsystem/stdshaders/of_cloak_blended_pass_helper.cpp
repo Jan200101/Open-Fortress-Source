@@ -137,6 +137,8 @@
 // Auto generated inc files
 #include "of_cloak_blended_pass_vs30.inc"
 #include "of_cloak_blended_pass_ps30.inc"
+#include "of_cloak_blended_pass_vs20.inc"
+#include "of_cloak_blended_pass_ps20b.inc"
 
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
@@ -199,6 +201,7 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 		int userDataSize = 0;
 		pShaderShadow->VertexShaderVertexFormat( flags, nTexCoordCount, NULL, userDataSize );
 
+		if (g_pHardwareConfig->SupportsShaderModel_3_0())
 		{
 			// Vertex Shader
 			DECLARE_STATIC_VERTEX_SHADER(of_cloak_blended_pass_vs30);
@@ -209,6 +212,18 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 			DECLARE_STATIC_PIXEL_SHADER(of_cloak_blended_pass_ps30);
 			SET_STATIC_PIXEL_SHADER_COMBO( BUMPMAP, bBumpMapping ? 1 : 0 );
 			SET_STATIC_PIXEL_SHADER(of_cloak_blended_pass_ps30);
+		}
+		else
+		{
+			// Vertex Shader
+			DECLARE_STATIC_VERTEX_SHADER(of_cloak_blended_pass_vs20);
+			SET_STATIC_VERTEX_SHADER_COMBO(BUMPMAP, bBumpMapping ? 1 : 0);
+			SET_STATIC_VERTEX_SHADER(of_cloak_blended_pass_vs20);
+
+			// Pixel Shader
+			DECLARE_STATIC_PIXEL_SHADER(of_cloak_blended_pass_ps20b);
+			SET_STATIC_PIXEL_SHADER_COMBO(BUMPMAP, bBumpMapping ? 1 : 0);
+			SET_STATIC_PIXEL_SHADER(of_cloak_blended_pass_ps20b);
 		}
 
 		// Textures
@@ -239,6 +254,7 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 			pShader->SetVertexShaderTextureTransform( VERTEX_SHADER_SHADER_SPECIFIC_CONST_0, info.m_nBumpTransform );
 		}
 
+		if (g_pHardwareConfig->SupportsShaderModel_3_0())
 		{
 			// Set Vertex Shader Combos
 			DECLARE_DYNAMIC_VERTEX_SHADER(of_cloak_blended_pass_vs30);
@@ -249,6 +265,18 @@ void DrawCloakBlendedPass( CBaseVSShader *pShader, IMaterialVar** params, IShade
 			// Set Pixel Shader Combos
 			DECLARE_DYNAMIC_PIXEL_SHADER(of_cloak_blended_pass_ps30);
 			SET_DYNAMIC_PIXEL_SHADER(of_cloak_blended_pass_ps30);
+		}
+		else
+		{
+			// Set Vertex Shader Combos
+			DECLARE_DYNAMIC_VERTEX_SHADER(of_cloak_blended_pass_vs20);
+			SET_DYNAMIC_VERTEX_SHADER_COMBO(SKINNING, pShaderAPI->GetCurrentNumBones() > 0);
+			SET_DYNAMIC_VERTEX_SHADER_COMBO(COMPRESSED_VERTS, (int)vertexCompression);
+			SET_DYNAMIC_VERTEX_SHADER(of_cloak_blended_pass_vs20);
+
+			// Set Pixel Shader Combos
+			DECLARE_DYNAMIC_PIXEL_SHADER(of_cloak_blended_pass_ps20b);
+			SET_DYNAMIC_PIXEL_SHADER(of_cloak_blended_pass_ps20b);
 		}
 
 		// Bind textures
