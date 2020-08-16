@@ -358,11 +358,11 @@ const char *GetTranqTrailParticleName(int iTeamNumber, bool bCritical)
 {
 	if (iTeamNumber == TF_TEAM_BLUE)
 	{
-		return (bCritical ? "nailtrails_super_blue_crit" : "nailtrails_super_blue");
+		return (bCritical ? "tranq_tracer_teamcolor_blue_crit" : "tranq_tracer_teamcolor_blue");
 	}
 	else if (iTeamNumber == TF_TEAM_RED)
 	{
-		return (bCritical ? "nailtrails_super_red_crit" : "nailtrails_super_red");
+		return (bCritical ? "tranq_tracer_teamcolor_red_crit" : "tranq_tracer_teamcolor_red");
 	}
 	else
 	{

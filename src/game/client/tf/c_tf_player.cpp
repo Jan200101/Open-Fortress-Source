@@ -3797,7 +3797,7 @@ void C_TFPlayer::ClientThink()
 	// Kill the effect if either the player is dead, the spy is now invisible, if player is no longer tranqed
 	if ( m_pTranqEffect && ( bRemoveEffect || !m_Shared.InCond(TF_COND_TRANQ) ) )
 	{
-		ParticleProp()->StopEmissionAndDestroyImmediately(m_pTranqEffect);
+		ParticleProp()->StopEmission(m_pTranqEffect);
 		m_pTranqEffect = NULL;
 	}
 
@@ -5179,7 +5179,7 @@ void C_TFPlayer::CreateTranqEffect(void)
 	if ( IsLocalPlayer() )
 		return;
 
-	m_pTranqEffect = ParticleProp()->Create("sleepy_overhead", PATTACH_POINT_FOLLOW, "head");
+	m_pTranqEffect = ParticleProp()->Create("sleepy_circling", PATTACH_POINT_FOLLOW, "head");
 }
 //-----------------------------------------------------------------------------
 // Purpose:  Creation Of Tranq Overhead Effect

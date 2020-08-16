@@ -3272,11 +3272,54 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( m_Shared.InCond( TF_COND_HASTE ) )
 		maxfbspeed *= of_haste_movespeed_multplier.GetFloat();
 
-	if (m_Shared.InCond(TF_COND_TRANQ))
-		maxfbspeed *= m_Shared.m_flTranqMovementSlowness;
+//	if (m_Shared.InCond(TF_COND_TRANQ))
+//		maxfbspeed *= m_Shared.m_flTranqMovementSlowness;
+//
+//	if (m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
+//		maxfbspeed *= m_Shared.m_flFuckedUpLegsSlowness;
 
-	if (m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
-		maxfbspeed *= m_Shared.m_flFuckedUpLegsSlowness;
+	float m_flTFCMaxSlowdown = 0.5;
+
+	// Since speed reduction works by timing, bigger values = less slowdown.
+	// EX) 0.84 = 16% speed reduction, 0.16 = 84% speed reduction.
+	// EX 2) 1.25 = 25% speed INCREASE.
+
+	//Check to see if player is in both conditions of Tranq and Fucked Up Legs...1
+	if (m_Shared.InCond(TF_COND_TRANQ) && m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
+	{
+		//1...if it passes, check to see if FuckedUpLegSlown is 50% slowdown...A
+		if (m_Shared.m_flFuckedUpLegsSlowness == 0.5)
+		{
+			//A...if it is 50% slowdown, don't use the slowdown values of either Tranq Or Fucked Up Legs; Use the Max Slowdown of 50%, so it can't go above that.
+			maxfbspeed *= m_flTFCMaxSlowdown;
+		}
+		else
+		{
+			//A...if it isn't 50% slowdown, check to see if the added value of both the Tranq % and Fucked Up Leg % go above 50%...AB
+			if ( 1 - ( (1 - m_Shared.m_flFuckedUpLegsSlowness) + ( 1 - m_Shared.m_flTranqMovementSlowness) ) <= 0.5 )
+			{
+				//AB...If it does go above 50% reduction, use Max Slowdown Reduction instead.
+				maxfbspeed *= m_flTFCMaxSlowdown;
+			}
+			else
+			{
+				//AB...If it doesn't do the math to calurate the amount % of slowdown to do.
+				maxfbspeed *= 1 - ( (1 - m_Shared.m_flFuckedUpLegsSlowness) + (1 - m_Shared.m_flTranqMovementSlowness) );
+			}
+		}
+	}
+	//1...If not in both conditions, do a single check for either and apply the normal amount of slowdown for both of them.
+	else
+	{
+		if ( m_Shared.InCond(TF_COND_TRANQ) )
+		{
+			maxfbspeed *= m_Shared.m_flTranqMovementSlowness;
+		} 
+		else if (m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
+		{
+			maxfbspeed *= m_Shared.m_flFuckedUpLegsSlowness;
+		}
+	}
 
 	// Set the speed
 	SetMaxSpeed( maxfbspeed );
