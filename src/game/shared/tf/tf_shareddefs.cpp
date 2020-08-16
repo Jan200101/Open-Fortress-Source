@@ -389,26 +389,6 @@ bool WeaponID_IsGrenadeWeapon( int iWeaponID )
 		iWeaponID == TFC_WEAPON_GRENADELAUNCHER;
 }
 
-bool WeaponID_IsMeleeWeapon(int iWeaponID)
-{
-	return iWeaponID == TF_WEAPON_BAT ||
-		iWeaponID == TF_WEAPON_BOTTLE ||
-		iWeaponID == TF_WEAPON_FIREAXE ||
-		iWeaponID == TF_WEAPON_CLUB ||
-		iWeaponID == TF_WEAPON_CROWBAR ||
-		iWeaponID == TF_WEAPON_KNIFE ||
-		iWeaponID == TF_WEAPON_FISTS ||
-		iWeaponID == TF_WEAPON_SHOVEL ||
-		iWeaponID == TF_WEAPON_WRENCH ||
-		iWeaponID == TF_WEAPON_BONESAW ||
-		iWeaponID == TF_WEAPON_KNIFE ||
-		iWeaponID == TF_WEAPON_UMBRELLA ||
-		iWeaponID == TFC_WEAPON_CROWBAR ||
-		iWeaponID == TFC_WEAPON_UMBRELLA ||
-		iWeaponID == TFC_WEAPON_KNIFE ||
-		iWeaponID == TFC_WEAPON_WRENCH;
-}
-
 const char *g_aGrenadeNames[] =
 {
 	"TF_GRENADE_NONE",
