@@ -296,7 +296,6 @@ bool IsExplosiveProjectile( const char *alias );
 bool WeaponID_IsSniperRifle( int iWeaponID );
 bool WeaponID_IsRocketWeapon( int iWeaponID );
 bool WeaponID_IsGrenadeWeapon( int iWeaponID );
-bool WeaponID_IsMeleeWeapon( int iWeaponID );
 
 //-----------------------------------------------------------------------------
 // Grenade Launcher mode (for pipebombs).

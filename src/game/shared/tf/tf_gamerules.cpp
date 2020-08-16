@@ -5101,7 +5101,7 @@ const char *CTFGameRules::GetKillingWeaponName( const CTakeDamageInfo &info, CTF
 		{
 			killer_weapon_name = pWeapon->GetClassname();
 			
-			if (weaponType != NULL && WeaponID_IsMeleeWeapon(pWeapon->GetWeaponID()))
+			if (weaponType != NULL && pWeapon->IsMeleeWeapon())
 				*weaponType = 1;
 
 			if (pWeapon->GetKillIcon()[0] != '\0')
