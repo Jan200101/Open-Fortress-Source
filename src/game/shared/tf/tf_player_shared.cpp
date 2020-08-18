@@ -1666,20 +1666,19 @@ void CTFPlayerShared::Poison( CTFPlayer *pAttacker, float flTime )
 	if ( !m_pOuter->IsAlive() )
 		return;
 
-	if (!InCond(TF_COND_POISON) && !InCondUber())
+	if (m_pOuter->GetPlayerClass()->GetClassIndex() != TF_CLASS_MEDIC)
 	{
-		// Start posioning
-		AddCond(TF_COND_POISON, flTime);
-		m_flPoisonTime = gpGlobals->curtime;    //asap
-	} else
-		return;
+		if (!InCond(TF_COND_POISON) && !InCondUber())
+		{
+			// Start posioning
+			AddCond(TF_COND_POISON, flTime);
+			m_flPoisonTime = gpGlobals->curtime;    //asap
+		}
+		else
+			return;
 
-	if (flTime > 0.f)
-		m_flPoisonRemoveTime = gpGlobals->curtime + flTime;
-	else
-		m_flPoisonRemoveTime = gpGlobals->curtime + TF_POISON_STING_LIFE;
-
-	m_hPoisonAttacker = pAttacker;
+		m_hPoisonAttacker = pAttacker;
+	}
 
 #endif
 }
@@ -1694,10 +1693,19 @@ void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flSpeed)
 	if (!m_pOuter->IsAlive())
 		return;
 
-	if (!InCond(TF_COND_TRANQ) && !InCondUber())
+	if (!InCondUber())
 	{
-		// Start sloweness
-		AddCond(TF_COND_TRANQ, flTime);
+		if (!InCond(TF_COND_TRANQ))
+		{
+			AddCond(TF_COND_TRANQ, flTime);
+		}
+		else
+		{
+			float m_flTranqAddonTime = (flTime / 2) + GetConditionDuration(TF_COND_TRANQ);
+			//Msg("m_flTranqAddonTime is %f\n", m_flTranqAddonTime);
+			//Msg("TF_COND_TRANQ Condition Duration is %f\n", GetConditionDuration(TF_COND_TRANQ));
+			AddCond(TF_COND_TRANQ, m_flTranqAddonTime);
+		}
 	}
 	else
 		return;
@@ -1730,7 +1738,10 @@ void CTFPlayerShared::FuckUpLegs(CTFPlayer *pAttacker, float flTime, float flSpe
 			float m_flFuckedUpLegsSlownessAddTogether = m_flFuckedUpLegsSlowness - (1.0 - flSpeed);
 			m_flFuckedUpLegsSlowness = m_flFuckedUpLegsSlownessAddTogether;
 		}
-		AddCond(TF_COND_FUCKEDUP_LEGS, flTime);
+		float m_flNewFuckedUpLegsTime = (flTime / 2) + GetConditionDuration(TF_COND_FUCKEDUP_LEGS);
+		//Msg("m_flNewFuckedUpLegsTime is %\n", m_flNewFuckedUpLegsTime);
+		//Msg("TF_COND_FUCKEDUP_LEGS Condition Duration is %f\n", GetConditionDuration(TF_COND_FUCKEDUP_LEGS));
+		AddCond(TF_COND_FUCKEDUP_LEGS, m_flNewFuckedUpLegsTime);
 	}
 	else
 		return;
@@ -3271,12 +3282,6 @@ void CTFPlayer::TeamFortress_SetSpeed()
 
 	if ( m_Shared.InCond( TF_COND_HASTE ) )
 		maxfbspeed *= of_haste_movespeed_multplier.GetFloat();
-
-//	if (m_Shared.InCond(TF_COND_TRANQ))
-//		maxfbspeed *= m_Shared.m_flTranqMovementSlowness;
-//
-//	if (m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
-//		maxfbspeed *= m_Shared.m_flFuckedUpLegsSlowness;
 
 	float m_flTFCMaxSlowdown = 0.5;
 

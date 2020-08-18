@@ -113,6 +113,9 @@ ConVar of_zombie_dropitems( "of_zombie_dropitems", "1", FCVAR_ARCHIVE | FCVAR_NO
 
 ConVar of_spawn_with_weapon( "of_spawn_with_weapon", "", FCVAR_ARCHIVE | FCVAR_NOTIFY, "For bot behaviour debugging: players will only spawn with the specified weapon classname." );
 
+ConVar of_spread_infection("of_spread_infection", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Whether or not you can spread infection by touching teammates.");
+
+
 extern ConVar of_grenades;
 extern ConVar of_allowteams;
 extern ConVar spec_freeze_time;
@@ -8658,6 +8661,7 @@ void CTFPlayer::Touch( CBaseEntity *pOther )
 	if ( pPlayer )
 	{
 		CheckUncoveringSpies( pPlayer );
+		SpreadPoison(pPlayer);
 	}
 
 	BaseClass::Touch( pOther );
@@ -8682,6 +8686,19 @@ void CTFPlayer::CheckUncoveringSpies( CTFPlayer *pTouchedPlayer )
 
 	// pulse their invisibility
 	pTouchedPlayer->m_Shared.OnSpyTouchedByEnemy();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Check to see if this player has been infected
+//-----------------------------------------------------------------------------
+void CTFPlayer::SpreadPoison(CTFPlayer *pTouchedPlayer)
+{
+	// Only spread poison among teammates
+	if (of_spread_infection.GetBool())
+	{
+		if (m_Shared.IsAlly(pTouchedPlayer) && pTouchedPlayer->m_Shared.InCond(TF_COND_POISON))
+			m_Shared.Poison(pTouchedPlayer->m_Shared.m_hPoisonAttacker, pTouchedPlayer->m_Shared.GetConditionDuration(TF_COND_POISON));
+	}
 }
 
 enum
@@ -9486,7 +9503,7 @@ void CTFPlayer::InputSpeakResponseConcept( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Sets a player on fire
 //-----------------------------------------------------------------------------
 void CTFPlayer::InputIgnitePlayer( inputdata_t &inputdata )
 {
@@ -9503,7 +9520,7 @@ void CTFPlayer::InputExtinguishPlayer(inputdata_t &inputdata)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Poison a player
 //-----------------------------------------------------------------------------
 void CTFPlayer::InputPoisonPlayer(inputdata_t &inputdata)
 {

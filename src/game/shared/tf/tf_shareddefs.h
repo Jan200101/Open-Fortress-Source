@@ -543,7 +543,6 @@ extern const char *g_szProjectileNames[];
 
 // Poison
 #define TF_POISON_FREQUENCY			0.75f
-#define TF_POISON_STING_LIFE		8.f
 #define TF_POISON_DMG				8
 
 // disguising

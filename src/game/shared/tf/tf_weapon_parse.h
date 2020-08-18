@@ -150,7 +150,7 @@ public:
 	float 	m_flEffectDuration;
 	//Movement Speed Reduction, Higher = Less Reduction
 	float 	m_flSpeedReduction;
-	//Turn Speed Reduction
+	//Weapon Speed Reduction
 	float 	m_flWeaponSpeedReduction;
 	// Mag
 

@@ -340,7 +340,7 @@ void CTFProjectile_Tranq::ProjectileTouch(CBaseEntity *pOther)
 		Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo *>( GetFileWeaponInfoFromHandle(hWpnInfo) );
 
-		if ( ( pTFOwner->GetTeamNumber() != pTFOther->GetTeamNumber() ) || ( pTFOwner->GetTeamNumber() && pTFOther->GetTeamNumber() == TF_TEAM_MERCENARY ) )
+		if (GetEnemyTeam(pTFOther) == pTFOwner->GetTeamNumber())
 			pTFOther->m_Shared.Tranq( pTFOwner, pWeaponInfo->m_flEffectDuration, pWeaponInfo->m_flSpeedReduction);
 	}
 

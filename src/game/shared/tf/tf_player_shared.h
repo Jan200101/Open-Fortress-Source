@@ -376,7 +376,8 @@ private:
 	float					m_flFlameBurnTime;
 	float					m_flFlameRemoveTime;
 	float					m_flTauntRemoveTime;
-	//Poison Var Stuff
+
+	//Poison Stuff
 	CHandle<CTFPlayer>		m_hPoisonAttacker;
 	float					m_flPoisonTime;
 	float					m_flPoisonRemoveTime;
