@@ -84,6 +84,7 @@
 #include "tf_weaponbase.h"
 #include "tf_player.h"
 #include "tf_gamerules.h"
+#include "of_shared_schemas.h"
 #endif
 
 // NVNT haptic utils
@@ -5804,6 +5805,16 @@ CBaseEntity	*CBasePlayer::GiveNamedItem( const char *pszName, int iSubType )
 	// Msg( "giving %s\n", pszName );
 
 	EHANDLE pent;
+	
+	bool bIsSchemaItem = false;
+	string_t m_iszItem = AllocPooledString( pszName );
+	
+	KeyValues *kvWeapon = GetWeaponFromSchema(pszName);
+	if( kvWeapon )
+	{
+		pszName = kvWeapon->GetString("weapon_class", pszName);
+		bIsSchemaItem = true;
+	}
 
 	pent = CreateEntityByName(pszName);
 	if ( pent == NULL )
@@ -5814,13 +5825,16 @@ CBaseEntity	*CBasePlayer::GiveNamedItem( const char *pszName, int iSubType )
 
 	pent->SetLocalOrigin( GetLocalOrigin() );
 	pent->AddSpawnFlags( SF_NORESPAWN );
-
+	
 	CBaseCombatWeapon *pWeapon = dynamic_cast<CBaseCombatWeapon*>( (CBaseEntity*)pent );
 	if ( pWeapon )
 	{
+		if( bIsSchemaItem )
+			pWeapon->SetupSchemaItem(STRING(m_iszItem));
+
 		pWeapon->SetSubType( iSubType );
 	}
-
+	
 	DispatchSpawn( pent );
 
 	if ( pent != NULL && !(pent->IsMarkedForDeletion()) ) 
@@ -6757,7 +6771,7 @@ bool CBasePlayer::BumpWeapon( CBaseCombatWeapon *pWeapon )
 	// ----------------------------------------
 	// If I already have it just take the ammo
 	// ----------------------------------------
-	if (Weapon_OwnsThisType( pWeapon->GetClassname(), pWeapon->GetSubType())) 
+	if( Weapon_OwnsThisType( pWeapon->GetSchemaName(), pWeapon->GetSubType()) ) 
 	{
 		if( Weapon_EquipAmmoOnly( pWeapon ) )
 		{

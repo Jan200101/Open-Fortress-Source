@@ -262,9 +262,7 @@ void CTFFlag::PlantBomb()
 
 #ifdef GAME_DLL
 void CTFFlag::PlantedThink()
-{
-	DevMsg("Peee\n");
-	
+{	
 	if( gpGlobals->curtime > m_flExplodeTick )
 	{
 		Explode();

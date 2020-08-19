@@ -18,6 +18,8 @@
 
 using namespace vgui;
 
+extern void UTIL_PrecacheSchemaWeapon( const char *szName );
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -105,8 +107,8 @@ void CHudSwapWeapons::FireGameEvent( IGameEvent * event )
 		
 		if ( event->GetInt("playerid") != pPlayer->entindex() )
 			return;
-		const char *pszWeaponName = WeaponIdToClassname( event->GetInt("current_wep") );
-		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pszWeaponName );
+
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( event->GetString("current_wep") );
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 		if( pWeaponInfo && pWeaponInfo->iconActive )
 		{
@@ -114,13 +116,21 @@ void CHudSwapWeapons::FireGameEvent( IGameEvent * event )
 			Q_snprintf( temp, sizeof(temp), "../%s",pWeaponInfo->iconActive->szTextureFile );
 			m_pCurrentWepImg->SetImage( temp );
 		}
-		pszWeaponName = WeaponIdToClassname( event->GetInt("swap_wep") );
-		hWpnInfo = LookupWeaponInfoSlot( pszWeaponName );
+		
+		hWpnInfo = LookupWeaponInfoSlot( event->GetString("swap_wep") );
 		pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+		if( !pWeaponInfo )
+		{
+			UTIL_PrecacheSchemaWeapon( event->GetString("swap_wep") );
+		}
+
+		hWpnInfo = LookupWeaponInfoSlot( event->GetString("swap_wep") );
+		pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+
 		if( pWeaponInfo && pWeaponInfo->iconActive )
 		{
 			char temp[128];
-			Q_snprintf( temp, sizeof(temp), "../%s",pWeaponInfo->iconActive->szTextureFile );
+			Q_snprintf( temp, sizeof(temp), "../%s", pWeaponInfo->iconActive->szTextureFile );
 			m_pSwapWepImg->SetImage( temp );
 		}
 		

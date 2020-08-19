@@ -49,6 +49,7 @@ public:
 
 	virtual void PrimaryAttack();
 	virtual void ItemPostFrame();
+	virtual void HandleFireOnEmpty();
 	virtual bool FiresInBursts();
 	virtual void SecondaryAttack( void );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo );

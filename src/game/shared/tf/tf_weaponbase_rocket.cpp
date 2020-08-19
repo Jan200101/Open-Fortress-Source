@@ -370,7 +370,7 @@ void CTFBaseRocket::ExplodeManualy( trace_t *pTrace, int bitsDamageType, int bit
 
 	if ( pTrace->m_pEnt && pTrace->m_pEnt->IsPlayer() )
 	{
-		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, pTrace->m_pEnt->entindex(), GetWeaponID() , GetOriginalLauncher() );
+		TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, pTrace->m_pEnt->entindex(), GetWeaponID(), GetOriginalLauncher() );
 	}
 	else
 	{

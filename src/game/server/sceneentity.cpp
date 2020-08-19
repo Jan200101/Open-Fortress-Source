@@ -1775,6 +1775,41 @@ void CSceneEntity::DispatchStartSpeak( CChoreoScene *scene, CBaseFlex *actor, CC
 			}			
 		}
 
+#ifdef OF_DLL
+		AI_CriteriaSet pTempSet;
+		actor->ModifyOrAppendCriteria(pTempSet);
+		char szMutator[64];
+		Q_strncpy( szMutator, pTempSet.GetValue(pTempSet.FindCriterionIndex("playermutator")), sizeof(szMutator));
+		strlwr(szMutator);
+
+		if( FStrEq(szMutator, "robot") )
+		{
+			char szSoundScript[124];
+			char szResult[128];
+			Q_strncpy(szSoundScript, event->GetParameters(), sizeof(szSoundScript));
+			int iLen = sizeof(szSoundScript);
+			int y = 0;
+			for( int i = 0; i < iLen; i++ )
+			{
+				szResult[y] = szSoundScript[i];
+				if( szSoundScript[i] == '.' )
+				{
+					y++;
+					szResult[y] = 'M';
+					y++;
+					szResult[y] = 'V';
+					y++;
+					szResult[y] = 'M';
+					y++;
+					szResult[y] = '_';
+				}
+				y++;
+			}
+
+			event->SetParameters(szResult);
+		}
+#endif
+
 		float time_in_past = m_flCurrentTime - event->GetStartTime() ;
 
 		float soundtime = gpGlobals->curtime - time_in_past;
@@ -2906,7 +2941,7 @@ void CSceneEntity::DispatchStartSubScene( CChoreoScene *scene, CBaseFlex *pActor
 void CSceneEntity::StartEvent( float currenttime, CChoreoScene *scene, CChoreoEvent *event )
 {
 	Assert( event );
-
+	
 	if ( !Q_stricmp( event->GetName(), "NULL" ) )
  	{
  		LocalScene_Printf( "%s : %8.2f:  ignored %s\n", STRING( m_iszSceneFile ), currenttime, event->GetDescription() );

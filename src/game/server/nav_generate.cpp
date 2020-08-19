@@ -3388,9 +3388,8 @@ void CNavMesh::CreateNavAreasFromNodes( void )
 // adds walkable positions for any/all positions a mod specifies
 void CNavMesh::AddWalkableSeeds( void )
 {
-	CBaseEntity *spawn = gEntList.FindEntityByClassname( NULL, GetPlayerSpawnName() );
-
-	if (spawn )
+	CBaseEntity *spawn = NULL;
+	while( (spawn = gEntList.FindEntityByClassname( spawn, GetPlayerSpawnName() )) != NULL )
 	{
 		// snap it to the sampling grid
 		Vector pos = spawn->GetAbsOrigin();

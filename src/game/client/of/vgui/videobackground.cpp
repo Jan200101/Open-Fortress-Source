@@ -30,6 +30,11 @@ CVideoBackground::CVideoBackground(Panel *parent, const char *panelName) : BaseC
 	m_pVideo = new CTFVideoPanel( this, "VideoPanel" );
 }
 
+CVideoBackground::~CVideoBackground()
+{
+	m_pVideo->Shutdown();
+}
+
 void CVideoBackground::ApplySchemeSettings( IScheme *pScheme )
 {
 	BaseClass::ApplySchemeSettings(pScheme);

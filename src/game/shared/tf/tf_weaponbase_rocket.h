@@ -15,8 +15,12 @@
 
 #ifdef CLIENT_DLL
 	#include "c_baseanimating.h"
+	#include "c_of_baseschemaitem.h"
 
 	#define CTFBaseRocket C_TFBaseRocket
+	#define CBaseSchemaEntity C_BaseSchemaEntity
+#else
+	#include "of_baseschemaitem.h"
 #endif
 
 //#define TF_ROCKET_RADIUS	(110.0f * 1.1f)	//radius * TF scale up factor
@@ -44,7 +48,7 @@ public:
 	void	Spawn( void );
 
 	virtual void	SetLauncher( CBaseEntity *pLauncher ) { m_hOriginalLauncher = pLauncher; }
-	CBaseEntity		*GetOriginalLauncher( void ) { return m_hOriginalLauncher; }	
+	CBaseSchemaEntity		*GetOriginalLauncher(void) { return (CBaseSchemaEntity*)m_hOriginalLauncher.Get(); }
 	
 	virtual void	UpdateOnRemove( void );
 

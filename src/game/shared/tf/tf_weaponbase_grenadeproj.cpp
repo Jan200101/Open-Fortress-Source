@@ -323,7 +323,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 		}
 		else
 		{
-			TE_TFExplosion( filter, 0.0f, vecOrigin, pTrace->plane.normal, -1, GetWeaponID(), pTmpLauncher );
+			TE_TFExplosion(filter, 0.0f, vecOrigin, pTrace->plane.normal, -1, GetWeaponID(), pTmpLauncher);
 		}
 	}
 

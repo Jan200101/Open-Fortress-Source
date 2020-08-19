@@ -2094,6 +2094,24 @@ void CBaseObject::OnRemoveSapper( void )
 {
 	m_bHasSapper = false;
 
+	CBaseEntity *pChild = FirstMoveChild();
+	while ( pChild )
+	{
+		CBaseEntity *pNext = pChild->NextMovePeer();
+		if( CObjectSapper *pSapper = dynamic_cast<CObjectSapper*>(pChild) )
+		{
+			m_bHasSapper = true;
+			IHasBuildPoints *pBPInterface = dynamic_cast<IHasBuildPoints*>( this );
+			Assert( pBPInterface );
+			if( pBPInterface )
+			{
+				pBPInterface->SetObjectOnBuildPoint( m_iBuiltOnPoint, pSapper );
+			}
+			return;
+		}
+		pChild = pNext;
+	}
+	
 	UpdateDisabledState();
 }
 
@@ -2780,6 +2798,7 @@ void CBaseObject::ReattachChildren( void )
 			if ( CanBuildObjectOnBuildPoint( i, iObjectType ) )
 			{
 				pObject->AttachObjectToObject( this, i, vecDummy );
+				pObject->AttachObjectToObject( this, pObject->m_iBuiltOnPoint, vecDummy );
 				bReattached = true;
 			}
 		}

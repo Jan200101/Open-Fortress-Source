@@ -89,6 +89,7 @@ extern ConVar of_muzzlelight;
 #endif
 
 extern ConVar of_infiniteammo;
+extern ConVar of_haste_fire_multiplier;
 
 void CTFFlameThrower::Precache( void )
 {
@@ -435,8 +436,11 @@ void CTFFlameThrower::PrimaryAttack()
 
 		if ( TFGameRules()->IsInfGamemode() )
 			iDamagePerSec = ( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage ) / 2;
+		
+		if( pOwner->m_Shared.InCond(TF_COND_HASTE) )
+			iDamagePerSec *= 1.0f + ( 1.0f - of_haste_fire_multiplier.GetFloat() );
 
-		float flDamage = (float)iDamagePerSec * flFiringInterval;
+		float flDamage = (float)iDamagePerSec * max(flFiringInterval, 0.01f);
 
 		CTFFlameEntity::Create( GetFlameOriginPos(), pOwner->EyeAngles(), this, iDmgType, flDamage, iCustomDmgType );
 #endif
@@ -447,7 +451,12 @@ void CTFFlameThrower::PrimaryAttack()
 	// per frame, depending on how constants are tuned, so keep an accumulator so we can expend fractional amounts of ammo per shot.)
 	// Note we do this only on server and network it to client.  If we predict it on client, it can get slightly out of sync w/server
 	// and cause ammo pickup indicators to appear
-	m_flAmmoUseRemainder += TF_FLAMETHROWER_AMMO_PER_SECOND_PRIMARY_ATTACK * flFiringInterval;
+	
+	float flAmmoRate = m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_flTimeFireDelay;
+	if (pOwner->m_Shared.InCond(TF_COND_HASTE))
+		flAmmoRate *= 1.0f + ( 1.0f - of_haste_fire_multiplier.GetFloat());
+	
+	m_flAmmoUseRemainder += TF_FLAMETHROWER_AMMO_PER_SECOND_PRIMARY_ATTACK * flAmmoRate;
 	// take the integer portion of the ammo use accumulator and subtract it from player's ammo count; any fractional amount of ammo use
 	// remains and will get used in the next shot
 	int iAmmoToSubtract = (int) m_flAmmoUseRemainder;

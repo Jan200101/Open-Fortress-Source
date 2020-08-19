@@ -26,6 +26,6 @@ void EndGroupingSounds( void );
 // On the server, it only does the damage calculations.
 // On the client, it does all the effects.
 void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngles,
-					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage = -1.0f, int bCritical = false, bool bFirstShot = false );
+					 int iWeapon, int iMode, int iSeed, float flSpread, bool bFixedSpread = true, int iBullets = 1, float flRange = 8192, int iAmmoType = 0, float flDamage = -1.0f, int bCritical = false, bool bFirstShot = false );
 
 #endif // TF_FX_SHARED_H

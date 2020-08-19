@@ -43,6 +43,7 @@
 	#include "dt_utlvector_send.h"
 	#include "team_train_watcher.h"
 	#include "of_dropped_weapon.h"
+	#include "of_bot_spawner.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -379,7 +380,6 @@ void CDuelQueue::OnPreDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 void CDuelQueue::OnDataChanged( DataUpdateType_t updateType )
 {
-	DevMsg("Test\n");
 	IGameEvent *event = gameeventmanager->CreateEvent( "duel_refresh" );
 	if ( event )
 	{
@@ -2241,6 +2241,9 @@ void CTFGameRules::PrecacheGameMode()
 			}
 		}
 	}
+	
+	// Clank klank
+	CBaseEntity::PrecacheScriptSound( "MVM.BotStep" );
 
 	// Precache this for DM
 	CBaseEntity::PrecacheModel( "models/player/attachments/mercenary_shield.mdl" );
@@ -4596,7 +4599,7 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 			ClientPrint( pTFPlayer, HUD_PRINTTALK, "#Name_change_limit_exceeded" );
 		}
 	}
-
+	
 	// keep track of their hud_classautokill value
 	int nClassAutoKill = Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "hud_classautokill" ) );
 	pTFPlayer->SetHudClassAutoKill( nClassAutoKill > 0 ? true : false );
@@ -4615,16 +4618,16 @@ void CTFGameRules::ClientSettingsChanged( CBasePlayer *pPlayer )
 	iFov = clamp( iFov, 50, 130 );
 	pTFPlayer->SetDefaultFOV( iFov );
 
-	pTFPlayer->m_vecViewmodelOffset.SetX( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_x" ) ) );
-	pTFPlayer->m_vecViewmodelOffset.SetY( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_y" ) ) );
-	pTFPlayer->m_vecViewmodelOffset.SetZ( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_z" ) ) );
+	pTFPlayer->m_vecViewmodelOffset.SetX( Q_atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_x" ) ) );
+	pTFPlayer->m_vecViewmodelOffset.SetY( Q_atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_y" ) ) );
+	pTFPlayer->m_vecViewmodelOffset.SetZ( Q_atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_offset_z" ) ) );
 	
-	pTFPlayer->m_vecViewmodelAngle.SetX( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_x" ) ) );
-	pTFPlayer->m_vecViewmodelAngle.SetY( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_y" ) ) );
-	pTFPlayer->m_vecViewmodelAngle.SetZ( atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_z" ) ) );
+	pTFPlayer->m_vecViewmodelAngle.SetX( Q_atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_x" ) ) );
+	pTFPlayer->m_vecViewmodelAngle.SetY( Q_atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_y" ) ) );
+	pTFPlayer->m_vecViewmodelAngle.SetZ( Q_atof( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_angle_z" ) ) );
 
-	pTFPlayer->m_bCentered  = atoi( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_centered" ) ) == 1;
-	pTFPlayer->m_bMinimized = atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf_use_min_viewmodels" ) ) == 1;
+	pTFPlayer->m_bCentered  = Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "viewmodel_centered" ) ) == 1;
+	pTFPlayer->m_bMinimized = Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "tf_use_min_viewmodels" ) ) == 1;
 }
 
 //-----------------------------------------------------------------------------
@@ -7084,6 +7087,14 @@ bool CTFGameRules::HasPassedMinRespawnTime( CBasePlayer *pPlayer )
 	float flMinSpawnTime = GetMinTimeWhenPlayerMaySpawn( pPlayer ); 
 
 	return ( gpGlobals->curtime > flMinSpawnTime );
+}
+
+bool CTFGameRules::ShouldRespawnQuickly( CBasePlayer *pPlayer )
+{
+	if( TFGameRules()->IsDMGamemode() )
+		return true;
+	
+	return BaseClass::ShouldRespawnQuickly( pPlayer );
 }
 
 //-----------------------------------------------------------------------------

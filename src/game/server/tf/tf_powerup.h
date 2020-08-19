@@ -69,7 +69,7 @@ public:
 // CTFPowerup::DropSingleInstance(Vector&, CBaseCombatCharacter*, float, float)
 	void			DropSingleInstance( const Vector &Velocity, CBaseCombatCharacter *pBCC, float flLifetime, float flTime );
 
-	COutputEvent m_OnRespawn;
+	COutputEvent 	m_OnRespawn;
 	bool			m_bDisabled;
 	bool			m_bHide = 1;
 

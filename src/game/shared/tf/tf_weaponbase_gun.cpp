@@ -93,9 +93,7 @@ void CTFWeaponBaseGun::BurstFire( void )
 	if ( m_iClip1 <= 0 )
 	{
 		if ( FiresInBursts() )
-		m_iShotsDue = 0;
-		if ( LoadsManualy() )
-		m_bInBarrage = false;
+			m_iShotsDue = 0;
 		return;
 	}
 	BaseClass::BurstFire();
@@ -115,6 +113,14 @@ void CTFWeaponBaseGun::BeginBurstFire(void)
 	BaseClass::BeginBurstFire();
 }
 
+void CTFWeaponBaseGun::HandleFireOnEmpty()
+{
+	if( LoadsManualy() && m_flNextPrimaryAttack <= gpGlobals->curtime )
+		PrimaryAttack();
+
+	BaseClass::HandleFireOnEmpty();
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -128,19 +134,22 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	if ( !CanAttack() )
 		return;	
 	
-	// Check for ammunition.
+	if( LoadsManualy() && !InBarrage() )
+	{
+		Reload();
+		return;
+	}
 	
+	// Check for ammunition.
 	if ( m_iClip1 <= 0 && m_iClip1 != -1 )
 	{
 		if ( FiresInBursts() )
-		m_iShotsDue = 0;
-		if ( LoadsManualy() )
-		{
-			m_bInBarrage = false;
-			AbortReload();
-		}
+			m_iShotsDue = 0;
+		
+		m_bInBarrage = false;
 		return;
 	}
+
 	if ( GetWindupTime() > 0.0f )
 	{
 		if ( m_bWindingUp )
@@ -156,13 +165,14 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 			return;
 		}
 	}	
-	if ( !FiresInBursts() && !LoadsManualy() )
+	if ( !FiresInBursts() )
 	{
 		// Are we capable of firing again?
-		if ( m_flNextPrimaryAttack > gpGlobals->curtime  )
+		if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 			return;
 	}
-	else if ( ( FiresInBursts() && m_iShotsDue == 0 ) || ( LoadsManualy() && !InBarrage() ) )
+
+	else if ( ( FiresInBursts() && m_iShotsDue == 0 ) )
 		return;
 
 	CalcIsAttackCritical();
@@ -260,7 +270,7 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 		SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 	}
 	
-	if ( !InBarrage() && !InBurst() )
+	if ( !InBurst() )
 		m_bWindingUp = false;	
 
 	// Check the reload mode and behave appropriately.
@@ -275,59 +285,24 @@ void CTFWeaponBaseGun::ItemPostFrame( void )
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner( ) );
 	if ( !pOwner )
 		return;
-	
-	if ( LoadsManualy() &&  m_iClip1 <= 0 )
+ 
+	if( LoadsManualy() && !( pOwner->m_nButtons & (IN_ATTACK | IN_RELOAD) ) && m_iClip1 > 0 )
 	{
-		m_bInBarrage = false;
-	}
-	
-	if ( InBarrage() )
-	{
-        // If it's firing the clip don't let them repress attack to reload
-        pOwner->m_nButtons &= ~IN_ATTACK;
-		pOwner->m_nButtons &= ~IN_RELOAD;
 		AbortReload();
+		m_bInBarrage = true;
 	}
 	
-    // Try to fire if there's ammo in the clip and we're not holding the button
-    m_bInBarrage = LoadsManualy() && m_iClip1 > 0 && !( pOwner->m_nButtons & IN_ATTACK ) && !( pOwner->m_nButtons & IN_RELOAD );
+	if( LoadsManualy() && InBarrage() )
+		pOwner->m_nButtons |= IN_ATTACK;	
+ 
+	if ( InBurst() && m_flNextShotTime < gpGlobals->curtime )
+		BurstFire();
 
-	if ( LoadsManualy() )
+	if ( FiresInBursts() && pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && m_flNextPrimaryAttack < gpGlobals->curtime && m_iClip1 > 0 )
 	{
-		if( !InBarrage() )
-		{
-			if ( CanReload() && ( pOwner->m_nButtons & IN_ATTACK ) )
-			{
-				// Convert the attack key into the reload key
-				pOwner->m_nButtons |= IN_RELOAD;
-			}
-
-			// Don't allow attack button if we're not attacking
-			pOwner->m_nButtons &= ~IN_ATTACK;
-		}
-		else if ( FiresInBursts() )
-		{
-			// Fake the attack key
-			if ( InBurst() && m_flNextShotTime < gpGlobals->curtime )
-				BurstFire();
-			
-			if ( m_flNextPrimaryAttack < gpGlobals->curtime && m_iClip1 > 0 )
-				BeginBurstFire();
-		}
-		else if ( m_flNextPrimaryAttack < gpGlobals->curtime )
-		{
-			BurstFire();
-		}
+		BeginBurstFire();
 	}
-	else {
-		if ( InBurst() && m_flNextShotTime < gpGlobals->curtime )
-			BurstFire();
 
-		if ( FiresInBursts() && pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && m_flNextPrimaryAttack < gpGlobals->curtime && m_iClip1 > 0 )
-		{
-			BeginBurstFire();
-		}
-	}
 	BaseClass::ItemPostFrame();	
 	
 }
@@ -501,6 +476,10 @@ void CTFWeaponBaseGun::FireBullet( CTFPlayer *pPlayer )
 		m_iWeaponMode,
 		CBaseEntity::GetPredictionRandomSeed() & 255,
 		GetWeaponSpread(),
+		!GetTFWpnData().m_bNoFixedSpread,
+		GetTFWpnData().GetWeaponData( m_iWeaponMode ).m_nBulletsPerShot,
+		GetTFWpnData().GetWeaponData( m_iWeaponMode ).m_flRange,
+		GetTFWpnData().iAmmoType,
 		GetProjectileDamage(),
 		IsCurrentAttackACrit(),
 		bFirstShot );

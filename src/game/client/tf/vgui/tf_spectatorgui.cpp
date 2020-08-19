@@ -82,6 +82,8 @@ void CTFSpectatorGUI::Update()
 	UpdateKeyLabels();
 }
 
+extern ConVar of_wait_for_respawn;
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -114,7 +116,7 @@ void CTFSpectatorGUI::UpdateReinforcements( void )
 	else
 	{
 		float flNextRespawn = TFGameRules()->GetNextRespawnWave( pPlayer->GetTeamNumber(), pPlayer );
-		if ( !flNextRespawn )
+		if ( !flNextRespawn && !of_wait_for_respawn.GetBool() )
 		{
 			m_pReinforcementsLabel->SetVisible( false );
 			return;
@@ -123,7 +125,21 @@ void CTFSpectatorGUI::UpdateReinforcements( void )
 		int iRespawnWait = (flNextRespawn - gpGlobals->curtime);
 		if ( iRespawnWait <= 0 )
 		{
-			g_pVGuiLocalize->ConstructString( wLabel, sizeof( wLabel ), g_pVGuiLocalize->Find("#game_respawntime_now" ), 0 );
+			const char *key = engine->Key_LookupBinding( "+use" );
+			bool bUseBound = true;
+			if ( !key )
+			{
+				key = "< not bound >";
+				bUseBound = false;
+			}
+			SetDialogVariable( "key", key );
+
+			if( of_wait_for_respawn.GetBool() )
+			{
+				g_pVGuiLocalize->ConstructString( wLabel, sizeof( wLabel ), bUseBound ? g_pVGuiLocalize->Find("#game_respawntime_input" ) : g_pVGuiLocalize->Find("#game_respawntime_input_move" ), 1, key );
+			}
+			else
+				g_pVGuiLocalize->ConstructString( wLabel, sizeof( wLabel ), g_pVGuiLocalize->Find("#game_respawntime_now" ), 0 );
 		}
 		else if ( iRespawnWait <= 1.0 )
 		{

@@ -23,6 +23,7 @@
 #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) || defined( OF_DLL ) || defined ( OF_CLIENT_DLL )	
 #include "tf_shareddefs.h"
 #include "tf_gamerules.h"
+#include "of_shared_schemas.h"
 #endif
 
 #if !defined( CLIENT_DLL )
@@ -67,6 +68,44 @@ ConVar tf_weapon_criticals_bucket_bottom( "tf_weapon_criticals_bucket_bottom", "
 ConVar tf_weapon_criticals_bucket_default( "tf_weapon_criticals_bucket_default", "300.0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // TF
 
+// TODO, Client precaches of level specific items fail to precache
+// due to them being called before the schema is loaded
+// Find a way to fix this
+
+void UTIL_PrecacheSchemaWeapon( const char *szName )
+{
+	KeyValues *pWeapon = GetWeaponFromSchema( szName );
+	if( pWeapon )
+	{
+		if( pWeapon->GetString("weapon_class", "")[0] != '\0' )
+		{
+			UTIL_PrecacheOther( pWeapon->GetString("weapon_class") );
+
+			CBaseCombatWeapon *pEntity =(CBaseCombatWeapon*)CreateEntityByName( pWeapon->GetString("weapon_class") );
+			if ( !pEntity )
+			{
+				Warning( "NULL Ent in UTIL_PrecacheOther\n" );
+				return;
+			}
+			
+			if (pEntity)
+			{
+				pEntity->SetupSchemaItem(szName);
+				pEntity->Precache( );
+			}
+#ifdef OF_DLL
+			UTIL_RemoveImmediate( pEntity );
+#else
+			pEntity->Release();
+#endif
+		}
+		else
+			Warning("Failed to find weapon class, falling back to util precache other\n");
+	}
+	// If something fails, bail and just try to precache the class by name
+	UTIL_PrecacheOther( szName );
+}
+
 CBaseCombatWeapon::CBaseCombatWeapon()
 {
 	// Constructor must call this
@@ -92,6 +131,7 @@ CBaseCombatWeapon::CBaseCombatWeapon()
 	m_iClip2 = -1;
 #if defined ( OF_CLIENT_DLL )
 	m_iReserveAmmo = -1;
+	bParsedSchemaWeapon = false;
 #endif
 	m_iPrimaryAmmoType = -1;
 	m_iSecondaryAmmoType = -1;
@@ -271,6 +311,7 @@ void CBaseCombatWeapon::Precache( void )
 #else
 	// Add this weapon to the weapon registry, and get our index into it
 	// Get weapon data from script file
+	
 	if ( ReadWeaponDataFromFileForSlot( filesystem, GetClassname(), &m_hWeaponFileInfo, GetEncryptionKey() ) )
 	{
 		// Get the ammo indexes for the ammo's specified in the data file
@@ -339,59 +380,9 @@ void CBaseCombatWeapon::ParseWeaponScript( bool bReParse )
 {
 	// Add this weapon to the weapon registry, and get our index into it
 	// Get weapon data from script file
-	if ( ReadWeaponDataFromFileForSlot( filesystem, GetClassname(), &m_hWeaponFileInfo, GetEncryptionKey(), bReParse ) )
+	if ( ReadWeaponDataFromFileForSlot( filesystem, GetSchemaName(), &m_hWeaponFileInfo, GetEncryptionKey(), bReParse ) )
 	{
-		// Get the ammo indexes for the ammo's specified in the data file
-		if ( GetWpnData().szAmmo1[0] )
-		{
-			m_iPrimaryAmmoType = GetAmmoDef()->Index( GetWpnData().szAmmo1 );
-			if (m_iPrimaryAmmoType == -1)
-			{
-				Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
-			}
- #if defined ( TF_DLL ) || defined ( TF_CLIENT_DLL ) 
-			// Ammo override
-			int iModUseMetalOverride = 0;
-			CALL_ATTRIB_HOOK_INT( iModUseMetalOverride, mod_use_metal_ammo_type );
-			if ( iModUseMetalOverride )
-			{
-				m_iPrimaryAmmoType = (int)TF_AMMO_METAL;
-			}
-#endif
- 		}
-		if ( GetWpnData().szAmmo2[0] )
-		{
-			m_iSecondaryAmmoType = GetAmmoDef()->Index( GetWpnData().szAmmo2 );
-			if (m_iSecondaryAmmoType == -1)
-			{
-				Msg("ERROR: Weapon (%s) using undefined secondary ammo type (%s)\n",GetClassname(),GetWpnData().szAmmo2);
-			}
-
-		}
-#if defined( CLIENT_DLL )
-		gWR.LoadWeaponSprites( GetWeaponFileInfoHandle() );
-#endif
-		// Precache models (preload to avoid hitch)
-		m_iViewModelIndex = 0;
-		m_iWorldModelIndex = 0;
-		if ( GetViewModel() && GetViewModel()[0] )
-		{
-			m_iViewModelIndex = CBaseEntity::PrecacheModel( GetViewModel() );
-		}
-		if ( GetWorldModel() && GetWorldModel()[0] )
-		{
-			m_iWorldModelIndex = CBaseEntity::PrecacheModel( GetWorldModel() );
-		}
-
-		// Precache sounds, too
-		for ( int i = 0; i < NUM_SHOOT_SOUND_TYPES; ++i )
-		{
-			const char *shootsound = GetShootSound( i );
-			if ( shootsound && shootsound[0] )
-			{
-				CBaseEntity::PrecacheScriptSound( shootsound );
-			}
-		}
+		OnLoadWeaponScript();
 	}
 	else
 	{
@@ -399,6 +390,58 @@ void CBaseCombatWeapon::ParseWeaponScript( bool bReParse )
 		Warning( "Error reading weapon data file for: %s\n", GetClassname() );
 	//	Remove( );	//don't remove, this gets released soon!
 	}	
+}
+
+void CBaseCombatWeapon::OnLoadWeaponScript()
+{
+	// Get the ammo indexes for the ammo's specified in the data file
+	if ( GetWpnData().szAmmo1[0] )
+	{
+		m_iPrimaryAmmoType = GetAmmoDef()->Index( GetWpnData().szAmmo1 );
+		if (m_iPrimaryAmmoType == -1)
+		{
+			Msg("ERROR: Weapon (%s) using undefined primary ammo type (%s)\n",GetClassname(), GetWpnData().szAmmo1);
+		}
+	}
+	if ( GetWpnData().szAmmo2[0] )
+	{
+		m_iSecondaryAmmoType = GetAmmoDef()->Index( GetWpnData().szAmmo2 );
+		if (m_iSecondaryAmmoType == -1)
+		{
+			Msg("ERROR: Weapon (%s) using undefined secondary ammo type (%s)\n",GetClassname(),GetWpnData().szAmmo2);
+		}
+
+	}
+#if defined( CLIENT_DLL )
+	gWR.LoadWeaponSprites( GetWeaponFileInfoHandle() );
+#endif
+	// Precache models (preload to avoid hitch)
+	m_iViewModelIndex = 0;
+	m_iWorldModelIndex = 0;
+	if ( GetViewModel() && GetViewModel()[0] )
+	{
+		m_iViewModelIndex = CBaseEntity::PrecacheModel( GetViewModel() );
+	}
+	if ( GetWorldModel() && GetWorldModel()[0] )
+	{
+		m_iWorldModelIndex = CBaseEntity::PrecacheModel( GetWorldModel() );
+	}
+
+	// Precache sounds, too
+	for ( int i = 0; i < NUM_SHOOT_SOUND_TYPES; ++i )
+	{
+		const char *shootsound = GetShootSound( i );
+		if ( shootsound && shootsound[0] )
+		{
+			CBaseEntity::PrecacheScriptSound( shootsound );
+		}
+	}
+}
+
+void CBaseCombatWeapon::SetupSchemaItem(const char *szName)
+{
+	SetSchemaName(szName);
+	SetKillIcon(szName);
 }
 #endif
 
@@ -1112,7 +1155,6 @@ void CBaseCombatWeapon::Equip( CBaseCombatCharacter *pOwner )
 	}
 #endif
 
-
 	m_flNextPrimaryAttack		= gpGlobals->curtime;
 	m_flNextSecondaryAttack		= gpGlobals->curtime;
 	SetTouch( NULL );
@@ -1180,7 +1222,7 @@ int CBaseCombatWeapon::UpdateClientData( CBasePlayer *pPlayer )
 	int iNewState = WEAPON_IS_CARRIED_BY_PLAYER;
 
 	if ( pPlayer->GetActiveWeapon() == this )
-	{
+	{	
 		if ( pPlayer->m_fOnTarget ) 
 		{
 			iNewState = WEAPON_IS_ONTARGET;
@@ -1201,6 +1243,16 @@ int CBaseCombatWeapon::UpdateClientData( CBasePlayer *pPlayer )
 		m_iState = iNewState;
 		OnActiveStateChanged( iOldState );
 	}
+	
+#ifdef OF_CLIENT_DLL
+	// Precache happens before any networking is done so, we gotta do this stupid hack
+	if( IsSchemaItem() && !bParsedSchemaWeapon )
+	{
+		ParseWeaponScript(true);
+		bParsedSchemaWeapon = true;
+	}
+#endif	
+	
 	return 1;
 }
 
@@ -1586,8 +1638,8 @@ bool CBaseCombatWeapon::Deploy( )
 	bool bResult = DefaultDeploy( (char*)GetViewModel(), (char*)GetWorldModel(), GetDrawActivity(), (char*)GetAnimPrefix() );
 
 	// override pose parameters
-	PoseParameterOverride( false );
-
+	PoseParameterOverride( false );	
+	
 	return bResult;
 }
 

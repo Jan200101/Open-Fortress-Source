@@ -31,6 +31,12 @@
 #include "econ_entity.h"
 #endif // TF_CLIENT_DLL || TF_DLL
 
+#ifdef OF_CLIENT_DLL
+#include "c_of_baseschemaitem.h"
+#else
+#include "of_baseschemaitem.h"
+#endif
+
 #if !defined( CLIENT_DLL )
 extern void OnBaseCombatWeaponCreated( CBaseCombatWeapon * );
 extern void OnBaseCombatWeaponDestroyed( CBaseCombatWeapon * );
@@ -145,8 +151,20 @@ namespace vgui2
 
 #if defined USES_ECON_ITEMS
 #define BASECOMBATWEAPON_DERIVED_FROM		CEconEntity
-#else 
+#else
+	
+#if defined( OF_CLIENT_DLL ) || defined( OF_DLL )
+
+#ifdef CLIENT_DLL
+#define BASECOMBATWEAPON_DERIVED_FROM		C_BaseSchemaEntity
+#else
+#define BASECOMBATWEAPON_DERIVED_FROM		CBaseSchemaEntity
+#endif
+
+#else
 #define BASECOMBATWEAPON_DERIVED_FROM		CBaseAnimating
+#endif
+
 #endif 
 
 //-----------------------------------------------------------------------------
@@ -197,7 +215,9 @@ public:
 	virtual void			Spawn( void );
 	virtual void			Precache( void );
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
-	virtual void			ParseWeaponScript( bool bReParse );
+	void					ParseWeaponScript( bool bReParse );
+	virtual void			OnLoadWeaponScript( void );
+	virtual void			SetupSchemaItem( const char *szName );
 #endif
 
 	void					MakeTracer( const Vector &vecTracerSrc, const trace_t &tr, int iTracerType );
@@ -437,6 +457,8 @@ public:
 	virtual void			Activate( void );
 
 	virtual bool ShouldUseLargeViewModelVROverride() { return false; }
+	
+	WEAPON_FILE_INFO_HANDLE	GetWeaponFileInfoHandle() { return m_hWeaponFileInfo; }
 public:
 // Server Only Methods
 #if !defined( CLIENT_DLL )
@@ -543,7 +565,6 @@ public:
 	virtual void			GetViewmodelBoneControllers(C_BaseViewModel *pViewModel, float controllers[MAXSTUDIOBONECTRLS]) { return; }
 
 	virtual void			NotifyShouldTransmit( ShouldTransmitState_t state );
-	WEAPON_FILE_INFO_HANDLE	GetWeaponFileInfoHandle() { return m_hWeaponFileInfo; }
 
 	virtual int				GetWorldModelIndex( void );
 
@@ -684,6 +705,7 @@ protected:
 
 #else // Client .dll only
 	bool					m_bJustRestored;
+	bool					bParsedSchemaWeapon;
 
 	// Allow weapons resource to access m_hWeaponFileInfo directly
 	friend class			WeaponsResource;

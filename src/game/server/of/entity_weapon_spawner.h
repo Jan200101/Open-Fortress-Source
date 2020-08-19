@@ -61,6 +61,8 @@ public:
 	CNetworkVar( bool, m_bDisableShowOutline );
 	CNetworkVar( bool, m_bSuperWeapon );
 	CNetworkVar( int,  m_iIndex );
+
+	WEAPON_FILE_INFO_HANDLE	m_hWpnInfo;
 private:
 	CNetworkVar( float, m_flRespawnTick );
 };

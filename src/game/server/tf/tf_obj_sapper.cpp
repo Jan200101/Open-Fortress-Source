@@ -304,12 +304,12 @@ void CObjectSapper::OnGoActive( void )
 //-----------------------------------------------------------------------------
 void CObjectSapper::DetachObjectFromObject( void )
 {
-	if ( GetParentObject() )
-	{
-		GetParentObject()->OnRemoveSapper();
-	}
+	CBaseObject *pNotify = GetParentObject();
 
 	BaseClass::DetachObjectFromObject();
+	
+	if( pNotify )
+		pNotify->OnRemoveSapper();
 }
 
 //-----------------------------------------------------------------------------
