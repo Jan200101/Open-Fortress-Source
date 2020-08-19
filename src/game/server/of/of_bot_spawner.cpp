@@ -265,8 +265,9 @@ void CTFBotSpawner::FireGameEvent( IGameEvent *event )
 					}
 				}
 			}
+			CBaseEntity *pKiller = UTIL_PlayerByUserId( event->GetInt("attacker") );
 			
-			m_OnBotKilled.FireOutput( this, this );
+			m_OnBotKilled.FireOutput( pKiller ? pKiller : this, this );
 			m_iBots.Remove(iBot);
 			m_hBotTemplate.Remove(iBot);
 
