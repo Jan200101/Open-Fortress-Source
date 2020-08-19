@@ -62,6 +62,9 @@ $Project "Server (Open Fortress)"
                     }
                 }
             }
+			
+			$File	"of\of_auto_team.cpp"
+			$File	"of\of_auto_team.h"		
 			$File	"of\of_baseschemaitem.cpp"
 			$File	"of\of_baseschemaitem.h"
 			$File	"of\of_bot_spawner.cpp"

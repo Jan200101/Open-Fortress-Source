@@ -11,6 +11,7 @@
 #include "tf_gamerules.h"
 #include "c_team.h"
 #include "tf_hud_notification_panel.h"
+#include "c_of_auto_team.h"
 
 using namespace vgui;
 
@@ -289,6 +290,17 @@ void CTFTeamMenu::ShowPanel( bool bShow )
 
 	if (bShow)
 	{
+		if( TFAutoTeam() && TFAutoTeam()->GetResOverride() )
+		{
+			LoadControlSettings( TFAutoTeam()->GetResOverride() );
+			Update();
+			m_bWasOverriden = true;
+		}
+		else if( m_bWasOverriden )
+		{
+			LoadControlSettings( "Resource/UI/Teammenu.res" );
+			m_bWasOverriden = false;
+		}
 		if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() && !of_allowteams.GetBool() ) || TFGameRules()->IsInfGamemode() )
 		{
 			gViewPortInterface->ShowPanel( PANEL_DMTEAMSELECT, true );
@@ -757,6 +769,17 @@ void CTFDMTeamMenu::ShowPanel(bool bShow)
 
 	if (bShow)
 	{
+		if( TFAutoTeam() && TFAutoTeam()->GetResOverride() )
+		{
+			LoadControlSettings( TFAutoTeam()->GetResOverride() );
+			Update();
+			m_bWasOverriden = true;
+		}
+		else if( m_bWasOverriden )
+		{
+			LoadControlSettings( "Resource/UI/DMTeamMenu.res" );
+			m_bWasOverriden = false;
+		}
 		if (TFGameRules()->State_Get() == GR_STATE_TEAM_WIN &&
 			C_TFPlayer::GetLocalTFPlayer() &&
 			C_TFPlayer::GetLocalTFPlayer()->GetTeamNumber() != TFGameRules()->GetWinningTeam()

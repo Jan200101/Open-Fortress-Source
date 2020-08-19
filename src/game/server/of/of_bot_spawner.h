@@ -9,31 +9,6 @@
 
 class CTFBot;
 
-class CTFAutoHumanTeam : public CBaseEntity
-{
-public:
-	DECLARE_CLASS(CTFAutoHumanTeam, CBaseEntity);
-	DECLARE_DATADESC();
-	
-	CTFAutoHumanTeam();
-	~CTFAutoHumanTeam();
-	virtual void Spawn();
-	int GetHumanTeam(){ return m_iAutoTeam; };
-	bool ShouldExcludeBots(){ return m_bExcludeBots; };
-	bool AllowSpectator(){ return !m_bDisableSpectating; };
-	
-	int UpdateTransmitState()	// always send to all clients
-	{
-		return SetTransmitState( FL_EDICT_ALWAYS );
-	}
-private:
-	CNetworkVar( int, m_iAutoTeam );
-	CNetworkVar( bool, m_bExcludeBots );
-	CNetworkVar( bool, m_bDisableSpectating );
-};
-
-extern CTFAutoHumanTeam *TFAutoTeam();
-
 class CTFBotSpawner : public CBaseEntity, public CGameEventListener
 {
 public:

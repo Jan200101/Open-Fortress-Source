@@ -22,38 +22,6 @@
 // memdbgon is the worst show EVER it is the wo
 #include "tier0/memdbgon.h"
 
-BEGIN_DATADESC(CTFAutoHumanTeam)
-DEFINE_KEYFIELD( m_iAutoTeam, FIELD_INTEGER, "AutoTeam"	),
-DEFINE_KEYFIELD( m_bExcludeBots, FIELD_BOOLEAN, "ExcludeAllBots" ),
-DEFINE_KEYFIELD( m_bDisableSpectating, FIELD_BOOLEAN, "DisableSpectating" ),
-END_DATADESC()
-
-LINK_ENTITY_TO_CLASS( of_auto_team, CTFAutoHumanTeam );
-
-CTFAutoHumanTeam *g_AutoTeam;
-CTFAutoHumanTeam *TFAutoTeam()
-{
-	return g_AutoTeam;
-}
-
-CTFAutoHumanTeam::CTFAutoHumanTeam()
-{
-	m_iAutoTeam = TF_TEAM_RED;
-	m_bExcludeBots = false;
-	m_bDisableSpectating = false;
-}
-
-void CTFAutoHumanTeam::Spawn( void )
-{
-	g_AutoTeam = this;
-}
-
-CTFAutoHumanTeam::~CTFAutoHumanTeam()
-{
-	if( g_AutoTeam == this )
-		g_AutoTeam = NULL;
-}
-
 BEGIN_DATADESC(CTFBotSpawner)
 
 DEFINE_KEYFIELD( m_bDisabled, FIELD_BOOLEAN, "StartDisabled" ),

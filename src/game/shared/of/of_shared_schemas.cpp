@@ -516,7 +516,9 @@ void CTFItemSchema::PurgeLevelItems()
 	for( int i = 0; i < iCount; i++ )
 	{
 		m_hWeaponNames.FindAndRemove(m_hLevelWeaponNames[i]);
-		RemoveWeaponFromDatabase(m_hLevelWeaponNames[i]);
+		// This currently causes a lot of crashes
+		// Lets hope it doesn't clog up memory too much
+		//RemoveWeaponFromDatabase(m_hLevelWeaponNames[i]);
 	}
 	m_hLevelWeaponNames.Purge();
 	if( GetItemsGame() && GetLevelItemsGame() )

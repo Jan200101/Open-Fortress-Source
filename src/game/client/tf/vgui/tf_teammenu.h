@@ -103,6 +103,7 @@ private:
 	bool m_bRedDisabled;
 	bool m_bBlueDisabled;
 	bool m_bMercenaryDisabled;
+	bool m_bWasOverriden;
 
 private:
 	enum { NUM_TEAMS = 4 };
@@ -146,6 +147,8 @@ private:
 	CExButton		*m_pCancelButton;
 	
 	CModelPanel		*m_pBackgroundModel;
+	
+	bool m_bWasOverriden;
 
 
 private:
