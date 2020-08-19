@@ -57,6 +57,8 @@ $Project "Client (Open Fortress)"
                     }
                 }
             }
+			$File	"of\c_of_auto_team.cpp"
+			$File	"of\c_of_auto_team.h"		
 			$File	"of\c_of_baseschemaitem.cpp"
 			$File	"of\c_of_baseschemaitem.h"			
 			$File	"of\of_hud_weaponwheel.cpp"

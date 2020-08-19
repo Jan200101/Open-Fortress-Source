@@ -42,7 +42,7 @@
 #include "gamevars_shared.h"
 #include "NextBotUtil.h"
 #include "tf_player_resource.h"
-#include "of_bot_spawner.h"
+#include "of_auto_team.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -3084,7 +3084,7 @@ void CTFPlayer::HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill )
 		// if this join would unbalance the teams, refuse
 		// come up with a better way to tell the player they tried to join a full team!
 		// Bots MUST join a team
-		if ( TFGameRules()->WouldChangeUnbalanceTeams( iTeam, GetTeamNumber() ) && !IsFakeClient() )
+		if ( !bForceTeam && TFGameRules()->WouldChangeUnbalanceTeams( iTeam, GetTeamNumber() ) && !IsFakeClient() )
 		{
 			ShowViewPortPanel( PANEL_TEAM );
 			return;
