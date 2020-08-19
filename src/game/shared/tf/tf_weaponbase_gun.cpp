@@ -982,7 +982,7 @@ CBaseEntity *CTFWeaponBaseGun::FireBouncer(CTFPlayer *pPlayer)
 
 	Vector vecSrc;
 	QAngle angForward;
-	Vector vecOffset(23.5f, 12.0f, -5.f);
+	Vector vecOffset(36.f, 12.0f, -6.f);
 	if (iQuakeCvar)
 	{
 		vecOffset.x = 12.0f; //forward backwards

@@ -5179,9 +5179,13 @@ void C_TFPlayer::CreateTranqEffect(void)
 		return;
 
 	if (!m_Shared.m_bTranqEffects)
+	{
 		m_pTranqEffect = ParticleProp()->Create("sleepy_overhead", PATTACH_POINT_FOLLOW, "head");
+	}
 	else
+	{
 		m_pTranqEffect = ParticleProp()->Create("mark_for_death", PATTACH_POINT_FOLLOW, "head");
+	}
 }
 
 //-----------------------------------------------------------------------------

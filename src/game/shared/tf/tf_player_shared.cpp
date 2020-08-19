@@ -1651,19 +1651,21 @@ void CTFPlayerShared::Poison( CTFPlayer *pAttacker, float flTime )
 	if ( !m_pOuter->IsAlive() )
 		return;
 
-	if ( !InCond( TF_COND_POISON ) )
+	if (!InCond(TF_COND_POISON) && !InCondUber())
 	{
 		// Start posioning
-		AddCond( TF_COND_POISON, flTime );
+		AddCond(TF_COND_POISON, flTime);
 		m_flPoisonTime = gpGlobals->curtime;    //asap
-	}
+	} else
+		return;
 
-	if ( flTime > 0.f )
+	if (flTime > 0.f)
 		m_flPoisonRemoveTime = gpGlobals->curtime + flTime;
 	else
 		m_flPoisonRemoveTime = gpGlobals->curtime + TF_POISON_STING_LIFE;
 
 	m_hPoisonAttacker = pAttacker;
+
 #endif
 }
 //-----------------------------------------------------------------------------
@@ -1677,13 +1679,15 @@ void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flSpeed, b
 	if (!m_pOuter->IsAlive())
 		return;
 
-	if (!InCond(TF_COND_TRANQ))
+	if (!InCond(TF_COND_TRANQ) && !InCondUber())
 	{
 		// Start sloweness
 		AddCond(TF_COND_TRANQ, flTime);
 		m_flTranqTime = gpGlobals->curtime;    //asap
 		m_bTranqEffects = bEffects;
 	}
+	else
+		return;
 #endif
 }
 //-----------------------------------------------------------------------------
