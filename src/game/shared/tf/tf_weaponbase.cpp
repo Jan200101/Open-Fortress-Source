@@ -926,6 +926,9 @@ bool CTFWeaponBase::CanHolster(void) const
 	if ( ( m_iShotsDue > 0 || m_bWindingUp || m_bInBarrage ) && !pPlayer->m_Shared.InCond( TF_COND_BERSERK )  )
 		return false;
 
+	if( LoadsManualy() && m_iClip1 > 0 )
+		return false;
+	
 	if (pPlayer->m_Shared.InCond(TF_COND_JAUGGERNAUGHT))
 		return false;
 
@@ -1216,7 +1219,7 @@ bool CTFWeaponBase::ReloadOrSwitchWeapons(void)
 	m_bFireOnEmpty = false;
 
 	// If we don't have any ammo, switch to the next best weapon
-	if (CanHolster() && !HasAnyAmmo() && m_flNextPrimaryAttack < gpGlobals->curtime && m_flNextSecondaryAttack < gpGlobals->curtime)
+	if( CanHolster() && !HasAnyAmmo() && m_flNextPrimaryAttack < gpGlobals->curtime && m_flNextSecondaryAttack < gpGlobals->curtime )
 	{
 		// weapon isn't useable, switch.
 		if (((GetWeaponFlags() & ITEM_FLAG_NOAUTOSWITCHEMPTY) == false) && (g_pGameRules->SwitchToNextBestWeapon(pOwner, this)))
@@ -1584,6 +1587,12 @@ void CTFWeaponBase::SendReloadEvents()
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::ItemBusyFrame(void)
 {
+	// Do reload checks while we're busy aswell if we're loading manually
+	if( LoadsManualy() && UsesClipsForAmmo1() )
+	{
+		CheckReload();
+	}	
+
 	// Call into the base ItemBusyFrame.
 	BaseClass::ItemBusyFrame();
 
@@ -1849,7 +1858,6 @@ void CTFWeaponBase::ItemPostFrame(void)
 //====================================================================================
 void CTFWeaponBase::CheckReload(void)
 {
-	
 	if ( m_bReloadsSingly )
 	{
 		CBasePlayer *pOwner = ToBasePlayer(GetOwner());
@@ -1859,6 +1867,9 @@ void CTFWeaponBase::CheckReload(void)
 		if( LoadsManualy() && !( pOwner->m_nButtons & (IN_ATTACK | IN_RELOAD) ) && m_iClip1 > 0 )
 		{
 			AbortReload();
+			pOwner->m_flNextAttack = gpGlobals->curtime;
+			m_flNextPrimaryAttack = gpGlobals->curtime;
+			m_flNextSecondaryAttack = gpGlobals->curtime;
 			m_bInBarrage = true;
 			return;
 		}
