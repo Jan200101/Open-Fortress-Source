@@ -409,7 +409,10 @@ void DMLoadout::ApplySettings( KeyValues *inResourceData )
 			
 			for( int y = 0; y < GetItemSchema()->GetWeaponCount(); y++ )
 			{
-				KeyValues *pSlot = GetItemSchema()->GetWeapon(y)->FindKey("slot");
+				if( !GetItemSchema()->GetWeapon(y)->GetBool( "ShowInArsenal", false ) )
+					continue;
+
+				KeyValues *pSlot = GetItemSchema()->GetWeapon(y)->FindKey( "slot" );
 				if( pSlot )
 				{
 					if( pSlot->GetInt( "mercenary", 0 ) != i + 1 )
@@ -560,7 +563,7 @@ void DMLoadout::SelectWeapon( int iSlot, const char *szWeapon, bool bChangeSelec
 						vgui::DMModelPanel* pClassModel = dynamic_cast<vgui::DMModelPanel*>(mainMenu->FindChildByName("classmodelpanel"));
 						if (pClassModel)
 						{
-							pClassModel->SetWeaponModel(pKey->GetString("playermodel", "models/weapons/w_models/w_supershotgun.mdl"), pWeapon->GetInt("loadout_anim", 0));
+							pClassModel->SetWeaponModel(szWeaponModel, iWeaponAnim);
 						}
 					}
 				}

@@ -62,7 +62,10 @@ $Project "Server (Open Fortress)"
                     }
                 }
             }
-			
+			$File	"of\of_baseschemaitem.cpp"
+			$File	"of\of_baseschemaitem.h"
+			$File	"of\of_bot_spawner.cpp"
+			$File	"of\of_bot_spawner.h"
 			$File	"of\of_dropped_weapon.cpp"
 			$File	"of\of_dropped_weapon.h"
 			$File	"of\of_dropped_powerup.cpp"

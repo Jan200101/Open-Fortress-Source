@@ -140,3 +140,40 @@ acttable_t *CTFSMG_Mercenary::ActivityList(int &iActivityCount)
 		return BaseClass::ActivityList(iActivityCount);
 	}
 }
+
+acttable_t CTFAssaultRifle::m_acttableAR_Mercenary[] =
+{
+	{ ACT_MP_STAND_IDLE, ACT_MERC_STAND_ASSAULT_RIFLE, false },
+	{ ACT_MP_CROUCH_IDLE, ACT_MERC_CROUCH_ASSAULT_RIFLE, false },
+	{ ACT_MP_RUN, ACT_MERC_RUN_ASSAULT_RIFLE, false },
+	{ ACT_MP_WALK, ACT_MERC_WALK_ASSAULT_RIFLE, false },
+	{ ACT_MP_AIRWALK, ACT_MERC_AIRWALK_ASSAULT_RIFLE, false },
+	{ ACT_MP_CROUCHWALK, ACT_MERC_CROUCHWALK_ASSAULT_RIFLE, false },
+	{ ACT_MP_JUMP, ACT_MERC_JUMP_ASSAULT_RIFLE, false },
+	{ ACT_MP_JUMP_START, ACT_MERC_JUMP_START_ASSAULT_RIFLE, false },
+	{ ACT_MP_JUMP_FLOAT, ACT_MERC_JUMP_FLOAT_ASSAULT_RIFLE, false },
+	{ ACT_MP_JUMP_LAND, ACT_MERC_JUMP_LAND_ASSAULT_RIFLE, false },
+	{ ACT_MP_SWIM, ACT_MERC_SWIM_ASSAULT_RIFLE, false },
+
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE, ACT_MERC_ATTACK_STAND_ASSAULT_RIFLE, false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE, ACT_MERC_ATTACK_CROUCH_ASSAULT_RIFLE, false },
+	{ ACT_MP_ATTACK_SWIM_PRIMARYFIRE, ACT_MERC_ATTACK_SWIM_ASSAULT_RIFLE, false },
+
+	{ ACT_MP_RELOAD_STAND, ACT_MERC_RELOAD_STAND_ASSAULT_RIFLE, false },
+	{ ACT_MP_RELOAD_CROUCH, ACT_MERC_RELOAD_CROUCH_ASSAULT_RIFLE, false },
+	{ ACT_MP_RELOAD_SWIM, ACT_MERC_RELOAD_SWIM_ASSAULT_RIFLE, false },
+};
+
+//Act table remapping for Merc
+acttable_t *CTFAssaultRifle::ActivityList(int &iActivityCount)
+{
+	if (GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY)
+	{
+		iActivityCount = ARRAYSIZE(m_acttableAR_Mercenary);
+		return m_acttableAR_Mercenary;
+	}
+	else
+	{
+		return BaseClass::ActivityList(iActivityCount);
+	}
+}

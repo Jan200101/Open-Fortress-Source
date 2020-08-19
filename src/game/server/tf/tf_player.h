@@ -102,6 +102,7 @@ public:
 	
 	virtual void		Spawn();
 			void		UpdateCosmetics();
+	void				StripWeapons();
 	virtual void		ClearSlots();
 	virtual void		ForceRespawn();
 	virtual CBaseEntity	*EntSelectSpawnPoint( void );
@@ -302,6 +303,8 @@ public:
 
 	CTFTeam *GetTFTeam( void );
 	CTFTeam *GetOpposingTFTeam( void );
+	
+	virtual const char *GetOverrideStepSound( const char *pszBaseStepSoundName );
 
 	void TeleportEffect( void );
 	void RemoveTeleportEffect( void );
@@ -402,6 +405,7 @@ public:
 
 	CNetworkVar( bool, m_bCentered );
 	CNetworkVar( bool, m_bMinimized );
+	CNetworkVar( int, m_iMegaOverheal );
 	
 	CUtlVector<int> m_iCosmetics;
 	KeyValues *kvDesiredCosmetics;
@@ -507,11 +511,11 @@ public:
 	CTFWeaponBase		*Weapon_OwnsThisID( int iWeaponID );
 	CTFWeaponBase		*Weapon_GetWeaponByType( int iType );
 
-	int				RestockClips( float PowerupSize );
-	int				RestockAmmo( float PowerupSize );
-	int				RestockMetal( float PowerupSize );
-	int				RestockCloak( float PowerupSize );
-	int				RestockSpecialEffects( float PowerupSize );
+	int					RestockClips( float PowerupSize );
+	int					RestockAmmo( float PowerupSize );
+	int					RestockMetal( float PowerupSize );
+	int					RestockCloak( float PowerupSize );
+	int					RestockSpecialEffects( float PowerupSize );
 	bool				OwnsWeaponID( int ID );
 
 	CNetworkVar( bool, m_bHauling );
@@ -534,6 +538,15 @@ public:
 	
 	CUtlVector< PowerupHandle >	m_hPowerups;
 	CUtlVector< WeaponHandle >	m_hSuperWeapons;
+	
+	struct custom_criteria_t
+	{
+		char szName[32];
+		char szValue[32];
+	};
+	CUtlVector<custom_criteria_t> m_hCustomCriteria;
+	void				AddResponseCriteria( char *szName, char *szValue );
+	void				AddResponseCriteria( const char *szName, const char *szValue );
 
 	void				ResetShieldDamage();
 
@@ -560,7 +573,6 @@ private:
 	void				InitClass( void );
 	void				GiveDefaultItems();
 	int					GetCarriedWeapons();
-	void				StripWeapons();
 
 	bool				SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot );
 	// for deathmatch
@@ -734,8 +746,10 @@ public:
 	void				RefillHealthAmmo();
 	void				AddAccount( int amount, bool bTrackChange=true );	// Add money to this player's account.
 	bool				IsRetroModeOn();
+	bool				IsRobot();
 
 	CNetworkVar( bool, m_bRetroMode );
+	CNetworkVar( bool, m_bIsRobot );
 	
 	CNetworkVar( int, m_iAccount );	// How much cash this player has.
 

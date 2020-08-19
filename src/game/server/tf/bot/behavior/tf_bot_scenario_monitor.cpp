@@ -4,6 +4,7 @@
 #include "tf_bot_manager.h"
 #include "tf_bot_scenario_monitor.h"
 #include "tf_bot_seek_and_destroy.h"
+#include "tf_bot_approach_object.h"
 #include "tf_bot_roam.h"
 #include "tf_bot_roam_dm.h"
 #include "map_entities/tf_hint.h"
@@ -142,6 +143,11 @@ Action<CTFBot> *CTFBotScenarioMonitor::DesiredScenarioAndClassAction( CTFBot *ac
 			return new CTFBotEngineerBuild;
 	}
 
+	if( actor->GetTargetOverride() != NULL )
+	{
+		return new CTFBotApproachObject( actor->GetTargetOverride(), 0.0f );
+	}
+	
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF	) )
 	{
 		if ( actor->GetFlagToFetch() )

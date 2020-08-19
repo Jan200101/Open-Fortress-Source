@@ -310,7 +310,6 @@ private:
 #endif
 public:
 	CNetworkVar( bool, bWatchReady );
-	CNetworkVar( float, m_flMegaOverheal );
 	CNetworkVar( float, m_flNextZoomTime );
 private:
 

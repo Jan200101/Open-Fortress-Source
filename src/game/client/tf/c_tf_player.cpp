@@ -73,7 +73,6 @@ ConVar of_color_g( "of_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc
 ConVar of_color_b( "of_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, -1, true, 255 );
 
 ConVar of_tennisball( "of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF" );
-ConVar of_mercenary_hat( "of_mercenary_hat", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you can't have TF2 without hats" );
 ConVar of_disable_cosmetics( "of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats" );
 
 ConVar tf_hud_no_crosshair_on_scope_zoom( "tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun." );
@@ -92,6 +91,8 @@ ConVar tf_always_deathanim( "tf_always_deathanim", "0", FCVAR_CHEAT, "Forces dea
 ConVar of_first_person_respawn_particles( "of_first_person_respawn_particles", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Show respawn particles in first person." );
 
 ConVar of_respawn_particles( "of_respawn_particles", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Draw respawn particles of players?" );
+
+ConVar of_wait_for_respawn( "of_wait_for_respawn", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "In DM, wait for input before spawning a player after they died." );
 
 extern ConVar cl_first_person_uses_world_model;
 extern ConVar of_jumpsound;
@@ -1365,7 +1366,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		SetAbsVelocity( m_vecRagdollVelocity );
 
 		Interp_Reset( GetVarMapping() );
-	}	
+	}
 	
 	bool bPlayDeathAnim = false;
 	int iRandom = random->RandomInt( 0 , 3 ); // 25% chance to play
@@ -1474,7 +1475,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		m_flBurnEffectStartTime = gpGlobals->curtime;
 		ParticleProp()->Create( "burningplayer_corpse", PATTACH_ABSORIGIN_FOLLOW );
 	}
-
+	
 	// Fade out the ragdoll in a while
 	StartFadeOut( cl_ragdoll_fade_time.GetFloat() );
 
@@ -1638,7 +1639,7 @@ bool C_TFRagdoll::IsRagdollVisible()
 void C_TFRagdoll::ClientThink( void )
 {
 	SetNextClientThink( CLIENT_THINK_ALWAYS );
-
+	
 	if ( m_bFadingOut == true )
 	{
 		int iAlpha = GetRenderColor().a;
@@ -2488,6 +2489,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	// stuff when writing a chat message
 	RecvPropBool(RECVINFO(m_bChatting)),
 	RecvPropBool(RECVINFO(m_bRetroMode)),
+	RecvPropBool(RECVINFO(m_bIsRobot)),
 	RecvPropBool(RECVINFO(m_bHauling)),
 
 	// This will create a race condition will the local player, but the data will be the same so.....
@@ -2514,6 +2516,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropInt( RECVINFO( m_bResupplied ) ),
 
 	RecvPropInt( RECVINFO( m_iAccount ) ),
+	RecvPropInt( RECVINFO( m_iMegaOverheal ) ),
 
 	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_iCosmetics ), 32, RecvPropInt(NULL, 0, sizeof(int)) ),
 

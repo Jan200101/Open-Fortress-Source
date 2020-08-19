@@ -37,20 +37,19 @@ CTFWeaponInfo *GetTFWeaponInfo( int iWeapon )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, ClientEntityHandle_t hEntity, CBaseEntity *m_hLauncher)
+void TFExplosionCallback(const Vector &vecOrigin, const Vector &vecNormal, int iWeaponID, unsigned short m_hWpnInfo, ClientEntityHandle_t hEntity, CBaseEntity *m_hLauncher)
 {
 	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( m_hLauncher );
 	
 	// Get the weapon information.
 	CTFWeaponInfo *pWeaponInfo = NULL;
-	pWeaponInfo = pWeapon ? GetTFWeaponInfo(pWeapon->GetWeaponID()) : GetTFWeaponInfo(iWeaponID);
-	
+	pWeaponInfo = pWeapon ? static_cast<CTFWeaponInfo*>(GetFileWeaponInfoFromHandle(pWeapon->GetWeaponFileInfoHandle())) : static_cast<CTFWeaponInfo*>(GetFileWeaponInfoFromHandle(m_hWpnInfo));
+
 	if ( iWeaponID == TF_WEAPON_GRENADE_MIRVBOMB )
 	{
 		if( pWeapon )
 		{
-			pWeaponInfo = GetTFWeaponInfo( pWeapon->GetWeaponID() );
-			DevMsg( "%s\n" ,pWeapon->GetClassname() );
+			pWeaponInfo = static_cast<CTFWeaponInfo*>(GetFileWeaponInfoFromHandle(pWeapon->GetWeaponFileInfoHandle()));
 		}
 		else
 			pWeaponInfo = GetTFWeaponInfo( TF_WEAPON_GRENADELAUNCHER_MERCENARY );
@@ -208,6 +207,7 @@ public:
 	Vector		m_vecOrigin;
 	Vector		m_vecNormal;
 	int			m_iWeaponID;
+	unsigned short m_hWpnInfo;
 	ClientEntityHandle_t m_hEntity;
 	CNetworkHandle( CTFWeaponBase, m_hLauncher );
 };
@@ -243,7 +243,7 @@ void C_TETFExplosion::PostDataUpdate( DataUpdateType_t updateType )
 
 	AffectRagdolls();
 
-	TFExplosionCallback( m_vecOrigin, m_vecNormal, m_iWeaponID, m_hEntity, m_hLauncher );
+	TFExplosionCallback( m_vecOrigin, m_vecNormal, m_iWeaponID, m_hWpnInfo, m_hEntity, m_hLauncher );
 }
 
 static void RecvProxy_ExplosionEntIndex( const CRecvProxyData *pData, void *pStruct, void *pOut )
@@ -258,6 +258,7 @@ IMPLEMENT_CLIENTCLASS_EVENT_DT( C_TETFExplosion, DT_TETFExplosion, CTETFExplosio
 	RecvPropFloat( RECVINFO( m_vecOrigin[2] ) ),
 	RecvPropVector( RECVINFO( m_vecNormal ) ),
 	RecvPropInt( RECVINFO( m_iWeaponID ) ),
+	RecvPropInt( RECVINFO( m_hWpnInfo ) ),
 	RecvPropInt( "entindex", 0, SIZEOF_IGNORE, 0, RecvProxy_ExplosionEntIndex ),
 	RecvPropEHandle( RECVINFO( m_hLauncher ) ),
 END_RECV_TABLE()

@@ -299,7 +299,7 @@ Vector CTFBotMainAction::SelectTargetPoint( const INextBot *me, const CBaseComba
 	if ( actor->m_iSkill != CTFBot::EASY )
 	{
 		// Try to aim for their feet for best damage
-		if ( WeaponID_IsRocketWeapon( pWeapon->GetWeaponID() ) )
+		if ( pWeapon->IsRocketWeapon() )
 		{
 			if ( them->GetAbsOrigin().z - 30.0f > actor->GetAbsOrigin().z )
 			{
@@ -364,7 +364,7 @@ Vector CTFBotMainAction::SelectTargetPoint( const INextBot *me, const CBaseComba
 		*/
 	}
 
-	if ( WeaponID_IsGrenadeWeapon( pWeapon->GetWeaponID() ) )
+	if ( pWeapon->IsGrenadeWeapon() )
 	{
 		Vector vecToActor = them->GetAbsOrigin() - actor->GetAbsOrigin();
 		float flLength = vecToActor.NormalizeInPlace();

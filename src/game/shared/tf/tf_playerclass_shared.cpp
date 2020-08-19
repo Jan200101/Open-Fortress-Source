@@ -427,6 +427,10 @@ BEGIN_RECV_TABLE_NOBASE( CTFPlayerClassShared, DT_TFPlayerClassShared )
 	RecvPropInt( RECVINFO( m_iOldModifiers ) ),
 	RecvPropDataTable( RECVINFO_DT( pLocalData ), 0, &REFERENCE_RECV_TABLE( DT_PlayerClassData ) ),
 	RecvPropBool( RECVINFO( m_bRefresh ) ),
+
+	RecvPropInt( RECVINFO( m_iSetCustomHealth ) ),
+	RecvPropFloat( RECVINFO( m_flSetCustomSpeed ) ),
+
 	RecvPropString( RECVINFO( m_iszSetCustomModel ) ),
 	RecvPropString( RECVINFO( m_iszSetCustomArmModel ) ),
 END_RECV_TABLE()
@@ -441,6 +445,10 @@ BEGIN_SEND_TABLE_NOBASE( CTFPlayerClassShared, DT_TFPlayerClassShared )
 	SendPropInt( SENDINFO( m_iOldModifiers ), TF_CLASSMOD_LAST , SPROP_UNSIGNED ),
 	SendPropDataTable( SENDINFO_DT( pLocalData ), &REFERENCE_SEND_TABLE( DT_PlayerClassData ) ),
 	SendPropBool( SENDINFO( m_bRefresh ) ),
+
+	SendPropInt( SENDINFO( m_iSetCustomHealth ) ),
+	SendPropFloat( SENDINFO( m_flSetCustomSpeed ) ),
+
 	SendPropStringT( SENDINFO( m_iszSetCustomModel ) ),
 	SendPropStringT( SENDINFO( m_iszSetCustomArmModel ) ),
 END_SEND_TABLE()
@@ -457,6 +465,8 @@ CTFPlayerClassShared::CTFPlayerClassShared()
 	m_iModifiers.Set( 0 );
 	m_iOldModifiers.Set( 0 );
 	m_bRefresh = false;
+	m_iSetCustomHealth = -1;
+	m_flSetCustomSpeed = -1.0f;
 #ifdef CLIENT_DLL
 	m_iszSetCustomModel[0] = '\0';
 	bRefresh = false;
@@ -479,6 +489,7 @@ void CTFPlayerClassShared::SetCustomModel( const char *pszModelName )
 	else
 		m_iszSetCustomModel.Set( NULL_STRING );
 }
+
 void CTFPlayerClassShared::SetCustomArmModel( const char *pszModelName )
 {
 	if (pszModelName && pszModelName[0])
@@ -491,6 +502,17 @@ void CTFPlayerClassShared::SetCustomArmModel( const char *pszModelName )
 	}
 	else
 		m_iszSetCustomArmModel.Set( NULL_STRING );
+}
+
+void CTFPlayerClassShared::SetCustomHealth( int iHealth )
+{
+	m_iSetCustomHealth = iHealth;
+	
+}
+
+void CTFPlayerClassShared::SetCustomSpeed( float flSpeed )
+{
+	m_flSetCustomSpeed = flSpeed;
 }
 #endif
 
@@ -696,10 +718,20 @@ int	CTFPlayerClassShared::GetMaxArmor( void )
 { return GetData()->m_nMaxArmor; }
 
 int	CTFPlayerClassShared::GetMaxHealth( void )
-{ return GetData()->m_nMaxHealth; }
+{
+	if( m_iSetCustomHealth > -1 )
+		return m_iSetCustomHealth;
+	else
+		return GetData()->m_nMaxHealth; 
+}
 
 float CTFPlayerClassShared::GetMaxSpeed( void )
-{ return GetData()->m_flMaxSpeed; }
+{
+	if( m_flSetCustomSpeed > -1 )
+		return m_flSetCustomSpeed;
+	else
+		return GetData()->m_flMaxSpeed; 
+}
 
 char	*CTFPlayerClassShared::GetName( void )
 { return GetData()->m_szClassName; }

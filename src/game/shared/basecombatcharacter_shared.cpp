@@ -202,7 +202,7 @@ CBaseCombatWeapon* CBaseCombatCharacter::Weapon_OwnsThisType( const char *pszWea
 	// Check for duplicates
 	for (int i=0;i<MAX_WEAPONS;i++) 
 	{
-		if ( m_hMyWeapons[i].Get() && FClassnameIs( m_hMyWeapons[i], pszWeapon ) )
+		if ( m_hMyWeapons[i].Get() && FStrEq( m_hMyWeapons[i].Get()->GetSchemaName(), pszWeapon ) )
 		{
 			// Make sure it matches the subtype
 			if ( m_hMyWeapons[i]->GetSubType() == iSubType )

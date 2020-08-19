@@ -156,11 +156,11 @@ void CTFScrollableItemList::AddItem( int iID, bool bSelected )
 
 	if( !iLastX )
 	{
-		iLastX = iCollumnSpacing;
+		iLastX = XRES(iCollumnSpacing);
 	}
 	if( !iLastY )
 	{
-		iLastY = iRowSpacing;
+		iLastY = YRES(iRowSpacing);
 	}
 	
 	int x = iLastX;
@@ -179,12 +179,12 @@ void CTFScrollableItemList::AddItem( int iID, bool bSelected )
 	pNewItem.pItemPanel->GetSize( w, h );
 	GetSize( gw, gh );
 	
-	iLastX = iLastX + w + iCollumnSpacing;
+	iLastX = iLastX + w + XRES(iCollumnSpacing);
 	
-	if( iLastX + w + iCollumnSpacing > gw )
+	if( iLastX + w + XRES(iCollumnSpacing) > gw )
 	{
 		iLastX = 0;
-		iLastY = iLastY + h + iRowSpacing;
+		iLastY = iLastY + h + YRES(iRowSpacing);
 	}
 
 	int iWide, iTall;

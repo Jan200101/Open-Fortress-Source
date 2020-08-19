@@ -132,6 +132,9 @@ public:
 #ifndef CLIENT_DLL
 	void		SetCustomModel( const char *pszModelName );
 	void		SetCustomArmModel( const char *pszModelName );
+	
+	void		SetCustomHealth( int iHealth );
+	void		SetCustomSpeed( float flSpeed );
 #endif	
 	char		*GetModelName( void );
 	char 		*GetSetCustomModel ( void );		
@@ -173,6 +176,9 @@ protected:
 	CNetworkVar( int,	m_iModifiers );
 	CNetworkVar( int,	m_iOldModifiers );
 	CNetworkVar( bool,	m_bRefresh );
+
+	CNetworkVar( int,	m_iSetCustomHealth );
+	CNetworkVar( float,	m_flSetCustomSpeed );
 #ifdef CLIENT_DLL
 	char	m_iszSetCustomModel[MAX_PATH];
 	char	m_iszSetCustomArmModel[MAX_PATH];

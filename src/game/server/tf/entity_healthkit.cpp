@@ -209,7 +209,7 @@ bool CHealthKitTiny::ITEM_GiveTFTinyHealth(CBasePlayer *pPlayer)
 	if (iHealthBefore < pTFPlayer->m_Shared.GetDefaultHealth())
 		iHealthToAdd = max(0, pTFPlayer->GetHealth() - pTFPlayer->m_Shared.GetDefaultHealth());
 
-	pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd;
+	pTFPlayer->m_iMegaOverheal += iHealthToAdd;
 
 	return true;
 }

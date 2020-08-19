@@ -227,6 +227,8 @@ public:
 	bool			IsAnyPointBeingCaptured( void ) const;
 	bool			IsPointBeingContested( CTeamControlPoint *point ) const;
 	float			GetTimeLeftToCapture( void );
+	void			SetTargetOverride( CBaseEntity *pEnt ){ pOverrideObjective = pEnt; };
+	CBaseEntity		*GetTargetOverride( void ){ return pOverrideObjective; };
 	CTeamControlPoint *SelectPointToCapture( const CUtlVector<CTeamControlPoint *> &candidates );
 	CTeamControlPoint *SelectPointToDefend( const CUtlVector<CTeamControlPoint *> &candidates );
 	CTeamControlPoint *SelectClosestPointByTravelDistance( const CUtlVector<CTeamControlPoint *> &candidates ) const;
@@ -346,6 +348,7 @@ private:
 	CountdownTimer m_lookForEnemiesTimer;
 
 	CTFPlayer *m_controlling;
+	CBaseEntity *pOverrideObjective;
 
 	CHandle<CTeamControlPoint> m_hMyControlPoint;
 	CountdownTimer m_myCPValidDuration;

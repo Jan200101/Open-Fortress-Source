@@ -110,27 +110,8 @@ void EndGroupingSounds() {}
 // only does the damage calculations.  On the client, it does all the effects.
 //-----------------------------------------------------------------------------
 void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngles,
-					 int iWeapon, int iMode, int iSeed, float flSpread, float flDamage /* = -1.0f */, int bCritical /* = false*/, bool bFirstShot )
+					 int iWeapon, int iMode, int iSeed, float flSpread, bool bFixedSpread, int iBullets, float flRange, int iAmmoType, float flDamage /* = -1.0f */, int bCritical /* = false*/, bool bFirstShot )
 {
-	// Get the weapon information.
-	const char *pszWeaponAlias = WeaponIdToAlias( iWeapon );
-	if ( !pszWeaponAlias )
-	{
-		DevMsg( 1, "FX_FireBullets: weapon alias for ID %i not found\n", iWeapon );
-		return;
-	}
-
-	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pszWeaponAlias );
-	if ( hWpnInfo == GetInvalidWeaponInfoHandle() )
-	{
-		DevMsg( 1, "FX_FireBullets: LookupWeaponInfoSlot failed for weapon %s\n", pszWeaponAlias );
-		return;
-	}
-
-	CTFWeaponInfo *pWeaponInfo = static_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-	if( !pWeaponInfo )
-		return;
-
 	bool bDoEffects = false;
 
 #ifdef CLIENT_DLL
@@ -172,7 +153,7 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 #else
 	// If this is server code, send the effect over to client as temp entity and 
 	// dispatch one message for all the bullet impacts and sounds.
-	TE_FireBullets( pPlayer->entindex(), vecOrigin, vecAngles, iWeapon, iMode, iSeed, flSpread, bCritical );
+	TE_FireBullets( pPlayer->entindex(), vecOrigin, vecAngles, iWeapon, iMode, iSeed, flSpread, bFixedSpread, iBullets, flRange, iAmmoType, flDamage, bCritical, bFirstShot );
 
 	// Let the player remember the usercmd he fired a weapon on. Assists in making decisions about lag compensation.
 	pPlayer->NoteWeaponFired();
@@ -194,19 +175,13 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	// Initialize the static firing information.
 	FireBulletsInfo_t fireInfo;
 	fireInfo.m_vecSrc = vecOrigin;
-	if ( flDamage < 0.0f )
-	{
-		if ( TFGameRules()->IsMutator( NO_MUTATOR ) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE ) fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nDamage;
-		else fireInfo.m_flDamage = pWeaponInfo->GetWeaponData( iMode ).m_nInstagibDamage;
-	}
-	else
-	{
-		fireInfo.m_flDamage = static_cast<int>(flDamage);
-	}
-	fireInfo.m_flDistance = pWeaponInfo->GetWeaponData( iMode ).m_flRange;
+
+	fireInfo.m_flDamage = static_cast<int>(flDamage);
+
+	fireInfo.m_flDistance = flRange;
 	fireInfo.m_iShots = 1;
 	fireInfo.m_vecSpread.Init( flSpread, flSpread, 0.0f );
-	fireInfo.m_iAmmoType = pWeaponInfo->iAmmoType;
+	fireInfo.m_iAmmoType = iAmmoType;
 
 	// Setup the bullet damage type & roll for crit.
 	int	nDamageType	= DMG_GENERIC;
@@ -240,11 +215,11 @@ void FX_FireBullets( int iPlayer, const Vector &vecOrigin, const QAngle &vecAngl
 	// Reset multi-damage structures.
 	ClearMultiDamage();
 
-	int nBulletsPerShot = pWeaponInfo->GetWeaponData( iMode ).m_nBulletsPerShot;
+	int nBulletsPerShot = iBullets;
 
 	bool bNoSpread = false;
 
-	if ( nBulletsPerShot > 1 && !pWeaponInfo->m_bNoFixedSpread )
+	if ( nBulletsPerShot > 1 && bFixedSpread )
 	{
 		bNoSpread = tf_use_fixed_weaponspreads.GetBool();
 	}	

@@ -214,7 +214,7 @@ CBaseModPanel::~CBaseModPanel()
 //		delete m_FooterPanel;
 		m_FooterPanel->MarkForDeletion();
 		m_FooterPanel = NULL;
-	}	
+	}
 
 	Assert(m_CFactoryBasePanel == this);
 	m_CFactoryBasePanel = 0;
@@ -792,10 +792,12 @@ void CBaseModPanel::OnGameUIActivated()
 		{
 			OpenFrontScreen();
 		}
+		m_pVideo->InvalidateLayout(true, true);
 	}
 	else if ( engine->IsConnected() && !m_LevelLoading )
 	{
 		m_pVideo->SetVisible( false );
+		m_pVideo->ShutDownVideo();
 
 		CBaseModFrame *pInGameMainMenu = m_Frames[ WT_INGAMEMAINMENU ].Get();
 

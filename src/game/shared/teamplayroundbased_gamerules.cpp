@@ -12,6 +12,7 @@
 #include "tf_gamestats_shared.h"
 #include "tf_gamerules.h"
 #include "engine/IEngineSound.h"
+#include "in_buttons.h"
 
 #if defined( OF_DLL )
 #include "tf_gamestats.h"
@@ -626,6 +627,10 @@ bool CTeamplayRoundBasedRules::HasPassedMinRespawnTime( CBasePlayer *pPlayer )
 	return ( gpGlobals->curtime > flMinSpawnTime );
 }
 
+#ifdef OF_CLIENT_DLL
+extern ConVar of_wait_for_respawn;
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -636,8 +641,32 @@ float CTeamplayRoundBasedRules::GetMinTimeWhenPlayerMaySpawn( CBasePlayer *pPlay
 	// a) the length of one full *unscaled* respawn wave for their team
 	//		and
 	// b) death anim length + freeze panel length
-
+	
 	float flDeathAnimLength = 2.0 + spec_freeze_traveltime.GetFloat() + spec_freeze_time.GetFloat();
+	
+#if defined (OF_DLL) || defined (OF_CLIENT_DLL)
+	if( TFGameRules()->IsDMGamemode() )
+	{
+		// Fuck
+		if( ( pPlayer->m_nButtons & IN_USE		 )
+		||  ( pPlayer->m_nButtons & IN_FORWARD	 )
+		||  ( pPlayer->m_nButtons & IN_BACK		 )
+		||  ( pPlayer->m_nButtons & IN_RIGHT	 )
+		||  ( pPlayer->m_nButtons & IN_MOVELEFT	 )
+		||  ( pPlayer->m_nButtons & IN_MOVERIGHT )
+		||  ( pPlayer->m_nButtons & IN_FORWARD	 )
+		)
+			flDeathAnimLength = 0.0f;
+		else if( 
+#ifdef OF_DLL
+		!pPlayer->IsFakeClient() && Q_atoi( engine->GetClientConVarValue( pPlayer->entindex(), "of_wait_for_respawn" ) ) == 1
+#else
+		 of_wait_for_respawn.GetBool()
+#endif
+		)
+			return gpGlobals->curtime;
+	}
+#endif
 
 	float fMinDelay = flDeathAnimLength;
 

@@ -12,6 +12,8 @@
 
 #include "items.h"
 
+typedef unsigned short WEAPON_FILE_INFO_HANDLE;
+
 //needed to remove dropped weapons at the end of every round
 DECLARE_AUTO_LIST( ICondDroppedWeaponAutoList );
 
@@ -31,7 +33,7 @@ public:
 
 	virtual unsigned int PhysicsSolidMaskForEntity( void ) const;
 
-	static CTFDroppedWeapon *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname, bool bThrown = false );
+	static CTFDroppedWeapon *Create( const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, WEAPON_FILE_INFO_HANDLE m_hWpnInfo, const char *pszClassname, bool bThrown = false );
 
 	float GetCreationTime( void ) { return m_flCreationTime; }
 	void  SetInitialVelocity( Vector &vecVelocity );
@@ -45,8 +47,8 @@ public:
 	CNetworkVar( bool, m_bFlamethrower );
 	
 	CTFWeaponInfo	*pWeaponInfo;
-	const char		*pszWeaponName;
-	int				WeaponID;
+	char			pszWeaponName[64];
+	WEAPON_FILE_INFO_HANDLE	m_hWpnInfo;
 
 private:
 	bool m_bAllowOwnerPickup;

@@ -403,6 +403,7 @@ public:
 	virtual void	ShutdownCustomResponseRulesDicts();
 
 	virtual bool	HasPassedMinRespawnTime( CBasePlayer *pPlayer );
+	virtual bool	ShouldRespawnQuickly( CBasePlayer *pPlayer );
 
 	bool			ShouldScorePerRound( void );
 	

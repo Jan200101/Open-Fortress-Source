@@ -98,7 +98,7 @@ ActionResult<CTFBot> CTFBotDestroyEnemySentry::OnStart( CTFBot *me, Action<CTFBo
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
 	{
 		pWeapon = (CTFWeaponBase *)me->GetWeapon( iWeapon );
-		if ( pWeapon && WeaponID_IsGrenadeWeapon( pWeapon->GetWeaponID() ) )
+		if ( pWeapon && pWeapon->IsGrenadeWeapon() )
 		{
 			m_bGrenadeWeapon = true;
 			break;
@@ -308,7 +308,7 @@ ActionResult<CTFBot> CTFBotDestroyEnemySentry::OnResume( CTFBot *me, Action<CTFB
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
 	{
 		pWeapon = (CTFWeaponBase *)me->GetWeapon( iWeapon );
-		if ( pWeapon && WeaponID_IsGrenadeWeapon( pWeapon->GetWeaponID() ) )
+		if ( pWeapon && pWeapon->IsGrenadeWeapon() )
 		{
 			m_bGrenadeWeapon = true;
 			break;
@@ -523,7 +523,7 @@ ActionResult<CTFBot> CTFBotUberAttackEnemySentry::OnStart( CTFBot *me, Action<CT
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
 	{
 		pWeapon = (CTFWeaponBase *)me->GetWeapon( iWeapon );
-		if ( pWeapon && WeaponID_IsGrenadeWeapon( pWeapon->GetWeaponID() ) )
+		if ( pWeapon && pWeapon->IsGrenadeWeapon() )
 		{
 			m_bGrenadeWeapon = true;
 			break;
@@ -542,7 +542,7 @@ ActionResult<CTFBot> CTFBotUberAttackEnemySentry::OnResume( CTFBot *me, Action<C
 	for ( int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++ )
 	{
 		pWeapon = (CTFWeaponBase *)me->GetWeapon( iWeapon );
-		if ( pWeapon && WeaponID_IsGrenadeWeapon( pWeapon->GetWeaponID() ) )
+		if ( pWeapon && pWeapon->IsGrenadeWeapon() )
 		{
 			m_bGrenadeWeapon = true;
 			break;

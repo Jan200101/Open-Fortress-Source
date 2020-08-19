@@ -40,6 +40,7 @@
 #include "tf_player.h"
 #include "tf_gamerules.h"
 #include "tf_weaponbase.h"
+#include "of_shared_schemas.h"
 #endif
 
 #ifdef HL2_DLL
@@ -911,12 +912,20 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 			}
 		}
 
-		// required precache
-		UTIL_PrecacheOther( item_to_give );
-
 		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname	
-		EHANDLE pent;
-		pent = CreateEntityByName(STRING(iszItem));
+
+		bool bIsSchemaItem = false;
+		
+		KeyValues *kvWeapon = GetWeaponFromSchema(item_to_give);
+		if( kvWeapon )
+		{
+			Q_strncpy( item_to_give, kvWeapon->GetString("weapon_class", STRING(iszItem)), sizeof( item_to_give ) );
+			Q_strlower( item_to_give );
+			bIsSchemaItem = true;
+		}
+
+		CTFWeaponBase *pent;
+		pent = dynamic_cast<CTFWeaponBase*>(CreateEntityByName(item_to_give));
 		if ( pent == NULL )
 		{
 			Msg( "NULL Ent in Give Weapon!\n" );
@@ -926,40 +935,17 @@ CON_COMMAND( give_weapon, "Give weapon to player.\n\tArguments: <item_name>" )
 		pent->SetLocalOrigin( pPlayer->GetLocalOrigin() );
 		pent->AddSpawnFlags( SF_NORESPAWN );
 
-		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( STRING(iszItem) );
-		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );		
-		if( !pWeaponInfo )
+		Q_strncpy( item_to_give, STRING(iszItem), sizeof( item_to_give ) );
+		if( bIsSchemaItem )
 		{
-			UTIL_Remove( pent );
-			Warning( "NULL WeaponInfo in Give Weapon!\n" );
-			return;
+			pent->SetupSchemaItem(item_to_give);
 		}
-		
-		int iSlot;
-
-		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
-			iSlot = pWeaponInfo->iSlotDM;
-		else if ( pWeaponInfo->m_iClassSlot[ pPlayer->GetPlayerClass()->GetClassIndex() ] != -1 )
-			iSlot = pWeaponInfo->m_iClassSlot[ pPlayer->GetPlayerClass()->GetClassIndex() ];
 		else
-			iSlot = pWeaponInfo->iSlot;
-		
-		int iPos = pWeaponInfo->iPosition;
-		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode() )
-			iPos = pWeaponInfo->iPositionDM;		
-		
-		if( pPlayer->m_hWeaponInSlot[iSlot][iPos] )
-			UTIL_Remove(pPlayer->m_hWeaponInSlot[iSlot][iPos]);
-
-		CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( (CBaseEntity*)pent );
-
+			DevMsg("Not schema item\n");
 		DispatchSpawn( pent );
+		pent->GiveTo( pPlayer ); 
 
-		if( pWeapon )
-		{
-			pWeapon->GiveTo( pPlayer ); 
-		}
-		pPlayer->Weapon_Switch( pWeapon );
+		pPlayer->Weapon_Switch( pent );
 	}
 }
 #endif

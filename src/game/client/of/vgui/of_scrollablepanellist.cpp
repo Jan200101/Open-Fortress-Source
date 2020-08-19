@@ -117,11 +117,11 @@ void CTFScrollablePanelList::AddItem( CTFEditableButton *pPanel )
 	
 	if( !iLastX )
 	{
-		iLastX = iCollumnSpacing;
+		iLastX = XRES(iCollumnSpacing);
 	}
 	if( !iLastY )
 	{
-		iLastY = iRowSpacing;
+		iLastY = YRES(iRowSpacing);
 	}
 
 	int x = iLastX;
@@ -139,12 +139,12 @@ void CTFScrollablePanelList::AddItem( CTFEditableButton *pPanel )
 	pNewItem.pPanel->GetSize( w, h );
 	GetSize( gw, gh );
 	
-	iLastX = iLastX + w + iCollumnSpacing;
+	iLastX = iLastX + w + XRES(iCollumnSpacing);
 	
-	if( iLastX + w + iCollumnSpacing > gw )
+	if( iLastX + w + XRES(iCollumnSpacing) > gw )
 	{
 		iLastX = 0;
-		iLastY = iLastY + h + iRowSpacing;
+		iLastY = iLastY + h + YRES(iRowSpacing);
 	}
 
 	pScrollBar->SetRange( 0, y + iTall + iCollumnSpacing );

@@ -703,6 +703,29 @@ bool CTFWeaponBase::IsWeapon(int iWeapon) const
 	return GetWeaponID() == iWeapon;
 }
 
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+bool CTFWeaponBase::IsRocketWeapon() const
+{
+	int iProjectile = GetTFWpnData().m_WeaponData[m_iWeaponMode].m_iProjectile;
+	return ( iProjectile == TF_PROJECTILE_ROCKET
+	||	iProjectile == TF_PROJECTILE_COOM
+	||	iProjectile == TF_PROJECTILE_INCENDROCKET );
+}
+
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+bool CTFWeaponBase::IsGrenadeWeapon() const
+{
+	int iProjectile = GetTFWpnData().m_WeaponData[m_iWeaponMode].m_iProjectile;
+	return ( iProjectile == TF_PROJECTILE_PIPEBOMB
+	||	iProjectile == TF_PROJECTILE_PIPEBOMB_REMOTE
+	||	iProjectile == TF_PROJECTILE_PIPEBOMB_DM
+	||	iProjectile == TF_PROJECTILE_BOUNCYROCKET );
+}
+
 int	CTFWeaponBase::GetDamageType() const
 {
 	int iAdditional = 0;
@@ -985,7 +1008,12 @@ void CTFWeaponBase::BeginBurstFire(void)
 
 	m_iShotsDue = GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBurstSize;
 
-	m_flNextPrimaryAttack = gpGlobals->curtime + GetBurstTotalTime() + GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay;
+	float flBurstFireDelay = GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay;
+
+	if( GetTFPlayerOwner() && GetTFPlayerOwner()->m_Shared.InCond(TF_COND_HASTE) )
+		flBurstFireDelay *= of_haste_fire_multiplier.GetFloat();
+	
+	m_flNextPrimaryAttack = gpGlobals->curtime + GetBurstTotalTime() + flBurstFireDelay;
 }
 
 bool CTFWeaponBase::FiresInBursts(void)

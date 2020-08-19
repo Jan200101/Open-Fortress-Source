@@ -331,8 +331,9 @@ void CNavArea::Save( CUtlBuffer &fileBuffer, unsigned int version ) const
 	PlaceDirectory::IndexType entry = placeDirectory.GetIndex( GetPlace() );
 	fileBuffer.Put( &entry, sizeof(entry) );
 
-	// write out ladder info
 	int i;
+	// write out ladder info
+	
 	for ( i=0; i<CNavLadder::NUM_LADDER_DIRECTIONS; ++i )
 	{
 		// save number of encounter paths for this area
@@ -348,7 +349,7 @@ void CNavArea::Save( CUtlBuffer &fileBuffer, unsigned int version ) const
 			fileBuffer.PutUnsignedInt( id );
 		}
 	}
-
+	
 	// save earliest occupy times
 	for( i=0; i<MAX_NAV_TEAMS; ++i )
 	{

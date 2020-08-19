@@ -22,6 +22,9 @@ class CVideoBackground : public Panel
 
 public:
 	CVideoBackground(Panel *parent, const char *panelName);
+	~CVideoBackground();
+	
+	void		ShutDownVideo(){ m_pVideo->Shutdown(); };
 
 	virtual void ApplySchemeSettings( vgui::IScheme *pScheme );
 

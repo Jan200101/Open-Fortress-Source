@@ -129,7 +129,7 @@ void CTFWeaponBaseMelee::Spawn()
 	Precache();
 
 	// Get the weapon information.
-	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( GetClassname() );
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( GetSchemaName() );
 	Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
 	CTFWeaponInfo *pWeaponInfo = dynamic_cast< CTFWeaponInfo* >( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 	Assert( pWeaponInfo && "Failed to get CTFWeaponInfo in melee weapon spawn" );
@@ -432,30 +432,40 @@ bool CTFWeaponBaseMelee::DoSwingTrace( trace_t &trace )
 
 	int team = pPlayer->GetTeamNumber();
 	if ( team == TF_TEAM_MERCENARY ) 
-		team = 0;		
+		team = 0;
 
-	CTraceFilterMeleeIgnoreTeammates meleefilter( pPlayer, COLLISION_GROUP_NONE, team, pPlayer );
-
-	// See if we hit anything.
-	UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &meleefilter, &trace );
-	if ( trace.fraction >= 1.0 )
+	bool bRetry = false;
+	do
 	{
-		UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, &meleefilter, &trace );
-		if ( trace.fraction < 1.0 )
-		{
-			// Calculate the point of intersection of the line (or hull) and the object we hit
-			// This is and approximation of the "best" intersection
-			CBaseEntity *pHit = trace.m_pEnt;
-			if ( !pHit || pHit->IsBSPModel() )
-			{
-				// Why duck hull min/max?
-				FindHullIntersection( vecSwingStart, trace, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, pPlayer );
-			}
+		if( bRetry )
+			team = 0;
 
-			// This is the point on the actual surface (the hull could have hit space)
-			vecSwingEnd = trace.endpos;	
+		CTraceFilterMeleeIgnoreTeammates meleefilter( pPlayer, COLLISION_GROUP_NONE, team, pPlayer );
+
+		// See if we hit anything.
+		UTIL_TraceLine( vecSwingStart, vecSwingEnd, MASK_SOLID, &meleefilter, &trace );
+		if ( trace.fraction >= 1.0 )
+		{
+			UTIL_TraceHull( vecSwingStart, vecSwingEnd, vecSwingMins, vecSwingMaxs, MASK_SOLID, &meleefilter, &trace );
+			if ( trace.fraction < 1.0 )
+			{
+				// Calculate the point of intersection of the line (or hull) and the object we hit
+				// This is and approximation of the "best" intersection
+				CBaseEntity *pHit = trace.m_pEnt;
+				if ( !pHit || pHit->IsBSPModel() )
+				{
+					// Why duck hull min/max?
+					FindHullIntersection( vecSwingStart, trace, VEC_DUCK_HULL_MIN, VEC_DUCK_HULL_MAX, pPlayer );
+				}
+
+				// This is the point on the actual surface (the hull could have hit space)
+				vecSwingEnd = trace.endpos;	
+			}
 		}
+		
+		bRetry = true;
 	}
+	while( !trace.m_pEnt && team != 0 );
 
 	return ( trace.fraction < 1.0f );
 }
@@ -483,7 +493,7 @@ void CTFWeaponBaseMelee::Smack( void )
 	{
 		// Hit sound - immediate.
 		// added check for npc
-		if (trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC())
+		if( trace.m_pEnt->IsPlayer() || trace.m_pEnt->IsNPC() )
 		{
 			WeaponSound( MELEE_HIT );
 		}

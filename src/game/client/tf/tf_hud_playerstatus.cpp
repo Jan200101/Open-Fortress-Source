@@ -432,7 +432,7 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 					m_nBonusHealthOrigH + nSizeAdj );
 			}
 			C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
-			if ( m_pMegaHealthBonusImage && pPlayer->m_Shared.m_flMegaOverheal > 0.0f )
+			if ( m_pMegaHealthBonusImage && pPlayer->m_iMegaOverheal > 0 )
 			{
 				if ( m_pMegaHealthBonusImage->IsVisible() != of_pill_overheal_percent.GetBool() )
 				{
@@ -444,7 +444,7 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 
 				// scale the flashing image based on how much health bonus we currently have
 				float flBoostMaxAmount = ( iMaxBuffedHealth ) - m_nMaxHealth;
-				float flPercent = pPlayer->m_Shared.m_flMegaOverheal / flBoostMaxAmount;
+				float flPercent = pPlayer->m_iMegaOverheal / flBoostMaxAmount;
 				if (flPercent > 1.0f)
 					flPercent = 1.0f;
 

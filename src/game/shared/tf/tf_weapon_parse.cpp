@@ -289,6 +289,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bLastShotAnim = pKeyValuesData->GetBool( "LastShotAnim", 0 );
 	m_bSwapFireAnims = pKeyValuesData->GetBool( "SwapFireAnims", 0 );
 	m_bNoFixedSpread = pKeyValuesData->GetBool( "NoFixedSpread", 0 );
+	m_bCanHeadshot = pKeyValuesData->GetBool( "CanHeadshot", 0 );
+	m_iReloadTypeOverride = pKeyValuesData->GetInt( "ReloadTypeOverride", -1 );
 	
 	m_iContinuousFireDamageIncrease = pKeyValuesData->GetInt( "ContinuousFire_DamageIncrease", 0 );
 	m_flContinuousFireBlastRadiusIncrease = pKeyValuesData->GetFloat( "ContinuousFire_BlastRadiusIncrease", 0.0f );

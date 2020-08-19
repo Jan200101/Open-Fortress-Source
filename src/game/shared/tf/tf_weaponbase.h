@@ -120,9 +120,13 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	
 	// Weapon Data.
 	CTFWeaponInfo const	&GetTFWpnData() const;
+	virtual void OnLoadWeaponScript( void );
 	virtual int GetWeaponID( void ) const;
 	bool IsWeapon( int iWeapon ) const;
-	virtual int	GetDamageType() const { return g_aWeaponDamageTypes[ GetWeaponID() ]; }
+	
+	bool IsRocketWeapon() const;
+	bool IsGrenadeWeapon() const;
+	virtual int	GetDamageType() const;
 	float GetDamageRadius( void ) const;
 	
 	virtual int GetCustomDamageType() const { return TF_DMG_CUSTOM_NONE; }

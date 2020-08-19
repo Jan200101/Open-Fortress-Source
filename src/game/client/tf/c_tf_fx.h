@@ -24,5 +24,12 @@ public:
 	int		m_iMode;
 	int		m_iSeed;
 	float	m_flSpread;
-	int		m_bCritical;
+	bool 	m_bFixedSpread;
+	int		m_iBullets;
+	float 	m_flRange;
+	float 	m_flDamage;
+	int 	m_iAmmoType;
+	int 	m_bCritical;
+	bool 	m_bFirstShot;
+
 };

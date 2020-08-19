@@ -121,6 +121,8 @@ public:
 	void			TurnOffTauntCam( void );
 
 	virtual void	InitPhonemeMappings();
+	
+	virtual const char *GetOverrideStepSound( const char *pszBaseStepSoundName );
 
 	// Gibs.
 	void InitPlayerGibs( void );
@@ -294,6 +296,7 @@ public:
 
 	CNetworkVar( bool, m_bCentered );
 	CNetworkVar( bool, m_bMinimized );
+	CNetworkVar( int, m_iMegaOverheal );
 
 	Vector				m_vecPlayerColor;	
 	CUtlVector<int> 	m_iCosmetics;
@@ -462,7 +465,10 @@ public:
 	int GetAccount() const;
 	
 	bool				IsRetroModeOn() { return m_bRetroMode; }
+	bool				IsRobot() { return m_bIsRobot; }
+
 	CNetworkVar( bool, m_bRetroMode );
+	CNetworkVar( bool, m_bIsRobot );
 };
 
 class C_TFRagdoll : public C_BaseFlex

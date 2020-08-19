@@ -757,9 +757,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	ParseParticleEffects( false, false );
 
 #ifdef OF_DLL	
-	InitItemSchema();
-	ParseItemsGame();
-	ParseSoundManifest();
+	ParseSharedSchemas();
 	SetupModelLoader();
 #endif
 
@@ -781,7 +779,7 @@ bool CServerGameDLL::DLLInit( CreateInterfaceFn appSystemFactory,
 	IMaterial *testmat = materials->FindMaterial("console/title_war", TEXTURE_GROUP_OTHER );
 	if ( testmat->IsErrorMaterial() )
 	{
-		Error("Your server is not mounting Team Fortress 2 correctly.\nTry specifying full paths to TF2 in the gameinfo.txt");
+		Error("Your server is not mounting Team Fortress 2 correctly.\nTry specifying full paths to TF2 in the gameinfo.txt\nOr get in game and type setup_hammer_paths in console");
 	}
 #endif
 
@@ -1004,6 +1002,10 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 		pItemSchema->BInitFromDelayedBuffer();
 	}
 #endif // USES_ECON_ITEMS
+
+#ifdef OF_DLL
+	ParseLevelSchemas();
+#endif
 
 	ResetWindspeed();
 	UpdateChapterRestrictions( pMapName );

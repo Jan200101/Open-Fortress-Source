@@ -48,12 +48,11 @@ void CTFDroppedWeapon::Precache( void )
 {
 }
 
-CTFDroppedWeapon *CTFDroppedWeapon::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, int iWeaponID, const char *pszClassname, bool bThrown)
+CTFDroppedWeapon *CTFDroppedWeapon::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, const char *pszModelName, WEAPON_FILE_INFO_HANDLE m_hWpnInfo, const char *pszClassname, bool bThrown)
 {
 	//Don't drop if it's a crowabr and everybody has it or it is a gamemode where no weapons should be dropped
 	if ( ( TFGameRules() && TFGameRules()->IsGGGamemode() ) ||
-		( iWeaponID == TF_WEAPON_CROWBAR && of_forceclass.GetBool() ) ||
-		iWeaponID == TF_WEAPON_NONE )
+		( m_hWpnInfo == LookupWeaponInfoSlot("tf_weapon_crowbar") && of_forceclass.GetBool() ) )
 		return NULL;
 
 	CTFDroppedWeapon *pDroppedWeapon = static_cast<CTFDroppedWeapon *>( CBaseAnimating::CreateNoSpawn( "tf_dropped_weapon", vecOrigin, vecAngles, pOwner ) );
@@ -63,10 +62,10 @@ CTFDroppedWeapon *CTFDroppedWeapon::Create(const Vector &vecOrigin, const QAngle
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo *>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 
 		pDroppedWeapon->SetModelName( AllocPooledString( pszModelName ) );
-		pDroppedWeapon->WeaponID = iWeaponID;
-		pDroppedWeapon->pszWeaponName = pszClassname;
+		pDroppedWeapon->m_hWpnInfo = m_hWpnInfo;
+		Q_strncpy(pDroppedWeapon->pszWeaponName, pszClassname, sizeof(pDroppedWeapon->pszWeaponName));
 		pDroppedWeapon->pWeaponInfo = pWeaponInfo;
-		pDroppedWeapon->m_bFlamethrower = iWeaponID == TF_WEAPON_FLAMETHROWER || iWeaponID == TFC_WEAPON_FLAMETHROWER;
+		pDroppedWeapon->m_bFlamethrower = m_hWpnInfo == LookupWeaponInfoSlot("tf_weapon_flamethrower") || m_hWpnInfo == LookupWeaponInfoSlot("tfc_weapon_flamethrower");
 		pDroppedWeapon->m_bThrown = bThrown;
 
 		DispatchSpawn( pDroppedWeapon );
@@ -178,51 +177,62 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 
 	bool bSuccess = true;
 
-	// akimbo pickups have NOT pewished
-	if ( WeaponID == TF_WEAPON_PISTOL_MERCENARY && pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_MERCENARY ) ) // If the weapon is a pistol and we already own a pistol, give us the akimbos
-	{
-		WeaponID = TF_WEAPON_PISTOL_AKIMBO;
-		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( "tf_weapon_pistol_akimbo" );
-		pszWeaponName = g_aWeaponNames[TF_WEAPON_PISTOL_AKIMBO];
-		pWeaponInfo = dynamic_cast<CTFWeaponInfo *>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-	}
-
-	// don't allow multiple pistols to be picked up at the same time
-	if ( WeaponID == TF_WEAPON_PISTOL || WeaponID == TF_WEAPON_PISTOL_SCOUT )
-	{
-		if ( pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL ) || pTFPlayer->OwnsWeaponID( TF_WEAPON_PISTOL_SCOUT ) )
-			return;
-	}
-		
-	if ( !pWeaponInfo )
-		return;
-
+	CTFWeaponInfo *pTempInfo = pWeaponInfo;
+	const char *szTempName = pszWeaponName;
+	
 	bool bUsesDMBuckets = TFGameRules() && TFGameRules()->UsesDMBuckets();
-	int iSlot, iPos = pWeaponInfo->iPosition;
-	if (bUsesDMBuckets)
+	int iSlot, iPos;
+	if( bUsesDMBuckets )
 	{
-		iSlot = pWeaponInfo->iSlotDM;
-		iPos = pWeaponInfo->iPositionDM;
+		iSlot = pTempInfo->iSlotDM;
+		iPos = pTempInfo->iPositionDM;
 	}
-	else if (pWeaponInfo->m_iClassSlot[pTFPlayer->GetPlayerClass()->GetClassIndex()] != -1)
+	else if (pTempInfo->m_iClassSlot[pTFPlayer->GetPlayerClass()->GetClassIndex()] != -1)
 	{
-		iSlot = pWeaponInfo->m_iClassSlot[pTFPlayer->GetPlayerClass()->GetClassIndex()];
+		iSlot = pTempInfo->m_iClassSlot[pTFPlayer->GetPlayerClass()->GetClassIndex()];
+		iPos = pTempInfo->iPosition;
 	}
 	else
 	{
-		iSlot = pWeaponInfo->iSlot;
+		iSlot = pTempInfo->iSlot;
+		iPos = pTempInfo->iPosition;
+	}
+
+	WEAPON_FILE_INFO_HANDLE	hWpnInfo = m_hWpnInfo;
+	bool bAkimbo = false;
+	// akimbo pickups have NOT pewished
+	if ( m_hWpnInfo == LookupWeaponInfoSlot( "tf_weapon_pistol_mercenary" ) && pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponFileInfoHandle() == m_hWpnInfo ) // If the weapon is a pistol and we already own a pistol, give us the akimbos
+	{
+		hWpnInfo = LookupWeaponInfoSlot( "tf_weapon_pistol_akimbo" );
+		szTempName = "tf_weapon_pistol_akimbo";
+		pTempInfo = dynamic_cast<CTFWeaponInfo *>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+		bAkimbo = true;
+	}
+
+	if( bUsesDMBuckets )
+	{
+		iSlot = pTempInfo->iSlotDM;
+		iPos = pTempInfo->iPositionDM;
+	}
+	else if( pTempInfo->m_iClassSlot[pTFPlayer->GetPlayerClass()->GetClassIndex()] != -1 )
+	{
+		iSlot = pTempInfo->m_iClassSlot[pTFPlayer->GetPlayerClass()->GetClassIndex()];
+	}
+	else
+	{
+		iSlot = pTempInfo->iSlot;
 	}
 	
 	if ( !pTFPlayer->m_hWeaponInSlot )
 		return;
 	
-	if ( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == WeaponID )
+	if ( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponFileInfoHandle() == hWpnInfo )
 		return;
 	
 	if ( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && !pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->CanHolster() )
 		return;
 	
-	if ( bUsesDMBuckets )
+	if( !bUsesDMBuckets )
 	{
 		if ( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && !(pTFPlayer->m_nButtons & IN_USE) )
 		{
@@ -230,8 +240,8 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 			if ( event )
 			{
 				event->SetInt( "playerid", pTFPlayer->entindex() );
-				event->SetInt( "current_wep", pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() );
-				event->SetInt( "swap_wep", WeaponID );
+				event->SetString( "current_wep", pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetSchemaName() );
+				event->SetString( "swap_wep", szTempName );
 				gameeventmanager->FireEvent( event );
 			}
 			return;
@@ -242,7 +252,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 	{
 		CSingleUserRecipientFilter filter( pTFPlayer );		// Filter the sound to the player who picked this up
 		EmitSound( filter, entindex(), "AmmoPack.Touch" );	// Play the sound
-		CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pTFPlayer->GiveNamedItem( pszWeaponName ); 	// Create the weapon
+		CTFWeaponBase *pGivenWeapon =(CTFWeaponBase *)pTFPlayer->GiveNamedItem( szTempName ); 	// Create the weapon
 		if( pGivenWeapon )
 		{
 			pGivenWeapon->GiveTo( pTFPlayer );	// and give it to the player
@@ -258,7 +268,7 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 			if ( m_iClip > -1 )
 			{
 				pGivenWeapon->m_iClip1 = m_iClip;
-				if( WeaponID == TF_WEAPON_PISTOL_AKIMBO )
+				if( bAkimbo )
 					pGivenWeapon->m_iClip1 *= 2;
 			}
 
@@ -276,11 +286,11 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 			{
 				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_ULTRARARE );
 			}
-			else if ( WeaponID_IsRocketWeapon ( pGivenWeapon->GetWeaponID() )  // "rare" weapons, this is kinda terrible
-					|| WeaponID_IsGrenadeWeapon ( pGivenWeapon->GetWeaponID() ) 
-					|| pGivenWeapon->GetWeaponID() == TF_WEAPON_RAILGUN
-					|| pGivenWeapon->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN
-					|| pGivenWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN )
+			else if ( pGivenWeapon->IsRocketWeapon()  // "rare" weapons, this is kinda terrible
+					|| pGivenWeapon->IsGrenadeWeapon() 
+					|| pGivenWeapon->GetWeaponFileInfoHandle() == LookupWeaponInfoSlot( "tf_weapon_railgun" )
+					|| pGivenWeapon->GetWeaponFileInfoHandle() == LookupWeaponInfoSlot( "tf_weapon_lightning_gun" )
+					|| pGivenWeapon->GetWeaponFileInfoHandle() == LookupWeaponInfoSlot( "tf_weapon_gatling_gun" ) )
 			{
 				pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_RARE );
 			}

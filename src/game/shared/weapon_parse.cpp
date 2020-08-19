@@ -121,6 +121,18 @@ WEAPON_FILE_INFO_HANDLE LookupWeaponInfoSlot( const char *name )
 // FIXME, handle differently?
 static FileWeaponInfo_t gNullWeaponInfo;
 
+void MarkWeaponAsDirty( const char *szName )
+{
+	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( FindWeaponInfoSlot( szName ) );
+	pFileInfo->bParsedScript = false;
+}
+
+void RemoveWeaponFromDatabase( const char *szName )
+{
+	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( FindWeaponInfoSlot( szName ) );
+	delete pFileInfo;
+	m_WeaponInfoDatabase.Remove(szName);
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -153,10 +165,10 @@ WEAPON_FILE_INFO_HANDLE GetInvalidWeaponInfoHandle( void )
 
 void ResetFileWeaponInfoDatabase( void )
 {
-	for( int i = 0; i < TF_WEAPON_COUNT; i++ )
+	for( unsigned int i = 0; i < m_WeaponInfoDatabase.Count(); i++ )
 	{
-		WEAPON_FILE_INFO_HANDLE hHandle = FindWeaponInfoSlot( g_aWeaponNames[i] );
-		ReadWeaponDataFromFileForSlot( filesystem, g_aWeaponNames[i], &hHandle, g_pGameRules->GetEncryptionKey(), true );
+		WEAPON_FILE_INFO_HANDLE hHandle = i;
+		ReadWeaponDataFromFileForSlot( filesystem, m_WeaponInfoDatabase[i]->szClassName, &hHandle, g_pGameRules->GetEncryptionKey(), true );
 	}
 #ifdef _DEBUG
 	memset(g_bUsedWeaponSlots, 0, sizeof(g_bUsedWeaponSlots));
@@ -302,7 +314,6 @@ bool ReadWeaponDataFromFileForSlot( IFileSystem* filesystem, const char *szWeapo
 		Assert( 0 );
 		return false;
 	}
-	
 	*phandle = FindWeaponInfoSlot( szWeaponName );
 	FileWeaponInfo_t *pFileInfo = GetFileWeaponInfoFromHandle( *phandle );
 	Assert( pFileInfo );

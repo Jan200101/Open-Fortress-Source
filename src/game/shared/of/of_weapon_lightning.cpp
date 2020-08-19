@@ -329,8 +329,6 @@ void CTFLightningGun::PrimaryAttack()
 		iCustomDmgType = TF_DMG_CUSTOM_CRIT_POWERUP;
 	}
 
-	
-
 #ifdef CLIENT_DLL
 	if ( bWasCritical != ( m_bCritFire > 0 ) )
 	{
@@ -353,11 +351,9 @@ void CTFLightningGun::PrimaryAttack()
 float CTFLightningGun::GetProjectileDamage( void )
 {
 	// create the flame entity
-	int iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
-	float flFiringInterval = GetFireRate();
+	int flDamage = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
 	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
-		iDamagePerSec = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nInstagibDamage;
-	float flDamage = (float)iDamagePerSec * flFiringInterval;
+		flDamage = m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nInstagibDamage;
 	
 	return flDamage;
 }

@@ -19,8 +19,14 @@ RecvPropInt( RECVINFO( m_iWeaponID ) ),
 RecvPropInt( RECVINFO( m_iMode ) ), 
 RecvPropInt( RECVINFO( m_iSeed ) ),
 RecvPropInt( RECVINFO( m_iPlayer ) ),
-RecvPropFloat( RECVINFO( m_flSpread ) ),
+RecvPropFloat( RECVINFO( m_flSpread ) ),	
+RecvPropBool( RECVINFO( m_bFixedSpread ) ),
+RecvPropInt( RECVINFO( m_iBullets ) ),
+RecvPropInt( RECVINFO( m_iAmmoType ) ),
+RecvPropFloat( RECVINFO( m_flRange ) ),
+RecvPropFloat( RECVINFO( m_flDamage ) ),
 RecvPropInt( RECVINFO( m_bCritical ) ),
+RecvPropBool( RECVINFO( m_bFirstShot ) ),
 END_RECV_TABLE()
 
 void C_TEFireBullets::PostDataUpdate( DataUpdateType_t updateType )
@@ -29,5 +35,5 @@ void C_TEFireBullets::PostDataUpdate( DataUpdateType_t updateType )
 
 	// Create the effect.
 	m_vecAngles.z = 0;
-	FX_FireBullets( m_iPlayer+1, m_vecOrigin, m_vecAngles, m_iWeaponID, m_iMode, m_iSeed, m_flSpread, -1, m_bCritical );
+	FX_FireBullets( m_iPlayer+1, m_vecOrigin, m_vecAngles, m_iWeaponID, m_iMode, m_iSeed, m_flSpread, m_bFixedSpread, m_iBullets, m_flRange, m_iAmmoType, m_flDamage, m_bCritical, m_bFirstShot );
 }

@@ -40,6 +40,10 @@ bool UTIL_KickBotFromTeam( int teamNum )
 		if ( bot == nullptr )
 			continue;
 
+		// Remove on death bots dont count
+		if( ( bot->m_nBotAttrs & CTFBot::AttributeType::REMOVEONDEATH ) == CTFBot::AttributeType::REMOVEONDEATH )
+			continue;
+
 		if ( player->GetTeamNumber() != teamNum || player->IsAlive() )
 			continue;
 
@@ -57,10 +61,15 @@ bool UTIL_KickBotFromTeam( int teamNum )
 		CTFBot *bot = dynamic_cast<CTFBot *>( player );
 		if ( bot == nullptr )
 			continue;
+		
+		// Remove on death bots dont count
+		if( ( bot->m_nBotAttrs & CTFBot::AttributeType::REMOVEONDEATH ) == CTFBot::AttributeType::REMOVEONDEATH )
+			continue;
 
 		if ( player->GetTeamNumber() != teamNum )
 			continue;
 
+		DevMsg("Bot %s has been kicked for quota\n", player->GetPlayerName() );
 		engine->ServerCommand( UTIL_VarArgs( "kickid %d\n", engine->GetPlayerUserId( player->edict() ) ) );
 		return true;
 	}
@@ -284,6 +293,10 @@ void CTFBotManager::MaintainBotQuota()
 		CTFBot *bot = dynamic_cast<CTFBot *>( player );
 		if ( bot != nullptr )
 		{
+			// Remove on death bots dont count
+			if( ( bot->m_nBotAttrs & CTFBot::AttributeType::REMOVEONDEATH ) == CTFBot::AttributeType::REMOVEONDEATH )
+				continue;
+
 			++nTFBotsTotal;
 			if ( bot->GetTeamNumber() == TF_TEAM_RED || bot->GetTeamNumber() == TF_TEAM_BLUE || bot->GetTeamNumber() == TF_TEAM_MERCENARY )
 			{

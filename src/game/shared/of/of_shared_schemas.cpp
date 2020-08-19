@@ -27,6 +27,25 @@
 	#define SHARED_ARGS UTIL_VarArgs
 #endif
 
+// Load all schemas on client/server start
+void ParseSharedSchemas()
+{
+#ifdef CLIENT_DLL
+	// Loadout is only clientside
+	ParseLoadout();
+#endif
+	InitItemSchema();
+	ParseItemsGame();
+	ParseSoundManifest();
+}
+
+void ParseLevelSchemas()
+{
+	ParseLevelSoundManifest();
+	ParseMapDataSchema();
+	ParseLevelItemsGame();
+}
+
 KeyValues* gSoundManifest;
 KeyValues* GlobalSoundManifest()
 {
@@ -115,13 +134,13 @@ void ParseLevelSoundManifest( void )
 #if CLIENT_DLL
 	engine->GetLevelName()
 #else
-	STRING(gpGlobals->mapname)
+	UTIL_VarArgs("maps/%s",STRING(gpGlobals->mapname))
 #endif
 	, mapname, sizeof( mapname ) );
 	Q_snprintf( mapsounds, sizeof( mapsounds ), "%s_level_sounds.txt", mapname );
 	if( !filesystem->FileExists( mapsounds , "GAME" ) )
 	{
-		DevMsg( "%s not present, not parsing", mapsounds );
+		DevMsg( "%s not present, not parsing\n", mapsounds );
 		return;
 	}
 	DevMsg("%s\n", mapsounds);
@@ -302,11 +321,81 @@ void ParseItemsGame( void )
 	
 }
 
+KeyValues* gLevelItemsGame;
+KeyValues* GetLevelItemsGame()
+{
+	return gLevelItemsGame;
+}
+
+void InitLevelItemsGame()
+{
+	if( gLevelItemsGame )
+	{
+		// Remove all weapons and reset the cosmetic count
+		if( GetItemSchema() )
+			GetItemSchema()->PurgeLevelItems();
+		gLevelItemsGame->deleteThis();
+	}
+	gLevelItemsGame = new KeyValues( "LevelItemsGame" );
+}
+
+void ParseLevelItemsGame( void )
+{	
+	InitLevelItemsGame();
+	
+	char szMapItems[MAX_PATH];
+	char szMapname[ 256 ];
+	Q_StripExtension( 
+#if CLIENT_DLL
+	engine->GetLevelName()
+#else
+	UTIL_VarArgs("maps/%s",STRING(gpGlobals->mapname))
+#endif
+	, szMapname, sizeof( szMapname ) );
+	Q_snprintf( szMapItems, sizeof( szMapItems ), "%s_items_game.txt", szMapname );
+	if( !filesystem->FileExists( szMapItems , "GAME" ) )
+	{
+		DevMsg( "%s not present, not parsing\n", szMapItems );
+		// We set this to null so certain functions bail out faster
+		gLevelItemsGame = NULL;
+		return;
+	}
+#if CLIENT_DLL
+	DevMsg("Client %s\n", szMapItems);
+#else
+	DevMsg("Server %s\n", szMapItems);
+#endif
+	GetLevelItemsGame()->LoadFromFile( filesystem, szMapItems, "GAME" );
+	
+	KeyValues *pCosmetics = GetLevelItemsGame()->FindKey("Cosmetics");
+	if( pCosmetics )
+	{
+		int i = 0;
+		FOR_EACH_SUBKEY( pCosmetics, kvSubKey )
+		{
+			i++;
+		}
+		GetLevelItemsGame()->SetInt("cosmetic_count", i);
+		GetItemsGame()->SetInt( "cosmetic_count", GetItemsGame()->GetInt( "cosmetic_count") + i );
+	}
+
+	KeyValues *pWeapons = GetLevelItemsGame()->FindKey("Weapons");
+	if( pWeapons )
+	{
+		FOR_EACH_SUBKEY( pWeapons, kvSubKey )
+		{
+			GetItemSchema()->AddLevelWeapon( kvSubKey->GetName() );
+		}
+	}	
+	
+}
+
 void ReloadItemsSchema()
 {
 	GetItemSchema()->PurgeSchema();
 	InitItemsGame();
 	ParseItemsGame();
+	ParseLevelItemsGame();
 #ifdef CLIENT_DLL
 	engine->ExecuteClientCmd( "schema_reload_items_game_server" );
 #endif
@@ -322,13 +411,21 @@ static ConCommand schema_reload_items_game(
 
 KeyValues* GetCosmetic( int iID )
 {
-	if( !GetItemsGame() )
-		return NULL;
-	
+	if( GetLevelItemsGame() )
+	{
+		KeyValues *pCosmetics = GetLevelItemsGame()->FindKey("Cosmetics");
+		if( pCosmetics )
+		{
+			KeyValues *pCosmetic = pCosmetics->FindKey( SHARED_ARGS( "%d", iID ) );
+			if( pCosmetic )
+				return pCosmetic;
+		}
+	}
+
 	KeyValues *pCosmetics = GetItemsGame()->FindKey("Cosmetics");
 	if( !pCosmetics )
 		return NULL;
-	
+
 	KeyValues *pCosmetic = pCosmetics->FindKey( SHARED_ARGS( "%d", iID ) );
 	if( !pCosmetic )
 		return NULL;
@@ -338,9 +435,17 @@ KeyValues* GetCosmetic( int iID )
 
 KeyValues* GetWeaponFromSchema( const char *szName )
 {
-	if( !GetItemsGame() )
-		return NULL;
-	
+	if( GetLevelItemsGame() )
+	{
+		KeyValues *pWeapons = GetLevelItemsGame()->FindKey("Weapons");
+		if( pWeapons )
+		{
+			KeyValues *pWeapon = pWeapons->FindKey( szName );
+			if( pWeapon )
+				return pWeapon;
+		}
+	}
+
 	KeyValues *pWeapons = GetItemsGame()->FindKey("Weapons");
 	if( !pWeapons )
 		return NULL;
@@ -381,6 +486,7 @@ void InitItemSchema()
 
 CTFItemSchema::CTFItemSchema()
 {
+	m_bWeaponWasModified = false;
 }
 
 void CTFItemSchema::PurgeSchema()
@@ -388,9 +494,54 @@ void CTFItemSchema::PurgeSchema()
 	m_hWeaponNames.Purge();
 }
 
+extern void MarkWeaponAsDirty( const char *szName );
+extern void RemoveWeaponFromDatabase( const char *szName );
+
+void CTFItemSchema::PurgeLevelItems()
+{
+	if( m_bWeaponWasModified )
+	{
+		// Reload weapons if one was modified
+		KeyValues *pWeapons = GetLevelItemsGame() ? GetLevelItemsGame()->FindKey("Weapons") : NULL;
+		if( pWeapons )
+		{
+			FOR_EACH_SUBKEY( pWeapons, kvSubKey )
+			{
+				MarkWeaponAsDirty(kvSubKey->GetName());
+			}
+		}
+		m_bWeaponWasModified = false;
+	}	
+	int iCount = m_hLevelWeaponNames.Count();
+	for( int i = 0; i < iCount; i++ )
+	{
+		m_hWeaponNames.FindAndRemove(m_hLevelWeaponNames[i]);
+		RemoveWeaponFromDatabase(m_hLevelWeaponNames[i]);
+	}
+	m_hLevelWeaponNames.Purge();
+	if( GetItemsGame() && GetLevelItemsGame() )
+		GetItemsGame()->SetInt( "cosmetic_count", GetItemsGame()->GetInt( "cosmetic_count") - GetLevelItemsGame()->GetInt( "cosmetic_count") );
+}
+
 void CTFItemSchema::AddWeapon( const char *szWeaponName )
 {
 	m_hWeaponNames.AddToTail( szWeaponName );
+}
+
+void CTFItemSchema::AddLevelWeapon( const char *szWeaponName )
+{
+	for( int i = 0; i < m_hWeaponNames.Count(); i++ )
+	{
+		// Don't add a name if we already have it but mark the fact that we modified a weapon
+		if( FStrEq(szWeaponName, m_hWeaponNames[i]) )
+		{
+			MarkWeaponAsDirty(szWeaponName);
+			m_bWeaponWasModified = true;
+			return;
+		}
+	}
+	m_hLevelWeaponNames.AddToTail( szWeaponName );
+	AddWeapon(szWeaponName);
 }
 
 KeyValues *CTFItemSchema::GetWeapon( int iID )
@@ -416,6 +567,50 @@ int CTFItemSchema::GetWeaponID( const char *szWeaponName )
 	}
 
 	return 0;
+}
+
+KeyValues* gMapData;
+KeyValues* GetMapData()
+{
+	return gMapData;
+}
+
+void InitMapData()
+{
+	if( gMapData )
+	{
+		gMapData->deleteThis();
+	}
+	gMapData = new KeyValues( "MapData" );
+}
+
+void ParseMapDataSchema( void )
+{	
+	InitMapData();
+	
+	char szMapData[MAX_PATH];
+	char szMapName[ 256 ];
+	Q_StripExtension( 
+#if CLIENT_DLL
+	engine->GetLevelName()
+#else
+	UTIL_VarArgs("maps/%s",STRING(gpGlobals->mapname))
+#endif
+	, szMapName, sizeof( szMapName ) );
+	Q_snprintf( szMapData, sizeof( szMapData ), "%s_mapdata.txt", szMapName );
+
+	if( !filesystem->FileExists( szMapData , "GAME" ) )	
+	{
+		DevMsg( "%s not present, not parsing¸\n", szMapData );
+		return;
+	}
+	
+	GetMapData()->LoadFromFile( filesystem, szMapData );
+	
+	FOR_EACH_SUBKEY( GetMapData(), kvSubKey )
+	{
+		DevMsg( "%s\n", kvSubKey->GetName() );
+	}
 }
 
 #ifdef CLIENT_DLL

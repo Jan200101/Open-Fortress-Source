@@ -32,8 +32,13 @@ public:
 	CNetworkVar( int, m_iMode );
 	CNetworkVar( int, m_iSeed );
 	CNetworkVar( float, m_flSpread );
+	CNetworkVar( bool, m_bFixedSpread );
+	CNetworkVar( int, m_iBullets );
+	CNetworkVar( float, m_flRange );
+	CNetworkVar( float, m_flDamage );
+	CNetworkVar( int, m_iAmmoType );
 	CNetworkVar( int, m_bCritical );
-
+	CNetworkVar( bool, m_bFirstShot );
 };
 
 //-----------------------------------------------------------------------------
@@ -60,7 +65,13 @@ IMPLEMENT_SERVERCLASS_ST_NOBASE( CTEFireBullets, DT_TEFireBullets )
 	SendPropInt( SENDINFO( m_iSeed ), NUM_BULLET_SEED_BITS, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iPlayer ), 6, SPROP_UNSIGNED ), 	// max 64 players, see MAX_PLAYERS
 	SendPropFloat( SENDINFO( m_flSpread ), 8, 0, 0.0f, 1.0f ),	
+	SendPropBool( SENDINFO( m_bFixedSpread ) ),
+	SendPropInt( SENDINFO( m_iBullets ) ),
+	SendPropInt( SENDINFO( m_iAmmoType ) ),
+	SendPropFloat( SENDINFO( m_flRange ) ),
+	SendPropFloat( SENDINFO( m_flDamage ) ),
 	SendPropInt( SENDINFO( m_bCritical ) ),
+	SendPropBool( SENDINFO( m_bFirstShot ) ),
 END_SEND_TABLE()
 
 // Singleton
@@ -69,8 +80,8 @@ static CTEFireBullets g_TEFireBullets( "Fire Bullets" );
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void TE_FireBullets( int iPlayerIndex, const Vector &vOrigin, const QAngle &vAngles, 
-					 int iWeaponID, int	iMode, int iSeed, float flSpread, int bCritical )
+void TE_FireBullets( int iPlayerIndex, const Vector &vOrigin, const QAngle &vAngles,
+				   int iWeaponID, int iMode, int iSeed, float flSpread, bool bFixedSpread, int iBullets, float flRange, int iAmmoType, float flDamage, int bCritical, bool bFirstShot )
 {
 	CPASFilter filter( vOrigin );
 	filter.UsePredictionRules();
@@ -80,7 +91,13 @@ void TE_FireBullets( int iPlayerIndex, const Vector &vOrigin, const QAngle &vAng
 	g_TEFireBullets.m_vecAngles = vAngles;
 	g_TEFireBullets.m_iSeed = iSeed;
 	g_TEFireBullets.m_flSpread = flSpread;
+	g_TEFireBullets.m_bFixedSpread = bFixedSpread;
+	g_TEFireBullets.m_iBullets = iBullets;
+	g_TEFireBullets.m_flRange = flRange;
+	g_TEFireBullets.m_iAmmoType = iAmmoType;
 	g_TEFireBullets.m_iMode = iMode;
+	g_TEFireBullets.m_flDamage = flDamage;
+	g_TEFireBullets.m_bFirstShot = bFirstShot;
 	g_TEFireBullets.m_iWeaponID = iWeaponID;
 	g_TEFireBullets.m_bCritical = bCritical;
 

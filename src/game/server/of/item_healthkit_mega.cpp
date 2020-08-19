@@ -31,14 +31,14 @@ bool CHealthKitMega::ITEM_GiveTFMegaHealth(CBasePlayer *pPlayer)
 		if (iHealthBefore < pTFPlayer->m_Shared.GetDefaultHealth())
 			iHealthToAdd = max(0, pTFPlayer->GetHealth() - pTFPlayer->m_Shared.GetDefaultHealth());
 
-		pTFPlayer->m_Shared.m_flMegaOverheal += iHealthToAdd;
+		pTFPlayer->m_iMegaOverheal += iHealthToAdd;
 	}
 	else
 	{
 		int iHealthToAdd = pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->GetHealth();
 		iHealthToAdd = clamp(iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->GetHealth());
 		pPlayer->TakeHealth(iHealthToAdd, DMG_IGNORE_MAXHEALTH);
-		pTFPlayer->m_Shared.m_flMegaOverheal = pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->m_Shared.GetDefaultHealth();
+		pTFPlayer->m_iMegaOverheal = pTFPlayer->m_Shared.GetMaxBuffedHealthDM() - pTFPlayer->m_Shared.GetDefaultHealth();
 	}
 
 	return true;

@@ -174,6 +174,7 @@ CTFBot::CTFBot( CTFPlayer *player )
 	m_vision = new CTFBotVision( this );
 	m_locomotor = new CTFBotLocomotion( this );
 	m_intention = new CTFBotIntention( this );
+	pOverrideObjective = NULL;
 
 	ListenForGameEvent( "teamplay_point_startcapture" );
 	ListenForGameEvent( "teamplay_point_captured" );

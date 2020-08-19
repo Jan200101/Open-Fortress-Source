@@ -990,6 +990,7 @@ $Project
 	$Folder	"Tools Framework"
 	{
 		$File	"entity_tools_server.cpp"
+		$File	"entity_tools_server.h"
 		$File	"toolframework_server.cpp"
 		$File	"toolframework_server.h"
 	}

@@ -1148,10 +1148,7 @@ int CHLClient::Init(CreateInterfaceFn appSystemFactory, CreateInterfaceFn physic
 	g_pClientMode->Enable();
 	
 #ifdef OF_CLIENT_DLL
-	ParseLoadout();
-	InitItemSchema();
-	ParseItemsGame();
-	ParseSoundManifest();
+	ParseSharedSchemas();
 	FMODManager()->InitFMOD();
 
 	BaseModUI::CBaseModPanel* pBaseModPanel = new BaseModUI::CBaseModPanel();
@@ -1949,6 +1946,11 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	if (g_bLevelInitialized)
 		return;
 	g_bLevelInitialized = true;
+	
+#ifdef OF_CLIENT_DLL
+	// We parse the level schemas here so that level specific items games load before we precache entities
+	ParseLevelSchemas();
+#endif
 
 	input->LevelInit();
 
@@ -2007,11 +2009,9 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 
 #ifdef OF_CLIENT_DLL
 	g_discordrpc.Reset();
-	
+
 	// S:O - Stop all FMOD sounds when exiting to the main menu
 	FMODManager()->StopAllSound();
-	InitLevelSoundManifest();
-	ParseLevelSoundManifest();
 #endif
 
 #if defined( REPLAY_ENABLED )

@@ -19,6 +19,7 @@
 #include "filesystem.h"
 #include "game.h"
 #include "tf_bot.h"
+#include "of_shared_schemas.h"
 
 #include "tier0/memdbgon.h"
 
@@ -31,6 +32,7 @@ extern ConVar of_allow_allclass_spawners;
 extern ConVar weaponstay;
 extern ConVar of_randomizer;
  
+extern void UTIL_PrecacheSchemaWeapon( const char *szName );
 //-----------------------------------------------------------------------------
 // Purpose: Spawn function for the Weapon Spawner
 //-----------------------------------------------------------------------------
@@ -97,29 +99,19 @@ void CWeaponSpawner::Spawn( void )
 		Q_strncpy( m_iszWeaponModelOLD, STRING( szWeaponModelOLD ) , sizeof( m_iszWeaponModelOLD ) );
 		Q_strncpy( m_iszPickupSound, STRING( szPickupSound ), sizeof( m_iszPickupSound ) );
 
-	if ( filesystem )
+	if( GetMapData() )
 	{
-		char szMapName[128];
-		Q_snprintf( szMapName, sizeof(szMapName), "maps/%s_mapdata.txt" , STRING(gpGlobals->mapname) );
-		if ( filesystem->FileExists( szMapName, "GAME" ) )
+		KeyValues* pWeaponSpawners = GetMapData()->FindKey("WeaponSpawners");
+		if ( pWeaponSpawners )
 		{
-			KeyValues* pMapData = new KeyValues( "MapData" );
-			pMapData->LoadFromFile( filesystem, szMapName );
-			if ( pMapData )
+			char pTemp[256];
+			Q_snprintf( pTemp, sizeof(pTemp), "%d", m_iIndex.Get() );
+			KeyValues* pWeaponSpawner = pWeaponSpawners->FindKey( pTemp );
+			if ( pWeaponSpawner )
 			{
-				KeyValues* pWeaponSpawners = pMapData->FindKey( "WeaponSpawners" );
-				if ( pWeaponSpawners )
-				{
-					char pTemp[256];
-					Q_snprintf( pTemp, sizeof(pTemp), "%d", m_iIndex.Get() );
-					KeyValues* pWeaponSpawner = pWeaponSpawners->FindKey( pTemp );
-					if ( pWeaponSpawner )
-					{
-						Q_strncpy( m_iszWeaponName.GetForModify(), pWeaponSpawner->GetString("Weapon", m_iszWeaponName.GetForModify()), 128 );
-						Q_strncpy( m_iszWeaponModel, pWeaponSpawner->GetString("Model", m_iszWeaponModel) , sizeof( m_iszWeaponModel ) );
-						Q_strncpy( m_iszPickupSound,  pWeaponSpawner->GetString("PickupSound", m_iszPickupSound), sizeof( m_iszPickupSound ) );						
-					}
-				}
+				Q_strncpy( m_iszWeaponName.GetForModify(), pWeaponSpawner->GetString("Weapon", m_iszWeaponName.GetForModify()), 128 );
+				Q_strncpy( m_iszWeaponModel, pWeaponSpawner->GetString("Model", m_iszWeaponModel) , sizeof( m_iszWeaponModel ) );
+				Q_strncpy( m_iszPickupSound,  pWeaponSpawner->GetString("PickupSound", m_iszPickupSound), sizeof( m_iszPickupSound ) );						
 			}
 		}
 	}
@@ -157,7 +149,7 @@ void CWeaponSpawner::SetWeaponModel( void )
 //-----------------------------------------------------------------------------
 void CWeaponSpawner::Precache( void )
 {
-	UTIL_PrecacheOther( m_iszWeaponName );
+	UTIL_PrecacheSchemaWeapon( m_iszWeaponName );
 	PrecacheScriptSound( m_iszPickupSound );
 	Update();
 
@@ -200,7 +192,6 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		if (!pWeaponInfo)
 			return false;
 		
-		int iWeaponID = AliasToWeaponID( m_iszWeaponName.Get() );
 		int iSlot;
 
 		if ( TFGameRules() && TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode()  )
@@ -220,7 +211,7 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 		}
 
 		// We have it already, dont take it Freeman, but get ammo
-		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() == iWeaponID )
+		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponFileInfoHandle() == m_hWpnInfo )
 		{
 			bTakeWeapon = false;
 			if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->ReserveAmmo() < pWeaponInfo->iMaxReserveAmmo )
@@ -228,10 +219,12 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 			else
 				return false;
 		}
+
 		if( pTFPlayer->m_hWeaponInSlot[iSlot][iPos] && !pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->CanHolster() )
 		{	
 			return false;
-		}		
+		}
+
 		if( TFGameRules() && !TFGameRules()->UsesDMBuckets() && bTakeWeapon )
 		{
 			// If the slot already has something, and its the 3 wep system but we're not picking it up, show the swap hud and bail out
@@ -241,8 +234,9 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				if ( event )
 				{
 					event->SetInt( "playerid", pTFPlayer->entindex() );
-					event->SetInt( "current_wep", pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponID() );
-					event->SetInt( "swap_wep", iWeaponID );
+					event->SetString( "current_wep", pTFPlayer->m_hWeaponInSlot[iSlot][iPos]->GetSchemaName() );
+					event->SetString( "swap_wep", m_iszWeaponName.Get() );
+
 					gameeventmanager->FireEvent( event );
 				}
 				return false;
@@ -259,7 +253,6 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 				if ( pGivenWeapon )
 				{
 					pGivenWeapon->GiveTo( pTFPlayer ); 																	 // Give it to the player
-
 					
 					if ( pGivenWeapon->GetTFWpnData().m_bAlwaysDrop ) // superweapon
 					{
@@ -270,11 +263,11 @@ bool CWeaponSpawner::MyTouch( CBasePlayer *pPlayer )
 								TeamplayRoundBasedRules()->BroadcastSoundFFA( pTFPlayer->entindex(), GetSuperWeaponPickupLineSelf(), GetSuperWeaponPickupLine() );
 						}
 					}
-					else if ( WeaponID_IsRocketWeapon ( pGivenWeapon->GetWeaponID() )  // "rare" weapons, this is kinda terrible
-							|| WeaponID_IsGrenadeWeapon ( pGivenWeapon->GetWeaponID() ) 
-							|| pGivenWeapon->GetWeaponID() == TF_WEAPON_RAILGUN
-							|| pGivenWeapon->GetWeaponID() == TF_WEAPON_LIGHTNING_GUN
-							|| pGivenWeapon->GetWeaponID() == TF_WEAPON_GATLINGGUN )
+					else if( pGivenWeapon->IsRocketWeapon()  // "rare" weapons, this is kinda terrible
+						|| pGivenWeapon->IsGrenadeWeapon()
+						|| pGivenWeapon->GetWeaponFileInfoHandle() == LookupWeaponInfoSlot( "tf_weapon_railgun" )
+						|| pGivenWeapon->GetWeaponFileInfoHandle() == LookupWeaponInfoSlot( "tf_weapon_lightning_gun" )
+						|| pGivenWeapon->GetWeaponFileInfoHandle() == LookupWeaponInfoSlot( "tf_weapon_gatling_gun" ) )
 					{
 						pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_MVM_LOOT_RARE );
 					}
@@ -339,8 +332,8 @@ void CWeaponSpawner::Materialize( void )
 
 void CWeaponSpawner::Update( void )
 {
-	WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
-	pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
+	m_hWpnInfo = LookupWeaponInfoSlot( m_iszWeaponName.Get() );
+	pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( m_hWpnInfo ) );
 	if ( pWeaponInfo )
 	{
 		m_bSuperWeapon = pWeaponInfo->m_bAlwaysDrop;
@@ -463,7 +456,7 @@ void CWeaponSpawner::InputSetWeaponName( inputdata_t &inputdata )
 	if ( name ) 
 	{
 		// precache the weapon...
-		UTIL_PrecacheOther( name );
+		UTIL_PrecacheSchemaWeapon( name );
 
 		Q_strncpy( m_iszWeaponName.GetForModify(), name, 128 );
 

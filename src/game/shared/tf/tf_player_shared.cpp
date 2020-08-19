@@ -149,7 +149,6 @@ RecvPropFloat( RECVINFO( m_flGHookProp ) ),
 RecvPropInt( RECVINFO( m_nPlayerState ) ),
 RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
 RecvPropInt( RECVINFO( m_iRespawnEffect ) ),
-RecvPropTime( RECVINFO( m_flMegaOverheal ) ),
 // Spy.
 RecvPropTime( RECVINFO( m_flInvisChangeCompleteTime ) ),
 RecvPropInt( RECVINFO( m_nDisguiseTeam ) ),
@@ -176,7 +175,6 @@ DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_bBlockJump, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_flGHookProp, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
-DEFINE_PRED_FIELD( m_flMegaOverheal, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_iRespawnEffect, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_flNextZoomTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
@@ -218,7 +216,6 @@ SendPropFloat( SENDINFO( m_flGHookProp ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN
 SendPropInt( SENDINFO( m_nPlayerState ), Q_log2( TF_STATE_COUNT ) + 1, SPROP_UNSIGNED ),
 SendPropInt( SENDINFO( m_iDesiredPlayerClass ), Q_log2( TF_CLASS_COUNT_ALL ) + 1, SPROP_UNSIGNED ),
 SendPropInt( SENDINFO( m_iRespawnEffect ), -1, SPROP_UNSIGNED ),
-SendPropTime( SENDINFO( m_flMegaOverheal ) ),
 // Spy
 SendPropTime( SENDINFO( m_flInvisChangeCompleteTime ) ),
 SendPropInt( SENDINFO( m_nDisguiseTeam ), 3, SPROP_UNSIGNED ),
@@ -883,7 +880,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		{
 			m_flHealFraction -= nHealthToAdd;
 
-			int iBoostMax = GetMaxBuffedHealth() + m_flMegaOverheal;
+			int iBoostMax = GetMaxBuffedHealth() + m_pOuter->m_iMegaOverheal;
 			if ( iBoostMax > GetMaxBuffedHealthDM() )
 				iBoostMax = GetMaxBuffedHealthDM();
 
@@ -937,7 +934,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		if ( m_pOuter->GetHealth() > m_pOuter->GetMaxHealth() )
 		{
 			float flBoostMaxAmount = GetMaxBuffedHealth() - m_pOuter->GetMaxHealth();
-			float flDrainTime = ( m_pOuter->GetHealth() <= GetDefaultHealth() + m_flMegaOverheal ) ? of_dm_boost_drain_time.GetFloat() : tf_boost_drain_time.GetFloat();
+			float flDrainTime = ( m_pOuter->GetHealth() <= GetDefaultHealth() + m_pOuter->m_iMegaOverheal ) ? of_dm_boost_drain_time.GetFloat() : tf_boost_drain_time.GetFloat();
 			m_flHealFraction += ( gpGlobals->frametime * ( flBoostMaxAmount / flDrainTime ) );
 
 			int nHealthToDrain = (int)m_flHealFraction;
@@ -946,7 +943,7 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 				m_flHealFraction -= nHealthToDrain;
 				// Drain our Pill overheal if thats the only thing left
 				if ( flDrainTime == of_dm_boost_drain_time.GetFloat() )
-					m_flMegaOverheal -= nHealthToDrain;
+					m_pOuter->m_iMegaOverheal -= nHealthToDrain;
 
 				// Manually subtract the health so we don't generate pain sounds / etc
 				m_pOuter->m_iHealth -= nHealthToDrain;
@@ -3125,7 +3122,7 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	}
 
 	// First, get their max class speed
-	maxfbspeed = GetPlayerClass()->GetData()->m_flMaxSpeed;
+	maxfbspeed = GetPlayerClass()->GetMaxSpeed();
 
 	// Slow us down if we're disguised as a slower class
 	// unless we're cloaked..
@@ -3875,4 +3872,14 @@ bool CTFPlayerShared::InPowerupCond()
 			return true;
 	}
 	return false;
+}
+
+const char *CTFPlayer::GetOverrideStepSound( const char *pszBaseStepSoundName )
+{
+	if( IsRobot() )
+	{
+		return "MVM.BotStep";
+	}
+
+	return pszBaseStepSoundName;
 }

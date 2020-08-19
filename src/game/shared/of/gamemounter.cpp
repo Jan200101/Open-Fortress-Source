@@ -134,3 +134,88 @@ void AddRequiredSearchPaths()
 
 	pMountFile->deleteThis();
 }
+
+void SetupHammerPaths( void )
+{
+	KeyValues *pMountFile = new KeyValues( "gamemounting.txt" );
+	pMountFile->LoadFromFile( g_pFullFileSystem, "gamemounting.txt", "MOD" );
+	
+	KeyValues *pGameInfo = new KeyValues( "GameInfo" );
+	pGameInfo->LoadFromFile( g_pFullFileSystem, "gameinfo_template.txt", "MOD" );
+	KeyValues *pSearchPaths = pGameInfo->FindKey("FileSystem")->FindKey("SearchPaths");
+	KeyValues *pFirst = pSearchPaths->GetFirstValue();
+	KeyValues *pLast = pFirst;
+	FOR_EACH_VALUE( pSearchPaths, kvValue )
+	{
+		if( FStrEq( kvValue->GetString(), "first" ) )
+			pFirst = kvValue;
+		else if( FStrEq( kvValue->GetString(), "last" ) )
+			pLast = kvValue;
+	}
+
+	for( KeyValues *pGame = pMountFile->GetFirstTrueSubKey(); pGame; pGame = pGame->GetNextTrueSubKey() )
+	{
+		const char* szGameName = pGame->GetName();
+		const bool bRequired = pGame->GetBool( "required", false );
+
+		if ( !steamapicontext || !steamapicontext->SteamApps() )
+		{
+			Msg( "Skipping %s, unable to get app install path.\n", szGameName );
+			continue;
+		}
+
+		char szPath[ MAX_PATH * 2 ];
+		int ccFolder = steamapicontext->SteamApps()->GetAppInstallDir( pGame->GetUint64( "appid" ), szPath, sizeof( szPath ) );
+
+		if ( ccFolder > 0 )
+		{
+			ConColorMsg( Color( 90, 240, 90, 255 ), "Adding %s paths into the gameinfo\n", szGameName );
+
+			KeyValues *pPaths = pGame->FindKey( "paths" );
+
+			if ( !pPaths )
+				return;
+
+			for ( KeyValues *pPath = pPaths->GetFirstSubKey(); pPath; pPath = pPath->GetNextKey() )
+			{
+				if ( !FStrEq( pPath->GetName(), "local" ) )
+					continue;
+
+				char szTempPath[ MAX_PATH * 2 ];
+				Q_strncpy( szTempPath, szPath, ARRAYSIZE( szTempPath ) );
+
+				V_AppendSlash( szTempPath, ARRAYSIZE( szTempPath ) );
+				V_strncat( szTempPath, pPath->GetString(), ARRAYSIZE( szTempPath ) );
+
+//				if( pFirst )
+//					pFirst->SetStringValue( szTempPath );
+
+				if( !pFirst )
+					continue;
+
+				pFirst->SetStringValue( szTempPath );
+				
+				ConColorMsg( Color( 144, 238, 144, 255 ), "\tAdding path: %s\n", szTempPath );
+				
+				if( pFirst == pLast )
+					break;
+				
+				pFirst = pFirst->GetNextValue();
+			}
+		}
+		else if ( bRequired )
+		{
+			Error( "Failed to mount required game: %s\n", szGameName );
+		}
+		else
+		{
+			Warning( "%s not found on system. Skipping.\n", szGameName );
+		}
+	}
+	
+	pGameInfo->SaveToFile( filesystem, "gameinfo.txt" );
+
+	pMountFile->deleteThis();
+}
+
+static ConCommand setup_hammer_paths( "setup_hammer_paths", SetupHammerPaths, "Setsup your gameinfo to be usable in hammer.", FCVAR_NONE );

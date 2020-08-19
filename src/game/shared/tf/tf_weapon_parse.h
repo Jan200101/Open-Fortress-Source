@@ -94,6 +94,9 @@ public:
 	bool	m_bSwapFireAnims;
 	bool	m_bNoFixedSpread;
 	
+	bool	m_bCanHeadshot;
+	int		m_iReloadTypeOverride;
+	
 	// Grenade.
 	bool	m_bGrenade;
 	float	m_flDamageRadius;
