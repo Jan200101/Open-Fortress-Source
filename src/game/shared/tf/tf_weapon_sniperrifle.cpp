@@ -24,8 +24,8 @@
 
 #define TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME	0.2f
 
-#define SNIPER_DOT_SPRITE_RED		"effects/sniperdot_red.vmt"
-#define SNIPER_DOT_SPRITE_BLUE		"effects/sniperdot_blue.vmt"
+#define SNIPER_DOT_SPRITE_RED			"effects/sniperdot_red.vmt"
+#define SNIPER_DOT_SPRITE_BLUE			"effects/sniperdot_blue.vmt"
 
 #ifdef CLIENT_DLL
 	ConVar of_holdtozoom( "of_holdtozoom", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_USERINFO, "Hold Mouse2 to zoom instead of Toggling it." );
@@ -221,7 +221,7 @@ void CTFSniperRifle::HandleZooms( void )
 	// Handle the zoom when taunting.
 	if ( pPlayer->m_Shared.InCond( TF_COND_TAUNTING ) )
 	{
-		if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) )
+		if ((GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && pPlayer->m_Shared.InCond(TF_COND_AIMING))
 		{
 			ToggleZoom();
 		}
@@ -268,12 +268,12 @@ void CTFSniperRifle::HandleZooms( void )
 			m_flNextSecondaryAttack = m_flRezoomTime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 			m_flRezoomTime = -1;
 		}
-		else if ( !pPlayer->m_Shared.InCond( TF_COND_AIMING ) || HoldToZoom == 0 )
+		else if ( (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && !pPlayer->m_Shared.InCond(TF_COND_AIMING) || HoldToZoom == 0)
 		{
 			Zoom();
 		}
 	}
-	else if ( pPlayer->m_Shared.InCond( TF_COND_AIMING ) && !( pPlayer->m_nButtons & IN_ATTACK2 ) && HoldToZoom == 1 )
+	else if ( (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && pPlayer->m_Shared.InCond(TF_COND_AIMING) && !(pPlayer->m_nButtons & IN_ATTACK2) && HoldToZoom == 1)
 	{
 		Zoom();
 	}
@@ -579,7 +579,7 @@ float CTFSniperRifle::GetProjectileDamage( void )
 //-----------------------------------------------------------------------------
 int	CTFSniperRifle::GetDamageType( void ) const
 {
-	if ( GetWeaponID() == TF_WEAPON_RAILGUN )
+	if ((GetWeaponID() == TF_WEAPON_RAILGUN) || (GetWeaponID() == TFC_WEAPON_SNIPER_RIFLE))
 		return BaseClass::GetDamageType();
 
 	// Only do hit location damage if we're zoomed
@@ -688,19 +688,235 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 	if ( pPlayer )
 	{
 		// no crits if they're not zoomed
-		if ( GetWeaponID() != TF_WEAPON_RAILGUN && ( pPlayer->GetFOV() >= pPlayer->GetDefaultFOV() ) )
+		if (((GetWeaponID() != TF_WEAPON_RAILGUN) && (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE)) 
+			&& (pPlayer->GetFOV() >= pPlayer->GetDefaultFOV()))
 		{
 			return false;
 		}
 
 		// no crits for 0.2 seconds after starting to zoom
-		if ( GetWeaponID() != TF_WEAPON_RAILGUN && (( gpGlobals->curtime - pPlayer->GetFOVTime() ) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME ))
+		if (((GetWeaponID() != TF_WEAPON_RAILGUN) && (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE))
+			&& ((gpGlobals->curtime - pPlayer->GetFOVTime()) < TF_WEAPON_SNIPERRIFLE_NO_CRIT_AFTER_ZOOM_TIME))
 		{
 			return false;
 		}
 	}
 
 	return true;
+}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::ItemPostFrame(void)
+{
+	if (m_bLowered)
+		return;
+
+	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
+	if (!pPlayer)
+		return;
+
+	if (!CanAttack())
+	{
+		if (IsZoomed())
+		{
+			ToggleZoom();
+		}
+		return;
+	}
+
+	HandleZooms();
+
+#ifdef GAME_DLL
+	if (m_hSniperDot)
+	{
+		UpdateSniperDot();
+	}
+#endif
+
+	if (pPlayer->m_nButtons & IN_ATTACK)
+	{
+	    //Added the charge statement here to allow the charge to start on primary hold. So now the charge after float will go up with the dot until both reach the correct float number and then on the release the float will send the multiplied damage to fire
+
+        float flChargeAfter = m_flNextPrimaryAttack;
+        if ( flChargeAfter <= gpGlobals->curtime) {
+            // Don't start charging in the time just after a shot before we unzoom to play rack anim.
+            if (pPlayer->m_Shared.InCond(TF_COND_AIMING) && !m_bRezoomAfterShot && !GetTFWpnData().m_bNoSniperCharge) {
+                m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage())+0.5, GetDamage() * 6);
+            } else {
+                m_flChargedDamage = max(0,m_flChargedDamage - gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC);
+            }
+        }
+		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+        {
+
+			pPlayer->m_Shared.AddCond(TF_COND_AIMING);
+			pPlayer->TeamFortress_SetSpeed();
+			#ifdef GAME_DLL
+				// Create the sniper dot.
+				CreateSniperDot(); 
+				pPlayer->ClearExpression();
+			#endif
+
+		}
+	}
+
+	// Fire.
+	if (pPlayer->m_afButtonReleased & IN_ATTACK)
+	{
+
+		Fire(pPlayer);
+		pPlayer->m_Shared.RemoveCond(TF_COND_AIMING);
+		pPlayer->TeamFortress_SetSpeed();
+		#ifdef GAME_DLL
+			// Create the sniper dot.
+			DestroySniperDot();
+			pPlayer->ClearExpression();
+		#endif
+	}
+
+	//if (!pPlayer->m_Shared.InCond(TF_COND_AIMING))
+	//	SoftZoomCheck();
+
+	if (!((pPlayer->m_afButtonReleased & IN_ATTACK) || (pPlayer->m_nButtons & IN_ATTACK2)))
+	{
+		if (!ReloadOrSwitchWeapons() && (m_bInReload == false))
+		{
+			WeaponIdle();
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::Fire(CTFPlayer *pPlayer)
+{
+	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
+	if ( ReserveAmmo() <= 0 )
+	{
+		HandleFireOnEmpty();
+		return;
+	}
+
+	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
+		return;
+
+	// Fire the sniper shot.
+	PrimaryAttack();
+
+	if ( IsZoomed() )
+	{
+		// If we have more bullets, zoom out, play the bolt animation and zoom back in
+		if( ReserveAmmo() < 0 )
+		{
+			//just zoom out
+			SetRezoom( false, 0.5f );	// just zoom out in 0.5 seconds
+		}
+	}
+	else
+	{
+		// Prevent primary fire preventing zooms
+		m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+	}
+
+	m_flChargedDamage = 0.0f;
+
+#ifdef GAME_DLL
+	if ( m_hSniperDot )
+	{
+		m_hSniperDot->ResetChargeTime();
+	}
+#endif
+}
+//-----------------------------------------------------------------------------
+// Purpose: Secondary attack.
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::Zoom(void)
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (pPlayer)
+	{
+		pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+	}
+
+	ToggleZoom();
+
+	// at least 0.1 seconds from now, but don't stomp a previous value
+	m_flNextPrimaryAttack = max(m_flNextPrimaryAttack, gpGlobals->curtime + 0.1);
+
+	m_flNextSecondaryAttack = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::ZoomOutIn(void)
+{
+	ZoomOut();
+
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (pPlayer && pPlayer->ShouldAutoRezoom())
+	{
+		m_flRezoomTime = gpGlobals->curtime + 0.9;
+	}
+	else
+	{
+		m_flNextSecondaryAttack = gpGlobals->curtime + 1.0f;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::ZoomIn(void)
+{
+	// Start aiming.
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if (!pPlayer)
+		return;
+
+	if (ReserveAmmo() <= 0)
+		return;
+
+	CTFWeaponBaseGun::ZoomIn();
+
+	pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::ZoomOut(void)
+{
+	CTFWeaponBaseGun::ZoomOut();
+
+	// Stop aiming
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+
+	if (!pPlayer)
+		return;
+
+	pPlayer->m_Shared.m_flNextZoomTime = gpGlobals->curtime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
+
+	// if we are thinking about zooming, cancel it
+	m_flUnzoomTime = -1;
+	m_flRezoomTime = -1;
+	m_bRezoomAfterShot = false;
+}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFCSniperRifle::SetRezoom(bool bRezoom, float flDelay)
+{
+	BaseClass::SetRezoom(bRezoom, flDelay);
+}
+
+// We need to set the damage amount that is stored to the charge float which is what the Primary attack in fire reads- Sir Matrix
+float CTFCSniperRifle::GetProjectileDamage( void )
+{
+    // Uncharged? Min damage.
+    return max( m_flChargedDamage, GetDamage() );
 }
 
 //=============================================================================
@@ -715,7 +931,13 @@ float CTFSniperRifle::GetHUDDamagePerc( void )
 {
 	return ( m_flChargedDamage / ( GetDamage() * 3 ));
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+float CTFCSniperRifle::GetHUDDamagePerc(void)
+{
+	return (m_flChargedDamage / (GetDamage() * 6));
+}
 //-----------------------------------------------------------------------------
 // Returns the sniper chargeup from 0 to 1
 //-----------------------------------------------------------------------------
@@ -738,34 +960,71 @@ void CProxySniperRifleCharge::OnBind( void *pC_BaseEntity )
 
 	if ( pPlayer )
 	{
-		CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
-		if ( pWeapon )
+		//can someone please find a better way of doing this
+		CTFWeaponBase *pWpn = pPlayer->GetActiveTFWeapon();
+		if (pWpn->GetWeaponID() == TFC_WEAPON_SNIPER_RIFLE)
 		{
-			float flChargeValue = ( ( 1.0 - pWeapon->GetHUDDamagePerc() ) * 0.8 ) + 0.6;
-
-			VMatrix mat, temp;
-
-			Vector2D center( 0.5, 0.5 );
-			MatrixBuildTranslation( mat, -center.x, -center.y, 0.0f );
-
-			// scale
+			CTFCSniperRifle *pWeapon = assert_cast<CTFCSniperRifle*>(pPlayer->GetActiveTFWeapon());
+			if (pWeapon)
 			{
-				Vector2D scale( 1.0f, 0.25f );
-				MatrixBuildScale( temp, scale.x, scale.y, 1.0f );
-				MatrixMultiply( temp, mat, mat );
+				float flChargeValue = ((1.0 - pWeapon->GetHUDDamagePerc()) * 0.8) + 0.6;
+
+				VMatrix mat, temp;
+
+				Vector2D center(0.5, 0.5);
+				MatrixBuildTranslation(mat, -center.x, -center.y, 0.0f);
+
+				// scale
+				{
+					Vector2D scale(1.0f, 0.25f);
+					MatrixBuildScale(temp, scale.x, scale.y, 1.0f);
+					MatrixMultiply(temp, mat, mat);
+				}
+
+				MatrixBuildTranslation(temp, center.x, center.y, 0.0f);
+				MatrixMultiply(temp, mat, mat);
+
+				// translation
+				{
+					Vector2D translation(0.0f, flChargeValue);
+					MatrixBuildTranslation(temp, translation.x, translation.y, 0.0f);
+					MatrixMultiply(temp, mat, mat);
+				}
+
+				m_pResult->SetMatrixValue(mat);
 			}
-
-			MatrixBuildTranslation( temp, center.x, center.y, 0.0f );
-			MatrixMultiply( temp, mat, mat );
-
-			// translation
+		}
+		else
+		{
+			CTFSniperRifle *pWeapon = assert_cast<CTFSniperRifle*>(pPlayer->GetActiveTFWeapon());
+			if (pWeapon)
 			{
-				Vector2D translation( 0.0f, flChargeValue );
-				MatrixBuildTranslation( temp, translation.x, translation.y, 0.0f );
-				MatrixMultiply( temp, mat, mat );
-			}
+				float flChargeValue = ((1.0 - pWeapon->GetHUDDamagePerc()) * 0.8) + 0.6;
 
-			m_pResult->SetMatrixValue( mat );
+				VMatrix mat, temp;
+
+				Vector2D center(0.5, 0.5);
+				MatrixBuildTranslation(mat, -center.x, -center.y, 0.0f);
+
+				// scale
+				{
+					Vector2D scale(1.0f, 0.25f);
+					MatrixBuildScale(temp, scale.x, scale.y, 1.0f);
+					MatrixMultiply(temp, mat, mat);
+				}
+
+				MatrixBuildTranslation(temp, center.x, center.y, 0.0f);
+				MatrixMultiply(temp, mat, mat);
+
+				// translation
+				{
+					Vector2D translation(0.0f, flChargeValue);
+					MatrixBuildTranslation(temp, translation.x, translation.y, 0.0f);
+					MatrixMultiply(temp, mat, mat);
+				}
+
+				m_pResult->SetMatrixValue(mat);
+			}
 		}
 	}
 
@@ -969,13 +1228,13 @@ void CSniperDot::OnDataChanged( DataUpdateType_t updateType )
 {
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
-		if ( GetTeamNumber() == TF_TEAM_BLUE )
+		if (GetTeamNumber() == TF_TEAM_BLUE)
 		{
-			m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS );
+			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_BLUE, TEXTURE_GROUP_CLIENT_EFFECTS);
 		}
 		else
 		{
-			m_hSpriteMaterial.Init( SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS );
+			m_hSpriteMaterial.Init(SNIPER_DOT_SPRITE_RED, TEXTURE_GROUP_CLIENT_EFFECTS);
 		}
 	}
 }

@@ -670,6 +670,10 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		OnAddTranq();
 		break;
 
+	case TF_COND_FUCKEDUP_LEGS:
+		OnAddFuckedUpLegs();
+		break;
+
 	default:
 		break;
 	}
@@ -759,6 +763,10 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 
 	case TF_COND_TRANQ:
 		OnRemoveTranq();
+		break;
+
+	case TF_COND_FUCKEDUP_LEGS:
+		OnRemoveFuckedUpLegs();
 		break;
 
 	default:
@@ -926,6 +934,9 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		// Reduce the duration of this poison
 		if (InCond(TF_COND_TRANQ))
 			m_flTranqRemoveTime -= 2.f * gpGlobals->frametime;
+
+		if (InCond(TF_COND_FUCKEDUP_LEGS))
+			m_flFuckedUpLegsRemoveTime -= 2.f * gpGlobals->frametime;
 	}
 
 	if ( bDecayHealth )
@@ -1443,17 +1454,8 @@ void CTFPlayerShared::OnRemoveHaste( void )
 void CTFPlayerShared::OnAddTranq( void )
 {
 #ifdef CLIENT_DLL
-	if(!m_bTranqEffects)
-	{
-		if (m_pOuter->IsLocalPlayer() == true)
-			m_pOuter->StartTranqSound();
-	}
-	/*
-	else
-	{
-		//Placeholder Stuff
-	}
-	*/
+	if (m_pOuter->IsLocalPlayer() == true)
+		m_pOuter->StartTranqSound();
 #endif
 	m_pOuter->TeamFortress_SetSpeed();
 }
@@ -1461,16 +1463,26 @@ void CTFPlayerShared::OnAddTranq( void )
 void CTFPlayerShared::OnRemoveTranq( void )
 {
 #ifdef CLIENT_DLL
-	if(!m_bTranqEffects)
-	{
-		m_pOuter->StopTranqSound();
-	}
-	/*
-	else
-	{
-		//Placeholder Stuff
-	}
-	*/
+	m_pOuter->StopTranqSound();
+#endif
+	m_pOuter->TeamFortress_SetSpeed();
+}
+
+void CTFPlayerShared::OnAddFuckedUpLegs(void)
+{
+#ifdef CLIENT_DLL
+	if (m_pOuter->IsLocalPlayer() == true)
+
+	m_pOuter->EmitSound("PlayerMedkitInfected");
+
+#endif
+	m_pOuter->TeamFortress_SetSpeed();
+}
+
+void CTFPlayerShared::OnRemoveFuckedUpLegs(void)
+{
+#ifdef CLIENT_DLL
+	//Fuck
 #endif
 	m_pOuter->TeamFortress_SetSpeed();
 }
@@ -1651,40 +1663,82 @@ void CTFPlayerShared::Poison( CTFPlayer *pAttacker, float flTime )
 	if ( !m_pOuter->IsAlive() )
 		return;
 
-	if (!InCond(TF_COND_POISON) && !InCondUber())
+	if (m_pOuter->GetPlayerClass()->GetClassIndex() != TF_CLASS_MEDIC)
 	{
-		// Start posioning
-		AddCond(TF_COND_POISON, flTime);
-		m_flPoisonTime = gpGlobals->curtime;    //asap
-	} else
-		return;
+		if (!InCond(TF_COND_POISON) && !InCondUber())
+		{
+			// Start posioning
+			AddCond(TF_COND_POISON, flTime);
+			m_flPoisonTime = gpGlobals->curtime;    //asap
+		}
+		else
+			return;
 
-	if (flTime > 0.f)
-		m_flPoisonRemoveTime = gpGlobals->curtime + flTime;
-	else
-		m_flPoisonRemoveTime = gpGlobals->curtime + TF_POISON_STING_LIFE;
-
-	m_hPoisonAttacker = pAttacker;
+		m_hPoisonAttacker = pAttacker;
+	}
 
 #endif
 }
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flSpeed, bool bEffects)
+void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flSpeed)
 {
 #ifdef GAME_DLL
-	m_flTranqSlowness = flSpeed;
+	m_flTranqMovementSlowness = flSpeed;
 
 	if (!m_pOuter->IsAlive())
 		return;
 
-	if (!InCond(TF_COND_TRANQ) && !InCondUber())
+	if (!InCondUber())
+	{
+		if (!InCond(TF_COND_TRANQ))
+		{
+			AddCond(TF_COND_TRANQ, flTime);
+		}
+		else
+		{
+			float m_flTranqAddonTime = (flTime / 2) + GetConditionDuration(TF_COND_TRANQ);
+			//Msg("m_flTranqAddonTime is %f\n", m_flTranqAddonTime);
+			//Msg("TF_COND_TRANQ Condition Duration is %f\n", GetConditionDuration(TF_COND_TRANQ));
+			AddCond(TF_COND_TRANQ, m_flTranqAddonTime);
+		}
+	}
+	else
+		return;
+#endif
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayerShared::FuckUpLegs(CTFPlayer *pAttacker, float flTime, float flSpeed)
+{
+#ifdef GAME_DLL
+
+	if (!m_pOuter->IsAlive())
+		return;
+
+	if (!InCond(TF_COND_FUCKEDUP_LEGS) && !InCondUber())
 	{
 		// Start sloweness
-		AddCond(TF_COND_TRANQ, flTime);
-		m_flTranqTime = gpGlobals->curtime;    //asap
-		m_bTranqEffects = bEffects;
+		m_flFuckedUpLegsSlowness = flSpeed;
+		AddCond(TF_COND_FUCKEDUP_LEGS, flTime);
+	}
+	else if (InCond(TF_COND_FUCKEDUP_LEGS) && !InCondUber())
+	{
+		if (m_flFuckedUpLegsSlowness - (1.0 - flSpeed) < 0.5)
+		{
+			m_flFuckedUpLegsSlowness = 0.5;
+		}
+		else
+		{
+			float m_flFuckedUpLegsSlownessAddTogether = m_flFuckedUpLegsSlowness - (1.0 - flSpeed);
+			m_flFuckedUpLegsSlowness = m_flFuckedUpLegsSlownessAddTogether;
+		}
+		float m_flNewFuckedUpLegsTime = (flTime / 2) + GetConditionDuration(TF_COND_FUCKEDUP_LEGS);
+		//Msg("m_flNewFuckedUpLegsTime is %\n", m_flNewFuckedUpLegsTime);
+		//Msg("TF_COND_FUCKEDUP_LEGS Condition Duration is %f\n", GetConditionDuration(TF_COND_FUCKEDUP_LEGS));
+		AddCond(TF_COND_FUCKEDUP_LEGS, m_flNewFuckedUpLegsTime);
 	}
 	else
 		return;
@@ -2460,6 +2514,8 @@ void CTFPlayerShared::SetInvulnerable( bool bState, bool bInstant )
 			RemoveCond(TF_COND_POISON);
 		if (InCond(TF_COND_TRANQ))
 			RemoveCond(TF_COND_TRANQ);
+		if (InCond(TF_COND_FUCKEDUP_LEGS))
+			RemoveCond(TF_COND_FUCKEDUP_LEGS);
 
 		CSingleUserRecipientFilter filter( m_pOuter );
 		m_pOuter->EmitSound( filter, m_pOuter->entindex(), "TFPlayer.InvulnerableOn" );
@@ -3224,8 +3280,48 @@ void CTFPlayer::TeamFortress_SetSpeed()
 	if ( m_Shared.InCond( TF_COND_HASTE ) )
 		maxfbspeed *= of_haste_movespeed_multplier.GetFloat();
 
-	if (m_Shared.InCond(TF_COND_TRANQ))
-		maxfbspeed *= m_Shared.m_flTranqSlowness;
+	float m_flTFCMaxSlowdown = 0.5;
+
+	// Since speed reduction works by timing, bigger values = less slowdown.
+	// EX) 0.84 = 16% speed reduction, 0.16 = 84% speed reduction.
+	// EX 2) 1.25 = 25% speed INCREASE.
+
+	//Check to see if player is in both conditions of Tranq and Fucked Up Legs...1
+	if (m_Shared.InCond(TF_COND_TRANQ) && m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
+	{
+		//1...if it passes, check to see if FuckedUpLegSlown is 50% slowdown...A
+		if (m_Shared.m_flFuckedUpLegsSlowness == 0.5)
+		{
+			//A...if it is 50% slowdown, don't use the slowdown values of either Tranq Or Fucked Up Legs; Use the Max Slowdown of 50%, so it can't go above that.
+			maxfbspeed *= m_flTFCMaxSlowdown;
+		}
+		else
+		{
+			//A...if it isn't 50% slowdown, check to see if the added value of both the Tranq % and Fucked Up Leg % go above 50%...AB
+			if ( 1 - ( (1 - m_Shared.m_flFuckedUpLegsSlowness) + ( 1 - m_Shared.m_flTranqMovementSlowness) ) <= 0.5 )
+			{
+				//AB...If it does go above 50% reduction, use Max Slowdown Reduction instead.
+				maxfbspeed *= m_flTFCMaxSlowdown;
+			}
+			else
+			{
+				//AB...If it doesn't do the math to calurate the amount % of slowdown to do.
+				maxfbspeed *= 1 - ( (1 - m_Shared.m_flFuckedUpLegsSlowness) + (1 - m_Shared.m_flTranqMovementSlowness) );
+			}
+		}
+	}
+	//1...If not in both conditions, do a single check for either and apply the normal amount of slowdown for both of them.
+	else
+	{
+		if ( m_Shared.InCond(TF_COND_TRANQ) )
+		{
+			maxfbspeed *= m_Shared.m_flTranqMovementSlowness;
+		} 
+		else if (m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
+		{
+			maxfbspeed *= m_Shared.m_flFuckedUpLegsSlowness;
+		}
+	}
 
 	// Set the speed
 	SetMaxSpeed( maxfbspeed );

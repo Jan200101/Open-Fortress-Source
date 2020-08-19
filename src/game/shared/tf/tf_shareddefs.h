@@ -543,7 +543,6 @@ extern const char *g_szProjectileNames[];
 
 // Poison
 #define TF_POISON_FREQUENCY			0.75f
-#define TF_POISON_STING_LIFE		8.f
 #define TF_POISON_DMG				8
 
 // disguising
@@ -702,6 +701,7 @@ enum
 	TF_COND_SHIELD_DUEL,	// 135
 	TF_COND_POISON,
 	TF_COND_TRANQ,
+	TF_COND_FUCKEDUP_LEGS,
 	TF_COND_HOOKED,
 	TF_COND_LAST
 };
@@ -1053,6 +1053,7 @@ enum
 	// open fortress
 	TF_DMG_CUSTOM_CRIT_POWERUP,
 	TF_DMG_CUSTOM_POISON,
+	TF_DMG_CUSTOM_LEGSHOT,
 };
 
 enum

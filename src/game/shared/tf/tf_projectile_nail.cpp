@@ -340,8 +340,8 @@ void CTFProjectile_Tranq::ProjectileTouch(CBaseEntity *pOther)
 		Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo *>( GetFileWeaponInfoFromHandle(hWpnInfo) );
 
-		if ( ( pTFOwner->GetTeamNumber() != pTFOther->GetTeamNumber() ) || ( pTFOwner->GetTeamNumber() && pTFOther->GetTeamNumber() == TF_TEAM_MERCENARY ) )
-			pTFOther->m_Shared.Tranq( pTFOwner, pWeaponInfo->m_flEffectDuration, pWeaponInfo->m_flSpeedReduction, pWeaponInfo->m_bTranqOrLeg );
+		if (GetEnemyTeam(pTFOther) == pTFOwner->GetTeamNumber())
+			pTFOther->m_Shared.Tranq( pTFOwner, pWeaponInfo->m_flEffectDuration, pWeaponInfo->m_flSpeedReduction);
 	}
 
 	UTIL_Remove(this);
@@ -358,11 +358,11 @@ const char *GetTranqTrailParticleName(int iTeamNumber, bool bCritical)
 {
 	if (iTeamNumber == TF_TEAM_BLUE)
 	{
-		return (bCritical ? "nailtrails_super_blue_crit" : "nailtrails_super_blue");
+		return (bCritical ? "tranq_tracer_teamcolor_blue_crit" : "tranq_tracer_teamcolor_blue");
 	}
 	else if (iTeamNumber == TF_TEAM_RED)
 	{
-		return (bCritical ? "nailtrails_super_red_crit" : "nailtrails_super_red");
+		return (bCritical ? "tranq_tracer_teamcolor_red_crit" : "tranq_tracer_teamcolor_red");
 	}
 	else
 	{

@@ -111,35 +111,33 @@ public:
 	virtual bool CanFireCriticalShot( bool bIsHeadshot = false );
 	virtual bool CanSoftZoom( void ) { return false; }
 
+	void CreateSniperDot(void);
+	void DestroySniperDot(void);
+	void UpdateSniperDot(void);
+
+	// Auto-rezooming handling
+	void SetRezoom(bool bRezoom, float flDelay);
+
+	CNetworkVar(float, m_flChargedDamage);
+
 #ifdef CLIENT_DLL
 	float GetHUDDamagePerc( void );
+#endif
+
+#ifdef GAME_DLL
+	CHandle<CSniperDot>		m_hSniperDot;
 #endif
 
 	bool IsZoomed( void );
 
 private:
 
-	void CreateSniperDot( void );
-	void DestroySniperDot( void );
-	void UpdateSniperDot( void );
-
-private:
-	// Auto-rezooming handling
-	void SetRezoom( bool bRezoom, float flDelay );
-
 	void Zoom( void );
+	void ZoomIn(void);
+	void ZoomOut(void);
 	void ZoomOutIn( void );
-	void ZoomIn( void );
-	void ZoomOut( void );
+
 	void Fire( CTFPlayer *pPlayer );
-
-private:
-
-	CNetworkVar( float,	m_flChargedDamage );
-
-#ifdef GAME_DLL
-	CHandle<CSniperDot>		m_hSniperDot;
-#endif
 
 	// Handles rezooming after the post-fire unzoom
 	float m_flUnzoomTime;
@@ -170,8 +168,35 @@ public:
 	DECLARE_CLASS(CTFCSniperRifle, CTFSniperRifle);
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
+    CNetworkVar(float, m_flChargedDamage);
+
+    virtual float GetProjectileDamage( void );
+
+#ifdef CLIENT_DLL
+	float GetHUDDamagePerc(void);
+#endif
 
 	virtual int	GetWeaponID(void) const { return TFC_WEAPON_SNIPER_RIFLE; }
+
+private:
+
+	void Fire(CTFPlayer *pPlayer);
+
+
+	virtual void SetRezoom(bool bRezoom, float flDelay);
+
+	void Zoom(void);
+	void ZoomOutIn(void);
+	void ZoomIn( void );
+	void ZoomOut( void );
+
+	virtual void ItemPostFrame(void);
+
+	// Handles rezooming after the post-fire unzoom
+	float m_flUnzoomTime;
+	float m_flRezoomTime;
+	bool m_bRezoomAfterShot;
+
 };
 
 #endif // TF_WEAPON_SNIPERRIFLE_H

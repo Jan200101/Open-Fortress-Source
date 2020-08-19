@@ -247,6 +247,7 @@ public:
 	virtual void		ValidateCurrentObserverTarget( void );
 
 	void CheckUncoveringSpies( CTFPlayer *pTouchedPlayer );
+	void SpreadPoison(CTFPlayer *pTouchedPlayer);
 	void Touch( CBaseEntity *pOther );
 
 	void TeamFortress_SetSpeed();

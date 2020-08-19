@@ -115,6 +115,9 @@ ConVar of_zombie_dropitems( "of_zombie_dropitems", "1", FCVAR_ARCHIVE | FCVAR_NO
 
 ConVar of_spawn_with_weapon( "of_spawn_with_weapon", "", FCVAR_ARCHIVE | FCVAR_NOTIFY, "For bot behaviour debugging: players will only spawn with the specified weapon classname." );
 
+ConVar of_spread_infection("of_spread_infection", "1", FCVAR_REPLICATED | FCVAR_NOTIFY, "Whether or not you can spread infection by touching teammates.");
+
+
 extern ConVar of_grenades;
 extern ConVar of_allowteams;
 extern ConVar spec_freeze_time;
@@ -1504,6 +1507,9 @@ void CTFPlayer::Regenerate( void )
 
 	if (m_Shared.InCond(TF_COND_TRANQ))
 		m_Shared.RemoveCond(TF_COND_TRANQ);
+
+	if (m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
+		m_Shared.RemoveCond(TF_COND_FUCKEDUP_LEGS);
 }
 
 //-----------------------------------------------------------------------------
@@ -4417,6 +4423,21 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 				break;
 			}
+		case HITGROUP_RIGHTLEG:
+		case HITGROUP_LEFTLEG:
+		{
+			CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
+
+			if (pWpn->GetWeaponID() == TFC_WEAPON_SNIPER_RIFLE)
+			{
+				//Someone needs to make it so it takes the vars from the weapon's script file
+				CTakeDamageInfo info;
+
+				m_Shared.FuckUpLegs(pAttacker, pWpn->GetTFWpnData().m_flEffectDuration, pWpn->GetTFWpnData().m_flSpeedReduction);
+				info_modified.SetDamageCustom(TF_DMG_CUSTOM_LEGSHOT);
+			}
+			break;
+		}
 		default:
 			break;
 		}
@@ -4894,7 +4915,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( pAttacker != this && !(bitsDamage & (DMG_DROWN | DMG_FALL)) ) 
 	{
 		float flDamage = 0.f;
-		
+
 		if ( bitsDamage & DMG_CRITICAL )
 		{
 			if ( bDebug )
@@ -5003,6 +5024,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( !(bitsDamage & DMG_BURN ) )
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 		}
+		
+		if (bitsCustomDamage == TF_DMG_CUSTOM_LEGSHOT)
+			flDamage = info.GetDamage() * 0.5f;
 
 		info.SetDamage( flDamage );
 	}
@@ -8784,6 +8808,7 @@ void CTFPlayer::Touch( CBaseEntity *pOther )
 	if ( pPlayer )
 	{
 		CheckUncoveringSpies( pPlayer );
+		SpreadPoison(pPlayer);
 	}
 
 	BaseClass::Touch( pOther );
@@ -8808,6 +8833,19 @@ void CTFPlayer::CheckUncoveringSpies( CTFPlayer *pTouchedPlayer )
 
 	// pulse their invisibility
 	pTouchedPlayer->m_Shared.OnSpyTouchedByEnemy();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Check to see if this player has been infected
+//-----------------------------------------------------------------------------
+void CTFPlayer::SpreadPoison(CTFPlayer *pTouchedPlayer)
+{
+	// Only spread poison among teammates
+	if (of_spread_infection.GetBool())
+	{
+		if (m_Shared.IsAlly(pTouchedPlayer) && pTouchedPlayer->m_Shared.InCond(TF_COND_POISON))
+			m_Shared.Poison(pTouchedPlayer->m_Shared.m_hPoisonAttacker, pTouchedPlayer->m_Shared.GetConditionDuration(TF_COND_POISON));
+	}
 }
 
 enum
@@ -9618,7 +9656,7 @@ void CTFPlayer::InputSpeakResponseConcept( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Sets a player on fire
 //-----------------------------------------------------------------------------
 void CTFPlayer::InputIgnitePlayer( inputdata_t &inputdata )
 {
@@ -9635,7 +9673,7 @@ void CTFPlayer::InputExtinguishPlayer(inputdata_t &inputdata)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Poison a player
 //-----------------------------------------------------------------------------
 void CTFPlayer::InputPoisonPlayer(inputdata_t &inputdata)
 {
