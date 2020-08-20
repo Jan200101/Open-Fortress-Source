@@ -144,6 +144,7 @@ RecvPropInt(RECVINFO(m_iSlotOverride)),
 RecvPropInt(RECVINFO(m_iPositionOverride)),
 RecvPropInt(RECVINFO(m_iTeamNum)),
 RecvPropFloat(RECVINFO(m_flBlastRadiusIncrease)),
+RecvPropFloat( RECVINFO(m_flDamageBuildup) ),
 // Server specific.
 #else
 SendPropBool(SENDINFO(m_bLowered)),
@@ -159,6 +160,7 @@ SendPropInt(SENDINFO(m_iSlotOverride)),
 SendPropInt(SENDINFO(m_iPositionOverride)),
 SendPropInt(SENDINFO(m_iTeamNum)),
 SendPropFloat(SENDINFO(m_flBlastRadiusIncrease)),
+SendPropFloat( SENDINFO(m_flDamageBuildup), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 // World models have no animations so don't send these.
 SendPropExclude("DT_BaseAnimating", "m_nSequence"),
 SendPropExclude("DT_AnimTimeMustBeFirst", "m_flAnimTime"),
@@ -184,6 +186,7 @@ DEFINE_PRED_FIELD(m_iShotsDue, FIELD_INTEGER, FTYPEDESC_INSENDTABLE),
 DEFINE_PRED_FIELD_TOL(m_flNextShotTime, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE),
 DEFINE_PRED_FIELD_TOL(m_flWindTick, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE),
 DEFINE_PRED_FIELD(m_bSwapFire, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE),
+DEFINE_PRED_FIELD_TOL(m_flDamageBuildup, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, TD_MSECTOLERANCE),
 #endif
 #if defined( CLIENT_DLL )
 DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER),
@@ -192,6 +195,7 @@ DEFINE_FIELD(m_flWindTick, FIELD_FLOAT),
 DEFINE_FIELD(m_bSwapFire, FIELD_BOOLEAN),
 DEFINE_FIELD(m_iDamageIncrease, FIELD_INTEGER),
 DEFINE_FIELD(m_flBlastRadiusIncrease, FIELD_FLOAT),
+DEFINE_FIELD(m_flDamageBuildup, FIELD_FLOAT),
 #endif
 END_PREDICTION_DATA()
 
@@ -205,6 +209,7 @@ DEFINE_FIELD(m_flNextShotTime, FIELD_TIME),
 DEFINE_FIELD(m_flWindTick, FIELD_TIME),
 DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER),
 DEFINE_FIELD(m_bSwapFire, FIELD_BOOLEAN),
+DEFINE_FIELD(m_flDamageBuildup, FIELD_TIME),
 DEFINE_FUNCTION(FallThink)
 END_DATADESC()
 
@@ -251,6 +256,7 @@ CTFWeaponBase::CTFWeaponBase()
 	m_iCurrentSeed = -1;
 	m_iGGLevel = -1;
 	m_bNeverStrip = false;
+	m_flDamageBuildup = 0.0f;
 
 	m_bQuakeRLHack = false;
 
@@ -413,6 +419,13 @@ int CTFWeaponBase::GetDamage(void) const
 {
 	int iDamage = (TFGameRules()->IsMutator(NO_MUTATOR) || TFGameRules()->GetMutator() > INSTAGIB_NO_MELEE) ? m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nDamage : m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nInstagibDamage;
 	iDamage += m_iDamageIncrease;
+
+	if( m_pWeaponInfo->m_iHitsForConsecutiveDamage )
+	{
+		float flConseqPercent =( m_flDamageBuildup / (float)m_pWeaponInfo->m_iHitsForConsecutiveDamage );
+		int iConseqDmg = m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nConsecutiveDamage * flConseqPercent;
+		iDamage += iConseqDmg;
+	}
 	return iDamage;
 
 }
@@ -963,6 +976,7 @@ bool CTFWeaponBase::Deploy(void)
 
 	if (bDeploy)
 	{
+		m_flDamageBuildup = 0;
 		// Overrides the anim length for calculating ready time.
 		// Don't override primary attacks that are already further out than this. This prevents
 		// people exploiting weapon switches to allow weapons to fire faster.
@@ -1721,6 +1735,11 @@ void CTFWeaponBase::ItemPostFrame(void)
 	if (pOwner->m_Shared.IsLoser())
 		Lower();
 
+#ifdef GAME_DLL
+	float flTimeToDeplete = 1.0f / m_pWeaponInfo->m_flConsecutiveDamageLostPerSecond;
+	float flDepleteTime = gpGlobals->frametime / ( flTimeToDeplete );
+	m_flDamageBuildup = max( m_flDamageBuildup - flDepleteTime, 0.0 );
+#endif
 	// Call the base item post frame.
 
 	//Track the duration of the fire

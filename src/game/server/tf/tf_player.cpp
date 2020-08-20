@@ -4901,6 +4901,9 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CTFWeaponBase *pWeapon = pTFAttacker ? pTFAttacker->GetActiveTFWeapon() : NULL;
 	int iWeaponID = pWeapon ? pWeapon->GetWeaponID() : 0;
 
+	if( pWeapon )
+		pWeapon->m_flDamageBuildup = min( pWeapon->m_flDamageBuildup + 1.0f, pWeapon->GetTFWpnData().m_iHitsForConsecutiveDamage );
+
 	// if this is our own rocket and we are in midair, scale down the damage
 	if ( info.GetAttacker() == this && !GetGroundEntity() &&
 		(iWeaponID == TF_WEAPON_ROCKETLAUNCHER || iWeaponID == TF_WEAPON_ROCKETLAUNCHER_DM || iWeaponID == TF_WEAPON_DYNAMITE_BUNDLE) )

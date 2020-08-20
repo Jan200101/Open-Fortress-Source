@@ -307,6 +307,7 @@ public:
 	
 	CNetworkVar( int,	m_iSlotOverride );
 	CNetworkVar( int,	m_iPositionOverride );
+	CNetworkVar( float,	m_flDamageBuildup );
 protected:
 #ifdef CLIENT_DLL
 	virtual void CreateMuzzleFlashEffects( C_BaseEntity *pAttachEnt, int nIndex );

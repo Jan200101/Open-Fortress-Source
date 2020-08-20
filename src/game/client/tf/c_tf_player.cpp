@@ -2242,10 +2242,6 @@ public:
 
 EXPOSE_INTERFACE( CProxyLocalPlayerColor, IMaterialProxy, "LocalPlayerColor" IMATERIAL_PROXY_INTERFACE_VERSION );
 
-//-----------------------------------------------------------------------------
-// Purpose: Used for invulnerability material
-//			Returns 1 if the player is invulnerable, and 0 if the player is losing / doesn't have invuln.
-//-----------------------------------------------------------------------------
 class CProxyReserveAmmo : public CResultProxy
 {
 public:
@@ -2304,10 +2300,6 @@ public:
 
 EXPOSE_INTERFACE( CProxyReserveAmmo, IMaterialProxy, "ReserveAmmo" IMATERIAL_PROXY_INTERFACE_VERSION );
 
-//-----------------------------------------------------------------------------
-// Purpose: Used for invulnerability material
-//			Returns 1 if the player is invulnerable, and 0 if the player is losing / doesn't have invuln.
-//-----------------------------------------------------------------------------
 class CProxyClipCount : public CResultProxy
 {
 public:
@@ -2366,6 +2358,100 @@ public:
 
 EXPOSE_INTERFACE( CProxyClipCount, IMaterialProxy, "ClipCount" IMATERIAL_PROXY_INTERFACE_VERSION );
 
+class CProxyBuildup : public CResultProxy
+{
+public:
+	void OnBind( void *pC_BaseEntity )
+	{
+		Assert( m_pResult );
+
+		C_TFPlayer *pPlayer = NULL;
+		C_BaseEntity *pEntity = BindArgToEntity( pC_BaseEntity );
+		if ( !pEntity )
+		{
+			m_pResult->SetFloatValue( 0.0f );
+			return;
+		}
+		if ( pEntity->IsPlayer() )
+		{
+			pPlayer = dynamic_cast< C_TFPlayer* >( pEntity );
+		}
+		else
+		{
+			// See if it's a weapon
+			C_TFWeaponBase *pWeapon = dynamic_cast< C_TFWeaponBase* >( pEntity );
+			C_PlayerAttachedModel *pCosmetic = dynamic_cast< C_PlayerAttachedModel* >( pEntity );
+			if ( pWeapon )
+			{
+				pPlayer = (C_TFPlayer*)pWeapon->GetOwner();
+			}
+			else if ( pCosmetic )
+			{
+				pPlayer = dynamic_cast< C_TFPlayer* >(pCosmetic->GetMoveParent());
+			}
+			else
+			{
+				C_BaseViewModel *pVM = dynamic_cast< C_BaseViewModel* >( pEntity );
+				if ( pVM )
+				{
+					pPlayer = (C_TFPlayer*)pVM->GetOwner();
+				}
+				else
+				{
+					pPlayer = ToTFPlayer( pEntity->GetMoveParent() );
+				}
+			}
+		}
+
+		if ( pPlayer && pPlayer->GetActiveTFWeapon() )
+		{
+				m_pResult->SetFloatValue( (float)pPlayer->GetActiveTFWeapon()->m_flDamageBuildup );
+		}
+		else
+		{
+			m_pResult->SetFloatValue( 0.0f );
+			return;
+		}
+
+		if ( ToolsEnabled() )
+		{
+			ToolFramework_RecordMaterialParams( GetMaterial() );
+		}
+	}
+};
+
+EXPOSE_INTERFACE( CProxyBuildup, IMaterialProxy, "DamageBuildup" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+// Vault a value onto an acumulator and return the acumulator's value
+// Used this instead of texture scroll because that recomputes the scroll position
+// every time the scroll rate is changed since its not runtime
+class CProxyVault : public CFunctionProxy
+{
+public:
+	CProxyVault();
+	virtual void OnBind( void *pC_BaseEntity );
+private:
+	float flVaultedValue;
+};
+
+CProxyVault::CProxyVault()
+{
+	flVaultedValue = 0.0f;
+}
+
+void CProxyVault::OnBind( void *pC_BaseEntity )
+{
+	Assert( m_pResult );
+	flVaultedValue +=  gpGlobals->frametime / ( 1.0f / m_pSrc1->GetFloatValue() );
+	m_pResult->SetFloatValue( flVaultedValue );
+
+	if ( ToolsEnabled() )
+	{
+		ToolFramework_RecordMaterialParams( GetMaterial() );
+	}
+}
+
+EXPOSE_INTERFACE( CProxyVault, IMaterialProxy, "Vault" IMATERIAL_PROXY_INTERFACE_VERSION );
 //-----------------------------------------------------------------------------
 // Purpose: Used for rage material
 //			Returns 0 if the player is in Berserk, and 1 if the player is not.

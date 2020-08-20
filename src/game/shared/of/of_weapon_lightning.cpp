@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+	//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
 //
 //
 //=============================================================================
@@ -351,7 +351,7 @@ void CTFLightningGun::PrimaryAttack()
 float CTFLightningGun::GetProjectileDamage( void )
 {
 	// create the flame entity
-	int flDamage = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_nDamage;
+	int flDamage = GetDamage();
 	if ( TFGameRules()->IsMutator( INSTAGIB ) || TFGameRules()->IsMutator( INSTAGIB_NO_MELEE ) )
 		flDamage = m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nInstagibDamage;
 	
@@ -461,11 +461,11 @@ void CTFLightningGun::RestartParticleEffect( void )
 	
 	if ( m_bCritFire )
 	{
-		pszParticleEffect = "LG_bolt_crit";
+		pszParticleEffect = VarArgs( "%s_crit", GetTFWpnData().m_szTracerEffect );
 	}
 	else 
 	{
-		pszParticleEffect = "LG_bolt";
+		pszParticleEffect = GetTFWpnData().m_szTracerEffect;
 	}		
 		
 	// Start the effect on the viewmodel if our owner is the local player
@@ -529,6 +529,7 @@ public:
 
 void CTFLightningGun::SetParticleEnd()
 {
+	
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
 		return;
@@ -562,6 +563,7 @@ void CTFLightningGun::SetParticleEnd()
 	if ( m_pLightningParticle && m_pLightningParticle->m_pDef && m_pLightningParticle->m_pDef->ReadsControlPoint( 1 ) )
 	{
 		m_pLightningParticle->SetControlPoint( 1, tr.endpos );
+		m_pLightningParticle->SetControlPoint( RADIUS_CP1, Vector( m_flDamageBuildup / (float)m_pWeaponInfo->m_iHitsForConsecutiveDamage, 0, 0 ) );
 	}
 }
 

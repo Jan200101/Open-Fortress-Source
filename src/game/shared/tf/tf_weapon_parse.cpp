@@ -143,6 +143,9 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	Q_strncpy( m_nProjectileModel, pKeyValuesData->GetString( "ProjectileModel" ), MAX_WEAPON_STRING );
 	// Primary fire mode.
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage				= pKeyValuesData->GetInt( "Damage", 0 );
+	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nConsecutiveDamage	= pKeyValuesData->GetInt( "ConsecutiveDamage", 
+	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage ) - m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage;
+	
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nInstagibDamage		= pKeyValuesData->GetInt( "InstagibDamage", 0 );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flRange				= pKeyValuesData->GetFloat( "Range", 8192.0f );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBulletsPerShot		= pKeyValuesData->GetInt( "BulletsPerShot", 0 );
@@ -189,7 +192,10 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 
 	// Secondary fire mode.
 	// Inherit from primary fire mode
-	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_nDamage			= pKeyValuesData->GetInt( "Secondary_Damage", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage );
+	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_nDamage			= pKeyValuesData->GetInt( "Secondary_Damage", m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_nDamage );
+	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_nConsecutiveDamage	= pKeyValuesData->GetInt( "Secondary_ConsecutiveDamage", 
+	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_nDamage ) - m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_nDamage;
+	
 	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_flRange			= pKeyValuesData->GetFloat( "Secondary_Range", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flRange );
 	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_nBulletsPerShot	= pKeyValuesData->GetInt( "Secondary_BulletsPerShot", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nBulletsPerShot );
 	m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_flSpread			= pKeyValuesData->GetFloat( "Secondary_Spread", m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flSpread );
@@ -295,6 +301,11 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_iContinuousFireDamageIncrease = pKeyValuesData->GetInt( "ContinuousFire_DamageIncrease", 0 );
 	m_flContinuousFireBlastRadiusIncrease = pKeyValuesData->GetFloat( "ContinuousFire_BlastRadiusIncrease", 0.0f );
 	
+	m_iHitsForConsecutiveDamage = pKeyValuesData->GetInt( "HitsForConsecutiveDamage", 0 );
+	m_flConsecutiveDamageLostPerSecond = pKeyValuesData->GetFloat( "ConsecutiveDamageLostPerSecond", 1 );
+
+	if( m_flConsecutiveDamageLostPerSecond == 0 ) // should never be 0
+		m_flConsecutiveDamageLostPerSecond = 0.001f;
 	// Grenade data.
 	m_bGrenade				= ( pKeyValuesData->GetInt( "Grenade", 0 ) != 0 );
 	m_flDamageRadius		= pKeyValuesData->GetFloat( "DamageRadius", -1.0f );

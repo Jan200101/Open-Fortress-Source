@@ -37,6 +37,8 @@
 #define CUSTOM_COLOR_CP1		9
 #define CUSTOM_COLOR_CP2		10
 
+#define RADIUS_CP1				8
+
 // This is the class that holds whatever data we're sending down to the client to make the effect.
 class CEffectData
 {

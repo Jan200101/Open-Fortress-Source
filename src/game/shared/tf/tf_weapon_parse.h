@@ -23,6 +23,7 @@
 struct WeaponData_t
 {
 	int		m_nDamage;
+	int		m_nConsecutiveDamage;
 	int		m_nInstagibDamage;
 	int		m_nBulletsPerShot;
 	float	m_flRange;
@@ -148,6 +149,9 @@ public:
 	
 	int		m_iContinuousFireDamageIncrease;
 	float	m_flContinuousFireBlastRadiusIncrease;
+	
+	int		m_iHitsForConsecutiveDamage;
+	float	m_flConsecutiveDamageLostPerSecond;
 
 	// Effect Duration Amount
 	float 	m_flEffectDuration;
