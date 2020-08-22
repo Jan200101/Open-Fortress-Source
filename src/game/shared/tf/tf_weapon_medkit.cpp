@@ -150,7 +150,7 @@ float CTFMedkit::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 	CTFPlayer *pTFPlayer = ToTFPlayer(pTarget);
 #endif 
 
-	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
+	float flBaseDamage = (m_pWeaponInfo->GetWeaponData(TF_WEAPON_PRIMARY_MODE).m_nDamage);
 
 	if (pTarget->IsPlayer() || pTarget->IsNPC()) // damage npcs too
 	{
@@ -159,8 +159,10 @@ float CTFMedkit::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 			if (GetEnemyTeam(pTarget) == pPlayer->GetTeamNumber())
 			{
 #ifdef GAME_DLL
+				iCustomDamage = TF_DMG_CUSTOM_POISON;
 
 				CTakeDamageInfo info;
+
 				info.SetAttacker(GetOwnerEntity());		// the player who operated the thing that emitted nails
 				info.SetInflictor(pPlayer);				// the weapon that emitted this projectile
 
@@ -175,21 +177,22 @@ float CTFMedkit::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 
 				iHealthToAdd = clamp(iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetHealth());
 				iHealthRestored = pTFPlayer->TakeHealth(iHealthToAdd, DMG_IGNORE_MAXHEALTH);
-#endif
 
 				flBaseDamage = 0;
-
-#ifdef GAME_DLL
 
 				pPlayer->SpeakConceptIfAllowed(MP_CONCEPT_MEDIC_STOPPEDHEALING, pTFPlayer->IsAlive() ? "healtarget:alive" : "healtarget:dead");
 				pTFPlayer->SpeakConceptIfAllowed(MP_CONCEPT_HEALTARGET_STOPPEDHEALING);
 
+				//The TFC Medkit stops burning...
 				if (pTFPlayer->m_Shared.InCond(TF_COND_BURNING))
 					pTFPlayer->m_Shared.RemoveCond(TF_COND_BURNING);
+				//...and Infection...
 				if (pTFPlayer->m_Shared.InCond(TF_COND_POISON))
 					pTFPlayer->m_Shared.RemoveCond(TF_COND_POISON);
+				//...and Tranq...
 				if (pTFPlayer->m_Shared.InCond(TF_COND_TRANQ))
 					pTFPlayer->m_Shared.RemoveCond(TF_COND_TRANQ);
+				//...and Prieced Legs...
 				if (pTFPlayer->m_Shared.InCond(TF_COND_FUCKEDUP_LEGS))
 					pTFPlayer->m_Shared.RemoveCond(TF_COND_FUCKEDUP_LEGS);
 #endif

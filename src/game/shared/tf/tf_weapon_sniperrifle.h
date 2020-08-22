@@ -181,7 +181,7 @@ public:
 private:
 
 	void Fire(CTFPlayer *pPlayer);
-
+	virtual bool Holster(CBaseCombatWeapon *pSwitchingTo);
 
 	virtual void SetRezoom(bool bRezoom, float flDelay);
 

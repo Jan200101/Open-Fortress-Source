@@ -1682,10 +1682,11 @@ void CTFPlayerShared::Poison( CTFPlayer *pAttacker, float flTime )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flSpeed)
+void CTFPlayerShared::Tranq(CTFPlayer *pAttacker, float flTime, float flMovementSpeed, float flWeaponSpeed)
 {
 #ifdef GAME_DLL
-	m_flTranqMovementSlowness = flSpeed;
+	m_flTranqMovementSlowness = flMovementSpeed;
+	m_flTranqExtraSlowness = flWeaponSpeed;
 
 	if (!m_pOuter->IsAlive())
 		return;

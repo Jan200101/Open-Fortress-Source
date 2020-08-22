@@ -187,7 +187,7 @@ public:
 
 	void	Burn( CTFPlayer *pPlayer, float flTime );
 	void	Poison(CTFPlayer *pPlayer, float flTime);
-	void	Tranq(CTFPlayer *pPlayer, float flTime, float flSpeed);
+	void	Tranq(CTFPlayer *pPlayer, float flTime, float flMovementSpeed, float flWeaponSpeed);
 	void	FuckUpLegs(CTFPlayer *pPlayer, float flTime, float flSpeed);
 
 	// Weapons.

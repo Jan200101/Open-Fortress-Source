@@ -786,7 +786,34 @@ void CTFCSniperRifle::ItemPostFrame(void)
 		}
 	}
 }
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFCSniperRifle::Holster(CBaseCombatWeapon *pSwitchingTo)
+{
+	// Server specific.
+#ifdef GAME_DLL
+	// Destroy the sniper dot.
+	DestroySniperDot();
+#endif
 
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+	if (pPlayer && pPlayer->m_Shared.InCond(TF_COND_AIMING))
+	{
+		pPlayer->m_Shared.RemoveCond(TF_COND_AIMING);
+		pPlayer->TeamFortress_SetSpeed();
+	#ifdef GAME_DLL
+		// Create the sniper dot.
+		DestroySniperDot();
+		pPlayer->ClearExpression();
+	#endif
+	}
+
+	m_flChargedDamage = 0.0f;
+	ResetTimers();
+
+	return BaseClass::Holster(pSwitchingTo);
+}
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
