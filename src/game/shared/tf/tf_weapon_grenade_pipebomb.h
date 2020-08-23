@@ -59,7 +59,6 @@ public:
 	virtual const char *GetTrailParticleName( void );
 	virtual int     DrawModel( int flags );
 	virtual void	Simulate( void );
-	
 #else
 
 	DECLARE_DATADESC();

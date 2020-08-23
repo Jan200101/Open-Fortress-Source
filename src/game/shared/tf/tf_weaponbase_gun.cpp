@@ -994,6 +994,7 @@ CBaseEntity *CTFWeaponBaseGun::FireBouncer(CTFPlayer *pPlayer)
 	CTFProjectile_BouncyRocket *pProjectile = CTFProjectile_BouncyRocket::Create(this, vecSrc, angForward, pPlayer, pPlayer);
 	if (pProjectile)
 	{
+		pProjectile->SetFuseTime( gpGlobals->curtime + GetTFWpnData().m_flFuseTime );
 		pProjectile->SetCritical(IsCurrentAttackACrit());
 		pProjectile->SetDamage(GetProjectileDamage());
 		pProjectile->SetLauncher(this);

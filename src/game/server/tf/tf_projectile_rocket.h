@@ -70,6 +70,7 @@ public:
 	virtual void FlyThink(void);
 	virtual void RocketTouch(CBaseEntity *pOther);
 	void BounceSound(const short data);
+	void SetFuseTime( float flTime ) { m_flDetTime = flTime; }
 
 	float creationTime;
 
@@ -77,6 +78,7 @@ private:
 	QAngle	m_rotationVector;
 	float	m_flLastBounce;
 	int		m_iOldWaterLevel;
+	CNetworkVar( float, m_flDetTime );
 };
 
 #endif	//TF_PROJECTILE_ROCKET_H

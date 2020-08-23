@@ -48,6 +48,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	RecvPropVector( RECVINFO( m_vInitialVelocity ) ),
 	RecvPropInt( RECVINFO( m_bCritical ) ),
 	RecvPropTime( RECVINFO( m_flSpawnTime ) ),
+	RecvPropTime( RECVINFO( m_flDetonateTime ) ),
 	
 	RecvPropVector( RECVINFO_NAME( m_vecNetworkOrigin, m_vecOrigin ) ),
 	RecvPropQAngles( RECVINFO_NAME( m_angNetworkAngles, m_angRotation ) ),
@@ -56,6 +57,7 @@ BEGIN_NETWORK_TABLE( CTFWeaponBaseGrenadeProj, DT_TFWeaponBaseGrenadeProj )
 	SendPropVector( SENDINFO( m_vInitialVelocity ), 20 /*nbits*/, 0 /*flags*/, -3000 /*low value*/, 3000 /*high value*/	),
 	SendPropInt( SENDINFO( m_bCritical ) ),
 	SendPropTime( SENDINFO( m_flSpawnTime ) ),
+	SendPropTime( SENDINFO( m_flDetonateTime ) ),
 
 	SendPropExclude( "DT_BaseEntity", "m_vecOrigin" ),
 	SendPropExclude( "DT_BaseEntity", "m_angRotation" ),

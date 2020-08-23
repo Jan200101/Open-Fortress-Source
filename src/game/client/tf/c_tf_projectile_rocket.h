@@ -45,12 +45,16 @@ class C_TFProjectile_BouncyRocket : public C_TFProjectile_Rocket
 public:
 	DECLARE_NETWORKCLASS();
 
-	C_TFProjectile_BouncyRocket() {};
-	~C_TFProjectile_BouncyRocket() {};
+	C_TFProjectile_BouncyRocket();
+	~C_TFProjectile_BouncyRocket();
 
 	virtual const char *GetTrailParticleName();
 	virtual void	CreateRocketTrails(void);
 	virtual int		DrawModel(int flags);
+	
+private:
+	CNewParticleEffect		*m_hTimerParticle;
+	CNetworkVar( float, m_flDetTime );
 };
 
 #endif // C_TF_PROJECTILE_ROCKET_H

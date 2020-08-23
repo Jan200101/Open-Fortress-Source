@@ -130,6 +130,7 @@ PRECACHE_REGISTER(tf_projectile_bouncyrocket);
 IMPLEMENT_NETWORKCLASS_ALIASED(TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket)
 
 BEGIN_NETWORK_TABLE(CTFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket)
+	SendPropTime( SENDINFO( m_flDetTime ) ),
 END_NETWORK_TABLE()
 
 #define BOUNCYROCKET_TIMER 2.f
@@ -202,7 +203,7 @@ void CTFProjectile_BouncyRocket::FlyThink(void)
 		m_bCollideWithTeammates = true;
 
 	//expiration time
-	if (gpGlobals->curtime > m_flCreationTime + BOUNCYROCKET_TIMER)
+	if( gpGlobals->curtime > m_flDetTime )
 		Detonate();
 
 	//rotation
@@ -283,6 +284,7 @@ void CTFProjectile_BouncyRocket::RocketTouch(CBaseEntity *pOther)
 																							 GetOwnerEntity(), GetOwnerEntity(), m_flCreationTime, vecAbsVelocity);
 				if (pProjectile)
 				{
+					pProjectile->SetFuseTime( m_flDetTime );
 					pProjectile->SetCritical(GetCritical());
 					pProjectile->SetDamage(GetDamage());
 					pProjectile->SetLauncher(this);

@@ -67,6 +67,8 @@ CTFGrenadePipebombProjectile::CTFGrenadePipebombProjectile()
 	m_flChargeTime = 0.0f;
 #ifdef GAME_DLL
 	s_iszTrainName  = AllocPooledString( "models/props_vehicles/train_enginecar.mdl" );
+#else
+	m_hTimerParticle = NULL;
 #endif
 }
 
@@ -78,6 +80,7 @@ CTFGrenadePipebombProjectile::~CTFGrenadePipebombProjectile()
 {
 #ifdef CLIENT_DLL
 	ParticleProp()->StopEmission();
+	m_hTimerParticle = NULL;
 #endif
 }
 
@@ -172,7 +175,7 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 	{
 		m_flCreationTime = gpGlobals->curtime;
 		CNewParticleEffect *pParticle = ParticleProp()->Create( GetTrailParticleName(), PATTACH_ABSORIGIN_FOLLOW );
-		
+
 		C_TFPlayer *pPlayer = ToTFPlayer( GetThrower() );
 		m_bPulsed = false;
 
@@ -184,6 +187,7 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 		if ( pPlayer && pParticle )
 		{
 			pPlayer->m_Shared.UpdateParticleColor( pParticle );
+			m_hTimerParticle = pParticle;
 		}
 
 		CTFPipebombLauncher *pLauncher = dynamic_cast<CTFPipebombLauncher*>( GetOriginalLauncher() );
@@ -201,38 +205,36 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 
 				if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 				{
-					ParticleProp()->Create( "critical_grenade_blue", PATTACH_ABSORIGIN_FOLLOW );
+					m_hTimerParticle = ParticleProp()->Create( "critical_grenade_blue", PATTACH_ABSORIGIN_FOLLOW );
 				}
 				else
 				{
-					ParticleProp()->Create( "critical_pipe_blue", PATTACH_ABSORIGIN_FOLLOW );
+					m_hTimerParticle = ParticleProp()->Create( "critical_pipe_blue", PATTACH_ABSORIGIN_FOLLOW );
 				}
 				break;
 			case TF_TEAM_RED:
 				if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 				{
-					ParticleProp()->Create( "critical_grenade_red", PATTACH_ABSORIGIN_FOLLOW );
+					m_hTimerParticle = ParticleProp()->Create( "critical_grenade_red", PATTACH_ABSORIGIN_FOLLOW );
 				}
 				else
 				{
-					ParticleProp()->Create( "critical_pipe_red", PATTACH_ABSORIGIN_FOLLOW );
+					m_hTimerParticle = ParticleProp()->Create( "critical_pipe_red", PATTACH_ABSORIGIN_FOLLOW );
 				}
 				break;
 			case TF_TEAM_MERCENARY:
 
 				if ( m_iType == TF_GL_MODE_REMOTE_DETONATE )
 				{
-					if ( pPlayer )
-						pPlayer->m_Shared.UpdateParticleColor( ParticleProp()->Create( "critical_grenade_dm", PATTACH_ABSORIGIN_FOLLOW ) );
-					else
-						ParticleProp()->Create( "critical_grenade_dm", PATTACH_ABSORIGIN_FOLLOW );
+					m_hTimerParticle = ParticleProp()->Create( "critical_grenade_dm", PATTACH_ABSORIGIN_FOLLOW );
+					if ( pPlayer && m_hTimerParticle )
+						pPlayer->m_Shared.UpdateParticleColor( m_hTimerParticle );
 				}
 				else
 				{
-					if ( pPlayer )
-						pPlayer->m_Shared.UpdateParticleColor( ParticleProp()->Create( "critical_pipe_dm", PATTACH_ABSORIGIN_FOLLOW ) );
-					else
-						ParticleProp()->Create( "critical_pipe_dm", PATTACH_ABSORIGIN_FOLLOW );
+					m_hTimerParticle = ParticleProp()->Create( "critical_pipe_dm", PATTACH_ABSORIGIN_FOLLOW );
+					if ( pPlayer && m_hTimerParticle )
+						pPlayer->m_Shared.UpdateParticleColor( m_hTimerParticle );
 				}
 				break;
 			default:
@@ -246,12 +248,17 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 		//ParticleProp()->StopEmission();
 	}
 }
+
 extern ConVar tf_grenadelauncher_livetime;
 
 void CTFGrenadePipebombProjectile::Simulate( void )
 {
 	BaseClass::Simulate();
 
+	float flTimer = (m_flDetonateTime - m_flSpawnTime) ? (m_flDetonateTime - m_flSpawnTime) : 1.0f;
+	if( m_hTimerParticle )
+		m_hTimerParticle->SetControlPoint( RADIUS_CP1, Vector( 1.0f - (( m_flDetonateTime - gpGlobals->curtime ) / flTimer) , 0, 0 ) );
+	
 	if ( m_iType != TF_GL_MODE_REMOTE_DETONATE )
 		return;
 

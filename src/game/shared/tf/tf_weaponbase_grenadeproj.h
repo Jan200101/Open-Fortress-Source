@@ -59,6 +59,8 @@ private:
 
 	CTFWeaponBaseGrenadeProj( const CTFWeaponBaseGrenadeProj & );
 
+protected:
+	CNetworkVar(float, m_flDetonateTime);
 	// Client specific.
 #ifdef CLIENT_DLL
 
@@ -70,6 +72,7 @@ public:
 	
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetThrower(); }
 
+	CNewParticleEffect		*m_hTimerParticle;
 	// Server specific.
 #else
 
@@ -116,8 +119,6 @@ private:
 
 	// Custom collision to allow for constant elasticity on hit surfaces.
 	virtual void			ResolveFlyCollisionCustom( trace_t &trace, Vector &vecVelocity );
-
-	float					m_flDetonateTime;
 
 	bool					m_bInSolid;
 

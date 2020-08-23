@@ -157,14 +157,29 @@ void C_TFProjectile_Rocket::CreateLightEffects(void)
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
 
 BEGIN_NETWORK_TABLE( C_TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
+	RecvPropTime( RECVINFO( m_flDetTime ) ),
 END_NETWORK_TABLE()
 
+C_TFProjectile_BouncyRocket::C_TFProjectile_BouncyRocket()
+{
+	m_hTimerParticle = NULL;
+}
+
+C_TFProjectile_BouncyRocket::~C_TFProjectile_BouncyRocket()
+{
+	ParticleProp()->StopEmission();
+	m_hTimerParticle = NULL;
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 
 int C_TFProjectile_BouncyRocket::DrawModel(int flags)
 {
+	float flTimer = (m_flDetTime - m_flCreationTime) ? (m_flDetTime - m_flCreationTime) : 1.0f;
+	if( m_hTimerParticle )
+		m_hTimerParticle->SetControlPoint( RADIUS_CP1, Vector( 1.0f - (( m_flDetTime - gpGlobals->curtime ) / flTimer) , 0, 0 ) );
+
 	return C_BaseAnimating::DrawModel(flags);
 }
 
@@ -193,26 +208,29 @@ void C_TFProjectile_BouncyRocket::CreateRocketTrails(void)
 	C_TFPlayer *pPlayer = ToTFPlayer(GetOwnerEntity());
 
 	if (pPlayer && pParticle)
+	{
+		m_hTimerParticle = pParticle;
 		pPlayer->m_Shared.UpdateParticleColor(pParticle);
-
+	}
 	if (m_bCritical)
 	{
 		switch (GetTeamNumber())
 		{
 		case TF_TEAM_BLUE:
-			ParticleProp()->Create("critical_pipe_blue", PATTACH_ABSORIGIN_FOLLOW);
+			m_hTimerParticle = ParticleProp()->Create("critical_pipe_blue", PATTACH_ABSORIGIN_FOLLOW);
 			break;
 		case TF_TEAM_RED:
-			ParticleProp()->Create("critical_pipe_red", PATTACH_ABSORIGIN_FOLLOW);
+			m_hTimerParticle = ParticleProp()->Create("critical_pipe_red", PATTACH_ABSORIGIN_FOLLOW);
 			break;
 		case TF_TEAM_MERCENARY:
+			m_hTimerParticle = ParticleProp()->Create("critical_pipe_dm", PATTACH_ABSORIGIN_FOLLOW);
 			if (pPlayer)
-				pPlayer->m_Shared.UpdateParticleColor(ParticleProp()->Create("critical_pipe_dm", PATTACH_ABSORIGIN_FOLLOW));
-			else
-				ParticleProp()->Create("critical_pipe_dm", PATTACH_ABSORIGIN_FOLLOW);
+				pPlayer->m_Shared.UpdateParticleColor(m_hTimerParticle);
 			break;
 		default:
 			break;
 		}
 	}
+	
+	m_flCreationTime = gpGlobals->curtime;
 }
