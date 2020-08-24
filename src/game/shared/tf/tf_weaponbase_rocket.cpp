@@ -94,6 +94,18 @@ void CTFBaseRocket::Precache( void )
 //-----------------------------------------------------------------------------
 void CTFBaseRocket::Spawn( void )
 {
+#ifdef GAME_DLL
+	CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>( m_hOriginalLauncher.Get() );
+	if( pWeapon && pWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
+	{
+		const char *s_PipebombModel = pWeapon->GetTFWpnData().m_nProjectileModel;	
+		if ( s_PipebombModel )
+		{
+			PrecacheModel( s_PipebombModel );
+			SetModel( s_PipebombModel );
+		}
+	}
+#endif
 	// Precache.
 	Precache();
 
@@ -238,17 +250,6 @@ CTFBaseRocket *CTFBaseRocket::Create( CTFWeaponBase *pWeapon, const char *pszCla
 	}
 	// Spawn.
 	pRocket->Spawn();
-	
-	if( pWeapon && pWeapon->GetTFWpnData().m_nProjectileModel[0] != 0 )
-	{
-		const char *s_PipebombModel = pWeapon->GetTFWpnData().m_nProjectileModel;	
-		if ( s_PipebombModel )
-		{
-			PrecacheModel( s_PipebombModel );
-			pRocket->SetModel( s_PipebombModel );
-		}	
-		UTIL_SetSize( pRocket, -Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) );
-	}
 
 	// Setup the initial velocity.
 	Vector vecForward;

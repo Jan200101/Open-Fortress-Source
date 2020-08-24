@@ -137,6 +137,12 @@ END_NETWORK_TABLE()
 #define BOUNCYROCKET_SPEED 750.f
 #define BOUNCYROCKET_MODEL "models/weapons/w_models/w_grenade_bouncer.mdl"
 
+CTFProjectile_BouncyRocket::CTFProjectile_BouncyRocket()
+{
+	szImpactHard[0] = '\0';
+	szImpactSoft[0] = '\0';
+}
+
 CTFProjectile_BouncyRocket *CTFProjectile_BouncyRocket::Create(CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, float creationTime, Vector velocity)
 {
 	CTFProjectile_BouncyRocket *pRocket = static_cast<CTFProjectile_BouncyRocket*>(CTFBaseRocket::Create(pWeapon, "tf_projectile_bouncyrocket", vecOrigin, vecAngles, pOwner));
@@ -191,6 +197,18 @@ void CTFProjectile_BouncyRocket::Spawn(void)
 	CTFBaseRocket::Spawn();
 }
 
+void CTFProjectile_BouncyRocket::SetModel( const char *szModelName )
+{
+	BaseClass::SetModel( szModelName );
+
+	surfacedata_t *psurf = physprops->GetSurfaceData(physprops->GetSurfaceIndex(GetModelPtr()->pszSurfaceProp()));
+	if( psurf )
+	{
+		Q_strncpy(szImpactHard, physprops->GetString(psurf->sounds.impactHard), sizeof(szImpactHard));
+		Q_strncpy(szImpactSoft, physprops->GetString(psurf->sounds.impactSoft), sizeof(szImpactSoft));
+	}	
+}
+
 void CTFProjectile_BouncyRocket::FlyThink(void)
 {
 	if (creationTime)
@@ -231,10 +249,13 @@ void CTFProjectile_BouncyRocket::FlyThink(void)
 
 void CTFProjectile_BouncyRocket::BounceSound(const short data)
 {
+	if( szImpactHard[0] == '\0' || szImpactSoft[0] == '\0' )
+		return;
+
 	if (data == 14) //wooden surface
-		EmitSound("BouncerGrenade.ImpactSoft");
+		EmitSound(szImpactSoft);
 	else
-		EmitSound("BouncerGrenade.ImpactHard");
+		EmitSound(szImpactHard);
 }
 
 void CTFProjectile_BouncyRocket::RocketTouch(CBaseEntity *pOther)

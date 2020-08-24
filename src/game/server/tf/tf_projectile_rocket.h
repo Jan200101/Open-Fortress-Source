@@ -62,6 +62,8 @@ public:
 	DECLARE_CLASS(CTFProjectile_BouncyRocket, CTFProjectile_Rocket);
 	DECLARE_NETWORKCLASS();
 
+	CTFProjectile_BouncyRocket();
+	
 	static CTFProjectile_BouncyRocket *Create(CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles,
 											  CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, float creationTime = 0.f, Vector velocity = Vector(0.f,0.f,0.f));
 
@@ -72,12 +74,16 @@ public:
 	void BounceSound(const short data);
 	void SetFuseTime( float flTime ) { m_flDetTime = flTime; }
 
+	virtual void 	SetModel( const char *szModelName );
 	float creationTime;
 
 private:
 	QAngle	m_rotationVector;
 	float	m_flLastBounce;
 	int		m_iOldWaterLevel;
+	
+	char	szImpactHard[64];
+	char	szImpactSoft[64];
 	CNetworkVar( float, m_flDetTime );
 };
 
