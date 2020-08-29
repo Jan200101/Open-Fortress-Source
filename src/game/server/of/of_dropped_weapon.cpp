@@ -143,7 +143,8 @@ void CTFDroppedWeapon::PackTouch( CBaseEntity *pOther )
 			CTakeDamageInfo info;
 			info.SetAttacker( pOwner );
 			info.SetInflictor( this );
-			info.SetDamage( 40.f );
+			float fldamage = 40.f * ( ToTFPlayer(pOwner)->m_Shared.InCondCrit() ? 4.f : 1.f );
+			info.SetDamage( fldamage );
 			Vector vForce = vel;
 			VectorNormalize( vForce );
 			info.SetDamageForce( vForce );
