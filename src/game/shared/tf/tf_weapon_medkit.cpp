@@ -159,8 +159,6 @@ float CTFMedkit::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 			if (GetEnemyTeam(pTarget) == pPlayer->GetTeamNumber())
 			{
 #ifdef GAME_DLL
-				iCustomDamage = TF_DMG_CUSTOM_POISON;
-
 				CTakeDamageInfo info;
 
 				info.SetAttacker(GetOwnerEntity());		// the player who operated the thing that emitted nails
@@ -173,7 +171,7 @@ float CTFMedkit::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 			{
 #ifdef GAME_DLL
 				int iHealthRestored = 0;
-				int iHealthToAdd = flBaseDamage;
+				int iHealthToAdd = flBaseDamage * 4;
 
 				iHealthToAdd = clamp(iHealthToAdd, 0, pTFPlayer->m_Shared.GetMaxBuffedHealth() - pTFPlayer->GetHealth());
 				iHealthRestored = pTFPlayer->TakeHealth(iHealthToAdd, DMG_IGNORE_MAXHEALTH);
