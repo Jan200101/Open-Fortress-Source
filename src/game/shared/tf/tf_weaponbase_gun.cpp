@@ -982,13 +982,14 @@ CBaseEntity *CTFWeaponBaseGun::FireBouncer(CTFPlayer *pPlayer)
 
 	Vector vecSrc;
 	QAngle angForward;
-	Vector vecOffset(36.f, 12.0f, -6.f);
+	Vector vecOffset(24.f, 12.0f, -6.f);
 	if (iQuakeCvar)
 	{
 		vecOffset.x = 12.0f; //forward backwards
 		vecOffset.y = 0.0f; // left right
 		vecOffset.z = -8.0f; //up down
 	}
+
 	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
 
 	CTFProjectile_BouncyRocket *pProjectile = CTFProjectile_BouncyRocket::Create(this, vecSrc, angForward, pPlayer, pPlayer);
