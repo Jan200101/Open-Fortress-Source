@@ -133,7 +133,6 @@ BEGIN_NETWORK_TABLE(CTFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket)
 	SendPropTime( SENDINFO( m_flDetTime ) ),
 END_NETWORK_TABLE()
 
-#define BOUNCYROCKET_TIMER 2.f
 #define BOUNCYROCKET_SPEED 750.f
 #define BOUNCYROCKET_MODEL "models/weapons/w_models/w_grenade_bouncer.mdl"
 
@@ -260,7 +259,7 @@ void CTFProjectile_BouncyRocket::BounceSound(const short data)
 
 void CTFProjectile_BouncyRocket::RocketTouch(CBaseEntity *pOther)
 {
-	if ( pOther && pOther->IsSolidFlagSet(FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS) )
+	if (pOther && pOther->IsSolidFlagSet(FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS))
 		return;
 
 	// Handle hitting skybox (disappear).
@@ -279,7 +278,7 @@ void CTFProjectile_BouncyRocket::RocketTouch(CBaseEntity *pOther)
 
 			//projectile becomes uncapable of moving vertically under this odd circumstances
 			//spawn a new bouncer to take its place if they occur
-			Vector vec = GetAbsVelocity();
+			Vector vec = vecAbsVelocity;
 			VectorNormalize(vec);
 			float dot3D = DotProduct(vec, pTrace->plane.normal);
 			vec = Vector(vec.x, vec.y, 0.f);

@@ -1694,8 +1694,15 @@ void CTFGameMovement::FullWalkMove()
 
 void CTFGameMovement::CheckFootStepsSound(bool CSliding, const CBaseEntity *hook)
 {
-	if (hook)
+	if (hook || !player->IsAlive())
+	{
+		if (player->m_bNoFootStepsSound)
+		{
+			player->StopSound("Player.Slide");
+			player->m_bNoFootStepsSound = false;
+		}
 		return;
+	}
 
 	if (CSliding) //always go here if cslide is happening
 	{

@@ -742,7 +742,7 @@ void CTFCSniperRifle::ItemPostFrame(void)
         if ( flChargeAfter <= gpGlobals->curtime) {
             // Don't start charging in the time just after a shot before we unzoom to play rack anim.
             if (pPlayer->m_Shared.InCond(TF_COND_AIMING) && !m_bRezoomAfterShot && !GetTFWpnData().m_bNoSniperCharge) {
-                m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage())+0.5, GetDamage() * 6);
+                m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
             } else {
                 m_flChargedDamage = max(0,m_flChargedDamage - gpGlobals->frametime * TF_WEAPON_SNIPERRIFLE_UNCHARGE_PER_SEC);
             }
@@ -963,7 +963,7 @@ float CTFSniperRifle::GetHUDDamagePerc( void )
 //-----------------------------------------------------------------------------
 float CTFCSniperRifle::GetHUDDamagePerc(void)
 {
-	return (m_flChargedDamage / (GetDamage() * 6));
+	return (m_flChargedDamage / (GetDamage() * 3));
 }
 //-----------------------------------------------------------------------------
 // Returns the sniper chargeup from 0 to 1

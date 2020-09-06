@@ -1013,13 +1013,25 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		}
 	}
 
+
 	if ( InCond( TF_COND_POISON ) )
 	{
 		if ( gpGlobals->curtime >= m_flPoisonTime )
 		{
-			CTakeDamageInfo info( m_hPoisonAttacker, m_hPoisonAttacker, TF_POISON_DMG, DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_POISON );
-			m_pOuter->TakeDamage( info );
+			float m_flDamageMath = (TF_POISON_DMG - (m_flPoisonDamageTaken / 5));
+
+			if (m_flDamageMath > 2)
+			{
+				CTakeDamageInfo info(m_hPoisonAttacker, m_hPoisonAttacker, m_flDamageMath, DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_POISON);
+				m_pOuter->TakeDamage(info);
+			}
+			else
+			{
+				CTakeDamageInfo info(m_hPoisonAttacker, m_hPoisonAttacker, 2, DMG_SLASH | DMG_PREVENT_PHYSICS_FORCE, TF_DMG_CUSTOM_POISON);
+				m_pOuter->TakeDamage(info);
+			}
 			m_flPoisonTime = gpGlobals->curtime + TF_POISON_FREQUENCY;
+			m_flPoisonDamageTaken += 1;
 		}
 	}
 
@@ -1794,6 +1806,7 @@ void CTFPlayerShared::OnRemovePoison( void )
 		SetPoisonEffectEnabled(false);
 #else
 	m_hPoisonAttacker = NULL;
+	m_flPoisonDamageTaken = 0;
 #endif
 }
 

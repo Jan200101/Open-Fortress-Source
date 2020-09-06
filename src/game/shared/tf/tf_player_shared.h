@@ -380,6 +380,7 @@ private:
 	CHandle<CTFPlayer>		m_hPoisonAttacker;
 	float					m_flPoisonTime;
 	float					m_flPoisonRemoveTime;
+	float					m_flPoisonDamageTaken;
 
 	//Tranq Stuff
 	float					m_flTranqRemoveTime;
