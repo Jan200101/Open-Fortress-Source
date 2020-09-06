@@ -239,8 +239,20 @@ void CTFWeaponBaseGun::PrimaryAttack( void )
 	}
 #endif
 
-	FireProjectile( pPlayer );
-	
+	int iSeed = CBaseEntity::GetPredictionRandomSeed() & 255;
+	int i = 1;
+	bool bProjectile = !(m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iProjectile == TF_PROJECTILE_BULLET || m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iProjectile == TF_PROJECTILE_NONE);
+	CBaseEntity *pProjectile = FireProjectile(pPlayer);
+	while( bProjectile && i < GetTFWpnData().GetWeaponData( m_iWeaponMode ).m_nBulletsPerShot )
+	{
+		RandomSeed( iSeed );
+		pProjectile = FireProjectile(pPlayer);
+		i++;
+		iSeed++;
+	}
+  
+	OnShotFired();
+
 	m_iDamageIncrease += m_pWeaponInfo->m_iContinuousFireDamageIncrease;
 	m_flBlastRadiusIncrease += m_pWeaponInfo->m_flContinuousFireBlastRadiusIncrease;
 
@@ -338,8 +350,6 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 	int iProjectile = m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iProjectile;
 	CBaseEntity *pProjectile = NULL;
 
-	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
-
 	switch( iProjectile )
 	{
 	case TF_PROJECTILE_BULLET:
@@ -399,7 +409,6 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pProjectile = FireBouncer(pPlayer);
 		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
-
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -407,18 +416,23 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		break;
 	}
 
+	return pProjectile;
+}
+
+void CTFWeaponBaseGun::OnShotFired( void )
+{
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	
 	if ( m_iClip1 != -1 )
 	{
-		if ( !of_noreload.GetBool() || ReserveAmmo() <= 0 || ( pWeapon && (pWeapon->GetWeaponID() == TF_WEAPON_SUPERSHOTGUN || pWeapon->GetWeaponID() == TF_WEAPON_ETERNALSHOTGUN ) ) )
+		if ( !of_noreload.GetBool() || ReserveAmmo() <= 0 || ( GetWeaponID() == TF_WEAPON_SUPERSHOTGUN || GetWeaponID() == TF_WEAPON_ETERNALSHOTGUN ) )
 		{
 			m_iClip1 -= m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
 		}
-		else
+		else if ( !of_infiniteammo.GetBool() ) 
 		{
-			if ( !of_infiniteammo.GetBool() ) 
-					m_iReserveAmmo -= 1;
-		}
-		
+			m_iReserveAmmo -= 1;
+		}	
 	}
 	else
 	{
@@ -427,19 +441,16 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 			if ( !of_infiniteammo.GetBool() ) 
 				m_iReserveAmmo -= m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot;
 		}
-		else
+		else if ( !of_infiniteammo.GetBool() && pPlayer ) 
 		{
-			if ( !of_infiniteammo.GetBool() ) 
-				pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iSecondaryAmmoType );
-				
+			pPlayer->RemoveAmmo( m_pWeaponInfo->GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, m_iSecondaryAmmoType );
 		}
 	}
 
 	DoFireEffects();
 
-	UpdatePunchAngles( pPlayer );
-
-	return pProjectile;
+	if( pPlayer )
+		UpdatePunchAngles( pPlayer );	
 }
 
 //-----------------------------------------------------------------------------
@@ -514,7 +525,7 @@ public:
 //-----------------------------------------------------------------------------
 // Purpose: Return the origin & angles for a projectile fired from the player's gun
 //-----------------------------------------------------------------------------
-void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates /* = true */ )
+void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates /* = true */)
 {
 	Vector vecForward, vecRight, vecUp;
 	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
@@ -554,6 +565,10 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 	{
 		VectorAngles( endPos - *vecSrc, *angForward );
 	}
+	
+	float flSpread = GetWeaponSpread();
+	angForward->x += RandomFloat( -flSpread, flSpread );
+	angForward->y += RandomFloat( -flSpread, flSpread );
 }
 
 //-----------------------------------------------------------------------------
@@ -724,17 +739,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		vecOffset.y = 0.0f; // left right
 		vecOffset.z = -8.0f;
 	}
-	
 	GetProjectileFireSetup( pPlayer, vecOffset , &vecSrc, &angForward );
-	
-	// Add some spread
-	if (iSpecificNail != TF_PROJECTILE_TRANQ)
-	{
-		// Add some spread
-		float flSpread = 1.5;
-		angForward.x += RandomFloat(-flSpread, flSpread);
-		angForward.y += RandomFloat(-flSpread, flSpread);
-	}
 
 	CTFBaseProjectile *pProjectile = NULL;
 	switch( iSpecificNail )
@@ -777,8 +782,14 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 
 #ifdef GAME_DLL
 
+	QAngle vecAngles = pPlayer->EyeAngles();
+
+	float flSpread = GetWeaponSpread();
+	vecAngles.x += RandomFloat( -flSpread, flSpread );
+	vecAngles.y += RandomFloat( -flSpread, flSpread );
+
 	Vector vecForward, vecRight, vecUp;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+	AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
 
 	// Create grenades here!!
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();
@@ -799,11 +810,11 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 		vecOffset.z = -8.0f; //up down
 	}
 	
-	vecSrc +=  vecForward * vecOffset.x + vecRight * vecOffset.y + vecUp * vecOffset.z;
+	vecSrc += vecForward * vecOffset.x + vecRight * vecOffset.y + vecUp * vecOffset.z;
 	
 	Vector vecVelocity = ( vecForward * GetProjectileSpeed() ) + ( vecUp * 200.0f ) + ( random->RandomFloat( -10.0f, 10.0f ) * vecRight ) +		
 		( random->RandomFloat( -10.0f, 10.0f ) * vecUp );
-
+		
 	CTFGrenadePipebombProjectile *pProjectile = CTFGrenadePipebombProjectile::Create( vecSrc, pPlayer->EyeAngles(), vecVelocity, 
 		AngularImpulse( 600, random->RandomInt( -1200, 1200 ), 0 ),
 		pPlayer, GetTFWpnData(), bRemoteDetonate, this );
@@ -831,8 +842,14 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteD
 
 #ifdef GAME_DLL
 
+	QAngle vecAngles = pPlayer->EyeAngles();
+
+	float flSpread = GetWeaponSpread();
+	vecAngles.x += RandomFloat( -flSpread, flSpread );
+	vecAngles.y += RandomFloat( -flSpread, flSpread );
+
 	Vector vecForward, vecRight, vecUp;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+	AngleVectors( vecAngles, &vecForward, &vecRight, &vecUp );
 
 	// Create grenades here!!
 	Vector vecSrc = pPlayer->Weapon_ShootPosition();

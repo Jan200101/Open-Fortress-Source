@@ -67,6 +67,8 @@ public:
 	void				GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, QAngle *angForward, bool bHitTeammates = true );
 	void				GetProjectileAirblastSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, bool bHitTeammates = true );
 
+	void				OnShotFired(void);
+	
 	void FireBullet( CTFPlayer *pPlayer );
 	CBaseEntity *FireRocket( CTFPlayer *pPlayer );
 	CBaseEntity *FireCoom( CTFPlayer *pPlayer );
