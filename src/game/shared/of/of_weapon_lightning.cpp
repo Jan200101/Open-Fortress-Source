@@ -340,6 +340,8 @@ void CTFLightningGun::PrimaryAttack()
 
 	FireProjectile( pOwner );
 	
+	OnShotFired();
+	
 	m_flNextPrimaryAttack = gpGlobals->curtime + flFiringInterval;
 	m_flTimeWeaponIdle = gpGlobals->curtime + flFiringInterval;
 
