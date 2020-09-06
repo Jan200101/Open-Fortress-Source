@@ -400,6 +400,11 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
+	case TF_PROJECTILE_FLAKNAIL:
+		pProjectile = FireNail(pPlayer, iProjectile);
+		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+		break;
+
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -707,6 +712,8 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 	Vector vecSrc;
 	QAngle angForward;
 	Vector vecOffset( 16,6,-8 );
+
+	float flSpread2 = 1.5;
 	
 	int iQuakeCvar = 0;
 	
@@ -728,7 +735,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 	GetProjectileFireSetup( pPlayer, vecOffset , &vecSrc, &angForward );
 	
 	// Add some spread
-	if (iSpecificNail != TF_PROJECTILE_TRANQ)
+	if (iSpecificNail != TF_PROJECTILE_TRANQ || iSpecificNail != TF_PROJECTILE_FLAKNAIL)
 	{
 		// Add some spread
 		float flSpread = 1.5;
@@ -749,7 +756,20 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		
     case TF_PROJECTILE_NAIL:
 		pProjectile = CTFProjectile_Nail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
-		break;	
+		break;
+
+	case TF_PROJECTILE_FLAKNAIL:
+
+		pProjectile = CTFProjectile_FlakNail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
+
+		for (int iNailFired = 1; iNailFired <= m_pWeaponInfo->GetWeaponData(m_iWeaponMode).m_nBulletsPerShot; iNailFired++)
+		{
+			angForward.x += RandomFloat(-flSpread2, flSpread2);
+			angForward.y += RandomFloat(-flSpread2, flSpread2);
+			pProjectile = CTFProjectile_FlakNail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
+			Msg("Nail Number is is %i\n", iNailFired);
+		}
+		break;
 
 	default:
 		Assert(0);

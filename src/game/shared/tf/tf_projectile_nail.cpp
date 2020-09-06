@@ -404,3 +404,111 @@ void ClientsideProjectileTranqCallback(const CEffectData &data)
 DECLARE_CLIENT_EFFECT(TRANQ_DISPATCH_EFFECT, ClientsideProjectileTranqCallback);
 
 #endif
+
+//=============================================================================
+//
+// TF FlakCannon Projectile functions (Server specific).
+//
+#define FLAKCANNON_NAIL_MODEL				"models/weapons/w_models/w_nail.mdl"
+#define FLAKCANNON_NAIL_DISPATCH_EFFECT		"ClientProjectile_Nail"
+#define FLAKCANNON_NAIL_GRAVITY	0.001f
+
+LINK_ENTITY_TO_CLASS(tf_projectile_flaknail, CTFProjectile_FlakNail);
+PRECACHE_REGISTER(tf_projectile_flaknail);
+
+short g_sModelIndexFlakNail;
+void PrecacheFlakNail(void *pUser)
+{
+	g_sModelIndexFlakNail = modelinfo->GetModelIndex(FLAKCANNON_NAIL_MODEL);
+}
+
+PRECACHE_REGISTER_FN(PrecacheFlakNail);
+
+CTFProjectile_FlakNail::CTFProjectile_FlakNail()
+{
+}
+
+CTFProjectile_FlakNail::~CTFProjectile_FlakNail()
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+CTFProjectile_FlakNail *CTFProjectile_FlakNail::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, int bCritical)
+{
+	CTFProjectile_FlakNail *pFlakNail = static_cast<CTFProjectile_FlakNail*>(CTFBaseProjectile::Create("tf_projectile_flaknail", vecOrigin, vecAngles, pOwner, CTFProjectile_FlakNail::GetInitialVelocity(), g_sModelIndexFlakNail, FLAKCANNON_NAIL_DISPATCH_EFFECT, pScorer, bCritical));
+	return pFlakNail;
+
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+const char *CTFProjectile_FlakNail::GetProjectileModelName(void)
+{
+	return FLAKCANNON_NAIL_MODEL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+float CTFProjectile_FlakNail::GetGravity(void)
+{
+	return FLAKCANNON_NAIL_GRAVITY;
+}
+#ifdef CLIENT_DLL
+//-----------------------------------------------------------------------------
+// Purpose: 
+// Output : const char
+//-----------------------------------------------------------------------------
+const char *GetFlakNailTrailParticleName(int iTeamNumber, bool bCritical)
+{
+	if (iTeamNumber == TF_TEAM_BLUE)
+	{
+		return (bCritical ? "nailtrails_super_blue_crit" : "nailtrails_super_blue");
+	}
+	else if (iTeamNumber == TF_TEAM_RED)
+	{
+		return (bCritical ? "nailtrails_super_red_crit" : "nailtrails_super_red");
+	}
+	else
+	{
+		return (bCritical ? "nailtrails_super_dm_crit" : "nailtrails_super_dm");
+	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void ClientsideProjectileFlakNailCallback(const CEffectData &data)
+{
+	C_TFPlayer *pPlayer = dynamic_cast<C_TFPlayer*>(ClientEntityList().GetBaseEntityFromHandle(data.m_hEntity));
+	if (pPlayer)
+	{
+		C_LocalTempEntity *pFlakNail = ClientsideProjectileCallback(data, FLAKCANNON_NAIL_GRAVITY);
+		if (pFlakNail)
+		{
+			switch (pPlayer->GetTeamNumber())
+			{
+			case TF_TEAM_RED:
+				pFlakNail->m_nSkin = 0;
+				break;
+			case TF_TEAM_BLUE:
+				pFlakNail->m_nSkin = 1;
+				break;
+			case TF_TEAM_MERCENARY:
+				pFlakNail->m_nSkin = 2;
+				break;
+			}
+			bool bCritical = ((data.m_nDamageType & DMG_CRITICAL) != 0);
+			pPlayer->m_Shared.UpdateParticleColor(pFlakNail->AddParticleEffect(GetFlakNailTrailParticleName(pPlayer->GetTeamNumber(), bCritical)));
+			pFlakNail->AddEffects(EF_NOSHADOW);
+			pFlakNail->flags |= FTENT_USEFASTCOLLISIONS;
+		}
+	}
+}
+
+DECLARE_CLIENT_EFFECT(NAILGUN_NAIL_DISPATCH_EFFECT, ClientsideProjectileFlakNailCallback);
+
+#endif

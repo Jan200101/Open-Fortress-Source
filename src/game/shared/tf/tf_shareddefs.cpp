@@ -334,6 +334,7 @@ const char *g_aWeaponNames[] =
 	"TF_WEAPON_JUGGERNAUGHT",
 	"TF_WEAPON_COMBATKNIFE",
 	"TF_WEAPON_BOUNCER",
+	"TF_WEAPON_FLAKCANNON",
 
 	"TFC_WEAPON_SHOTGUN_SB",
 	"TFC_WEAPON_SHOTGUN_DB",
@@ -422,6 +423,7 @@ const char *g_aExplosiveNames[] =
 	"TF_PROJECTILE_PIPEBOMB",
 	"TF_PROJECTILE_INCENDROCKET",
 	"TF_PROJECTILE_BOUNCYROCKET",
+	"TF_PROJECTILE_FLAKNAIL",
 	"TF_GRENADE_NORMAL",
 };
 
@@ -513,8 +515,9 @@ uint g_aWeaponDamageTypes[] =
 	DMG_BLAST | DMG_HALF_FALLOFF | DMG_USEDISTANCEMOD,											// TF_WEAPON_GIB,
 	DMG_SLASH,																					// TF_WEAPON_CLAWS
 	DMG_CLUB,																					// TF_WEAPON_JUGGERNAUGHT,
-	DMG_SLASH,																					// TF_WEAPON_COMBATKNIFE
-	DMG_BLAST | DMG_HALF_FALLOFF,																// TF_WEAPON_BOUNCER
+	DMG_SLASH,																					// TF_WEAPON_COMBATKNIFE,
+	DMG_BLAST | DMG_HALF_FALLOFF,																// TF_WEAPON_BOUNCER,
+	DMG_BULLET,																					// TF_WEAPON_FLAKCANNON,
 	
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD,															//TFC_WEAPON_SHOTGUN_SB
 	DMG_BUCKSHOT | DMG_USEDISTANCEMOD,															//TFC_WEAPON_SHOTGUN_DB
@@ -585,6 +588,7 @@ const char *g_szProjectileNames[] =
 	"projectile_tranq",
 	"projectile_coom",
 	"projectile_bouncyrocket",
+	"projectile_flaknail",
 };
 
 //NOTENOTE: This has been reworked, above char list not related anymore

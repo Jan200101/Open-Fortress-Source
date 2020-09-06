@@ -62,6 +62,24 @@ BEGIN_DATADESC( CTFCNailgunSuper )
 END_DATADESC()
 #endif
 
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFFlakCannon, DT_TFFlakCannon)
+
+BEGIN_NETWORK_TABLE(CTFFlakCannon, DT_TFFlakCannon)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFFlakCannon)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_flakcannon, CTFFlakCannon);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_flakcannon );
+
+// Server specific.
+#ifdef GAME_DLL
+BEGIN_DATADESC( CTFFlakCannon )
+END_DATADESC()
+#endif
+
 //=============================================================================
 //
 // Weapon Nailgun functions.
