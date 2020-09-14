@@ -14,6 +14,7 @@
 
 #define CTFProjectile_Rocket C_TFProjectile_Rocket
 #define CTFProjectile_BouncyRocket C_TFProjectile_BouncyRocket
+#define CTFProjectile_FlakBall C_TFProjectile_FlakBall
 
 //-----------------------------------------------------------------------------
 // Purpose: Rocket projectile.
@@ -55,6 +56,25 @@ public:
 private:
 	CNewParticleEffect		*m_hTimerParticle;
 	CNetworkVar( float, m_flDetTime );
+};
+
+//----------------------------------------------------------------------------
+// Purpose: Rocket projectile.
+//-----------------------------------------------------------------------------
+class C_TFProjectile_FlakBall : public C_TFProjectile_Rocket
+{
+	DECLARE_CLASS(C_TFProjectile_FlakBall, C_TFProjectile_Rocket);
+public:
+	DECLARE_NETWORKCLASS();
+
+	C_TFProjectile_FlakBall();
+	~C_TFProjectile_FlakBall();
+
+	virtual void	CreateRocketTrails(void);
+	virtual const char *GetTrailParticleName(void) { return "rockettrail"; }
+
+	int			m_bCritical;
+
 };
 
 #endif // C_TF_PROJECTILE_ROCKET_H

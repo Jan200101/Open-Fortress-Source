@@ -78,6 +78,7 @@ public:
 	CBaseEntity *FireTripmine( CTFPlayer *pPlayer );
 	CBaseEntity *FireIncendRocket( CTFPlayer *pPlayer );
 	CBaseEntity *FireBouncer(CTFPlayer *pPlayer);
+	CBaseEntity *FireFlakBall(CTFPlayer *pPlayer);
 
 	virtual float GetWeaponSpread( void );
 	virtual float GetProjectileSpeed( void );

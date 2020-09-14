@@ -409,6 +409,17 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pProjectile = FireBouncer(pPlayer);
 		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
+
+	case TF_PROJECTILE_FLAKNAIL:
+		pProjectile = FireNail(pPlayer, iProjectile);
+		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+		break;
+
+	case TF_PROJECTILE_FLAKBALL:
+		pProjectile = FireFlakBall(pPlayer);
+		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+		break;
+
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -754,7 +765,11 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		
     case TF_PROJECTILE_NAIL:
 		pProjectile = CTFProjectile_Nail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
-		break;	
+		break;
+
+	case TF_PROJECTILE_FLAKNAIL:
+		pProjectile = CTFProjectile_FlakNail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
+		break;
 
 	default:
 		Assert(0);
@@ -1013,6 +1028,47 @@ CBaseEntity *CTFWeaponBaseGun::FireBouncer(CTFPlayer *pPlayer)
 	if (pProjectile)
 	{
 		pProjectile->SetFuseTime( gpGlobals->curtime + GetTFWpnData().m_flFuseTime );
+		pProjectile->SetCritical(IsCurrentAttackACrit());
+		pProjectile->SetDamage(GetProjectileDamage());
+		pProjectile->SetLauncher(this);
+	}
+	return pProjectile;
+
+#endif
+
+	return NULL;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Fire a bouncing projectile
+//-----------------------------------------------------------------------------
+CBaseEntity *CTFWeaponBaseGun::FireFlakBall(CTFPlayer *pPlayer)
+{
+	PlayWeaponShootSound();
+
+	// Server only - create the rocket.
+#ifdef GAME_DLL
+	int iQuakeCvar = 0;
+
+	if (!pPlayer->IsFakeClient())
+		iQuakeCvar = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered"));
+
+	Vector vecSrc;
+	QAngle angForward;
+	Vector vecOffset(24.f, 12.0f, -6.f);
+	if (iQuakeCvar)
+	{
+		vecOffset.x = 12.0f; //forward backwards
+		vecOffset.y = 0.0f; // left right
+		vecOffset.z = -8.0f; //up down
+	}
+
+	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
+
+	CTFProjectile_BouncyRocket *pProjectile = CTFProjectile_BouncyRocket::Create(this, vecSrc, angForward, pPlayer, pPlayer);
+	if (pProjectile)
+	{
+		pProjectile->SetFuseTime(gpGlobals->curtime + GetTFWpnData().m_flFuseTime);
 		pProjectile->SetCritical(IsCurrentAttackACrit());
 		pProjectile->SetDamage(GetProjectileDamage());
 		pProjectile->SetLauncher(this);

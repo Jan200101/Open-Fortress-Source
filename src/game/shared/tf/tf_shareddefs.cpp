@@ -424,6 +424,7 @@ const char *g_aExplosiveNames[] =
 	"TF_PROJECTILE_INCENDROCKET",
 	"TF_PROJECTILE_BOUNCYROCKET",
 	"TF_PROJECTILE_FLAKNAIL",
+	"TF_PROJECTILE_FLAKBALL",
 	"TF_GRENADE_NORMAL",
 };
 
@@ -589,6 +590,7 @@ const char *g_szProjectileNames[] =
 	"projectile_coom",
 	"projectile_bouncyrocket",
 	"projectile_flaknail",
+	"projectile_flakball",
 };
 
 //NOTENOTE: This has been reworked, above char list not related anymore

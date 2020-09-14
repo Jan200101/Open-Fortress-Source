@@ -99,8 +99,21 @@ public:
 
 	virtual const char *GetProjectileModelName(void);
 	virtual float GetGravity(void);
+	void BounceSound(const short data);
 
+#ifdef GAME_DLL
+	virtual void ProjectileTouch(CBaseEntity *pOther);
+#endif
+	
 	static float	GetInitialVelocity(void) { return FLAKCANNON_SPEED; }
+
+private:
+	QAngle	m_rotationVector;
+	float	m_flLastBounce;
+	int		m_iOldWaterLevel;
+
+	char	szImpactHard[64];
+	char	szImpactSoft[64];
 };
 
 

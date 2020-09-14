@@ -154,6 +154,9 @@ void C_TFProjectile_Rocket::CreateLightEffects(void)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Bonucy Rocket
+//-----------------------------------------------------------------------------
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
 
 BEGIN_NETWORK_TABLE( C_TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
@@ -233,4 +236,69 @@ void C_TFProjectile_BouncyRocket::CreateRocketTrails(void)
 	}
 	
 	m_flCreationTime = gpGlobals->curtime;
+}
+//-----------------------------------------------------------------------------
+// Purpose: Flak Ball
+//-----------------------------------------------------------------------------
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFProjectile_FlakBall, DT_TFProjectile_FlakBall)
+
+extern ConVar of_muzzlelight;
+
+BEGIN_NETWORK_TABLE(C_TFProjectile_FlakBall, DT_TFProjectile_FlakBall)
+RecvPropInt(RECVINFO(m_bCritical)),
+END_NETWORK_TABLE()
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_TFProjectile_FlakBall::C_TFProjectile_FlakBall(void)
+{
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+C_TFProjectile_FlakBall::~C_TFProjectile_FlakBall(void)
+{
+	ParticleProp()->StopEmission();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void C_TFProjectile_FlakBall::CreateRocketTrails(void)
+{
+	if (IsDormant())
+		return;
+
+	if (enginetrace->GetPointContents(GetAbsOrigin()) & MASK_WATER)
+		ParticleProp()->Create("rockettrail_underwater", PATTACH_POINT_FOLLOW, "trail");
+	else
+		ParticleProp()->Create(GetTrailParticleName(), PATTACH_POINT_FOLLOW, "trail");
+
+	C_TFPlayer *pPlayer = ToTFPlayer(GetOwnerEntity());
+	if (!pPlayer)
+		return;
+
+	if (m_bCritical)
+	{
+		switch (GetTeamNumber())
+		{
+		case TF_TEAM_BLUE:
+			ParticleProp()->Create("critical_rocket_blue", PATTACH_ABSORIGIN_FOLLOW);
+			break;
+		case TF_TEAM_RED:
+			ParticleProp()->Create("critical_rocket_red", PATTACH_ABSORIGIN_FOLLOW);
+			break;
+		case TF_TEAM_MERCENARY:
+			pPlayer->m_Shared.UpdateParticleColor(ParticleProp()->Create("critical_rocket_dm", PATTACH_ABSORIGIN_FOLLOW));
+			break;
+		case TF_TEAM_NPC:
+			ParticleProp()->Create("eyeboss_projectile", PATTACH_ABSORIGIN_FOLLOW);
+			break;
+		default:
+			break;
+		}
+	}
 }
