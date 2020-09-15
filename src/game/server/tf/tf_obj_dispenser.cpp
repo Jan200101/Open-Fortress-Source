@@ -99,10 +99,15 @@ public:
 	void Spawn( void )
 	{
 		BaseClass::Spawn();
-		AddSpawnFlags( SF_TRIGGER_ALLOW_CLIENTS );
+		
 		InitTrigger();
-		SetSolid( SOLID_BBOX );
-		UTIL_SetSize(this, Vector(-70,-70,-70), Vector(70,70,70) );
+		
+		if ( !GetModelIndex() )
+		{
+			AddSpawnFlags( SF_TRIGGER_ALLOW_CLIENTS );
+			SetSolid( SOLID_BBOX );
+			UTIL_SetSize( this, Vector( -70, -70, -70 ), Vector( 70, 70, 70 ) );
+		}
 	}
 
 	virtual void StartTouch( CBaseEntity *pEntity )
@@ -127,6 +132,52 @@ public:
 };
 
 LINK_ENTITY_TO_CLASS( dispenser_touch_trigger, CDispenserTouchTrigger );
+
+class CObjectCartDispenser : public CObjectDispenser
+{
+public:
+	DECLARE_CLASS( CDispenserTouchTrigger, CObjectDispenser );
+	DECLARE_DATADESC();
+
+	virtual void Spawn() override;
+
+	virtual void SetModel( const char* model ) override;
+
+	virtual int	OnTakeDamage( const CTakeDamageInfo& info ) override;
+
+	virtual int GetAvailableMetal() const override { return DISPENSER_MAX_METAL_AMMO; }
+private:
+	string_t m_iTrigger;
+};
+
+BEGIN_DATADESC(CObjectCartDispenser)
+DEFINE_KEYFIELD( m_iTrigger, FIELD_STRING, "touch_trigger" )
+END_DATADESC()
+
+void CObjectCartDispenser::Spawn()
+{
+	BaseClass::Spawn();
+	SetSolid( SOLID_NONE );
+
+	CBaseEntity* pTrigger = gEntList.FindEntityByName( NULL, m_iTrigger );
+	if ( pTrigger )
+	{
+		pTrigger->SetOwnerEntity( this );
+		m_hTouchTrigger = pTrigger;
+	}
+}
+
+void CObjectCartDispenser::SetModel( const char* model )
+{
+	return;
+}
+
+int CObjectCartDispenser::OnTakeDamage( const CTakeDamageInfo& info )
+{
+	return 0;
+}
+
+LINK_ENTITY_TO_CLASS( mapobj_cart_dispenser, CObjectCartDispenser );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -237,7 +288,8 @@ void CObjectDispenser::OnGoActive( void )
 
 	m_flNextAmmoDispense = gpGlobals->curtime + 0.5;
 
-	m_hTouchTrigger = CBaseEntity::Create( "dispenser_touch_trigger", GetAbsOrigin(), vec3_angle, this );
+	if( !m_hTouchTrigger )
+		m_hTouchTrigger = CBaseEntity::Create( "dispenser_touch_trigger", GetAbsOrigin(), vec3_angle, this );
 
 	BaseClass::OnGoActive();
 
@@ -323,7 +375,7 @@ void CObjectDispenser::Precache()
 
 	PrecacheParticleSystem( "dispenser_heal_red" );
 	PrecacheParticleSystem( "dispenser_heal_blue" );
-	PrecacheParticleSystem( "dispenser_heal_mercenary" );
+	PrecacheParticleSystem( "dispenser_heal_dm" );
 }
 
 //-----------------------------------------------------------------------------
@@ -593,7 +645,7 @@ bool CObjectDispenser::DispenseAmmo( CTFPlayer *pPlayer )
 	iTotalPickedUp += Primary;
 
 	// metal
-	int iMetal = pPlayer->GiveAmmo( min( m_iAmmoMetal, iAmount ), TF_AMMO_METAL );
+	int iMetal = pPlayer->GiveAmmo( min( GetAvailableMetal(), iAmount ), TF_AMMO_METAL );
 	m_iAmmoMetal -= iMetal;
 	iTotalPickedUp += iMetal;
 
@@ -624,7 +676,7 @@ void CObjectDispenser::RefillThink( void )
 		iAmount = iAmount + 20;
 
 	// Auto-refill half the amount as tfc, but twice as often
-	if ( m_iAmmoMetal < (float)DISPENSER_MAX_METAL_AMMO )
+	if ( GetAvailableMetal() < (float)DISPENSER_MAX_METAL_AMMO )
 	{
 		m_iAmmoMetal = min( m_iAmmoMetal + iAmount, (float)DISPENSER_MAX_METAL_AMMO );
 		EmitSound( "Building_Dispenser.GenerateMetal" );
@@ -784,6 +836,7 @@ void CObjectDispenser::StopHealing( CBaseEntity *pOther )
 
 	EHANDLE hOther = pOther;
 	bFound = m_hHealingTargets.FindAndRemove( hOther );
+	NetworkStateChanged();
 
 	if ( bFound )
 	{
@@ -812,12 +865,15 @@ bool CObjectDispenser::CouldHealTarget( CBaseEntity *pTarget )
 		int iTeam = GetTeamNumber();
 		int iPlayerTeam = pTFPlayer->GetTeamNumber();
 
+		if ( iTeam == TEAM_UNASSIGNED )
+			return true;
+
 		if ( iPlayerTeam != iTeam && pTFPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 		{
 			iPlayerTeam = pTFPlayer->m_Shared.GetDisguiseTeam();
 		}
 
-		if ( iPlayerTeam != iTeam || ( iPlayerTeam == TF_TEAM_MERCENARY && pTFPlayer != GetOwner() ) )
+		if ( iPlayerTeam != iTeam || ( iPlayerTeam == TF_TEAM_MERCENARY && GetBuilder() != NULL && pTFPlayer != GetBuilder() ) )
 		{
 			return false;
 		}
@@ -836,6 +892,7 @@ void CObjectDispenser::AddHealingTarget( CBaseEntity *pOther )
 	// add to tail
 	EHANDLE hOther = pOther;
 	m_hHealingTargets.AddToTail( hOther );
+	NetworkStateChanged();
 }
 
 //-----------------------------------------------------------------------------
@@ -846,6 +903,7 @@ void CObjectDispenser::RemoveHealingTarget( CBaseEntity *pOther )
 	// remove
 	EHANDLE hOther = pOther;
 	m_hHealingTargets.FindAndRemove( hOther );
+	NetworkStateChanged();
 }
 
 //-----------------------------------------------------------------------------

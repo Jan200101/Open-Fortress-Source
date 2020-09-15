@@ -292,6 +292,7 @@ void C_ObjectDispenser::UpdateEffects( void )
 				continue;
 
 			const char *pszEffectName;
+			bool bColored = false;
 			if ( GetTeamNumber() == TF_TEAM_RED )
 			{
 				pszEffectName = "dispenser_heal_red";
@@ -302,11 +303,22 @@ void C_ObjectDispenser::UpdateEffects( void )
 			}
 			else
 			{
-				pszEffectName = "dispenser_heal_mercenary";
+				pszEffectName = "dispenser_heal_dm";
+				bColored = true;
 			}
 
-			CNewParticleEffect *pEffect = ParticleProp()->Create( pszEffectName, PATTACH_POINT_FOLLOW, "heal_origin" );
+			ParticleAttachment_t pattach = PATTACH_POINT_FOLLOW;
+			if ( GetModelIndex() == 0 )
+				pattach = PATTACH_ABSORIGIN_FOLLOW;
+
+			CNewParticleEffect *pEffect = ParticleProp()->Create( pszEffectName, pattach, "heal_origin" );
 			ParticleProp()->AddControlPoint( pEffect, 1, pTarget, PATTACH_ABSORIGIN_FOLLOW, NULL, Vector(0,0,50) );
+
+			if ( bColored && pTarget->IsPlayer() )
+			{
+				CTFPlayer* pPlayer = ( CTFPlayer* )pTarget;
+				pPlayer->m_Shared.UpdateParticleColor( pEffect );
+			}
 
 			int iIndex = m_hHealingTargetEffects.AddToTail();
 			m_hHealingTargetEffects[iIndex].pTarget = pTarget;

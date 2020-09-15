@@ -87,6 +87,8 @@ public:
 	// Engineer hit me with a wrench
 	virtual bool	OnWrenchHit( CTFPlayer *pPlayer );
 
+	EHANDLE m_hTouchTrigger;
+
 private:
 	CNetworkVar( int, m_iState );
 
@@ -99,8 +101,6 @@ private:
 	CNetworkVar( int, m_iAmmoMetal );
 
 	float m_flNextAmmoDispense;
-
-	EHANDLE m_hTouchTrigger;
 
 	DECLARE_DATADESC();
 };
