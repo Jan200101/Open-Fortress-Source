@@ -114,6 +114,7 @@ private:
 
 	char	szImpactHard[64];
 	char	szImpactSoft[64];
+	int		m_INailBounce;
 };
 
 

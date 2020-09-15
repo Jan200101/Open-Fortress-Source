@@ -91,9 +91,7 @@ END_DATADESC()
 //-----------------------------------------------------------------------------
 void CTFFlakCannon::SecondaryAttack(void)
 {
-	Msg("Second Attack\n");
-	
-	if ((m_iReserveAmmo - 5) >= 0)
+	if  ( (m_iReserveAmmo - 5) >= 0)
 	{
 		m_iReserveAmmo = m_iReserveAmmo - 5;
 		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;

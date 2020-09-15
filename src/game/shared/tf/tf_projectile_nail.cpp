@@ -304,7 +304,6 @@ void CTFProjectile_Tranq::ProjectileTouch(CBaseEntity *pOther)
 
 	if (pOther->IsWorld())
 	{
-		Msg("ass\n");
 		SetAbsVelocity(vec3_origin);
 		AddSolidFlags(FSOLID_NOT_SOLID);
 
@@ -495,18 +494,28 @@ void CTFProjectile_FlakNail::ProjectileTouch(CBaseEntity *pOther)
 
 	if (pOther->IsWorld())
 	{
-		DevMsg("worldtouch\n");
-		Vector vecAbsVelocity = GetAbsVelocity();
-		Vector vec = vecAbsVelocity;
-		VectorNormalize(vec);
-		vec = Vector(vec.x, vec.y, 0.f);
+		Msg("m_INailBounce: %i\n", m_INailBounce);
+		if (m_INailBounce < 3)
+		{
+			m_INailBounce++;
+			Msg("m_INailBounce: %i\n", m_INailBounce);
+			Vector vecAbsVelocity = GetAbsVelocity();
+			Vector vec = vecAbsVelocity;
+			VectorNormalize(vec);
+			vec = Vector(vec.x, vec.y, 0.f);
 
-		//do the bounce
-		float backoff = DotProduct(vecAbsVelocity, pTrace->plane.normal) * 2.0f;
-		Vector change = pTrace->plane.normal * backoff;
-		vecAbsVelocity -= change;
-		vecAbsVelocity *= 0.9f;
-		return;
+			//do the bounce
+			float backoff = DotProduct(vecAbsVelocity, pTrace->plane.normal) * 2.0f;
+			Vector change = pTrace->plane.normal * backoff;
+			vecAbsVelocity -= change;
+			vecAbsVelocity *= 0.9f;
+			return;
+		}
+		else
+		{
+			UTIL_Remove(this);
+			return;
+		}
 	}
 
 	// determine the inflictor, which is the weapon which fired this projectile
@@ -565,29 +574,28 @@ void ClientsideProjectileFlakNailCallback(const CEffectData &data)
 	C_TFPlayer *pPlayer = dynamic_cast<C_TFPlayer*>(ClientEntityList().GetBaseEntityFromHandle(data.m_hEntity));
 	if (pPlayer)
 	{
-		C_LocalTempEntity *pNail = ClientsideProjectileCallback(data, FLAKNAIL_GRAVITY);
-		if (pNail)
+		C_LocalTempEntity *pFlakNail = ClientsideProjectileCallback(data, FLAKNAIL_GRAVITY);
+		if (pFlakNail)
 		{
 			switch (pPlayer->GetTeamNumber())
 			{
 			case TF_TEAM_RED:
-				pNail->m_nSkin = 0;
+				pFlakNail->m_nSkin = 0;
 				break;
 			case TF_TEAM_BLUE:
-				pNail->m_nSkin = 1;
+				pFlakNail->m_nSkin = 1;
 				break;
 			case TF_TEAM_MERCENARY:
-				pNail->m_nSkin = 2;
+				pFlakNail->m_nSkin = 2;
 				break;
 			}
 			bool bCritical = ((data.m_nDamageType & DMG_CRITICAL) != 0);
-			pPlayer->m_Shared.UpdateParticleColor(pNail->AddParticleEffect(GetFlakNailTrailParticleName(pPlayer->GetTeamNumber(), bCritical)));
-			pNail->AddEffects(EF_NOSHADOW);
-			pNail->flags |= FTENT_USEFASTCOLLISIONS;
+			pPlayer->m_Shared.UpdateParticleColor(pFlakNail->AddParticleEffect(GetFlakNailTrailParticleName(pPlayer->GetTeamNumber(), bCritical)));
+			pFlakNail->AddEffects(EF_NOSHADOW);
+			pFlakNail->flags |= FTENT_CLIENTSIDEPARTICLES;
 		}
 	}
 }
 
 DECLARE_CLIENT_EFFECT(FLAKNAIL_DISPATCH_EFFECT, ClientsideProjectileFlakNailCallback);
-
 #endif
