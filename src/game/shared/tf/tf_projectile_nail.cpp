@@ -441,7 +441,16 @@ CTFProjectile_FlakNail::~CTFProjectile_FlakNail()
 //-----------------------------------------------------------------------------
 CTFProjectile_FlakNail *CTFProjectile_FlakNail::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, int bCritical)
 {
-	return static_cast<CTFProjectile_FlakNail*>(CTFBaseProjectile::Create("tf_projectile_flaknail", vecOrigin, vecAngles, pOwner, CTFProjectile_FlakNail::GetInitialVelocity(), g_sModelIndexFlakNail, FLAKNAIL_DISPATCH_EFFECT, pScorer, bCritical));
+	
+	CTFProjectile_FlakNail *pFlakNail = static_cast<CTFProjectile_FlakNail*>(CTFBaseProjectile::Create("tf_projectile_flaknail", vecOrigin, vecAngles, pOwner, 
+																			CTFProjectile_FlakNail::GetInitialVelocity(), g_sModelIndexFlakNail, FLAKNAIL_DISPATCH_EFFECT, pScorer, bCritical));;
+
+	if (!pFlakNail)
+		return NULL;
+
+	pFlakNail->SetMoveType(MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM);
+
+	return pFlakNail;
 }
 
 //-----------------------------------------------------------------------------
@@ -486,14 +495,17 @@ void CTFProjectile_FlakNail::ProjectileTouch(CBaseEntity *pOther)
 
 	if (pOther->IsWorld())
 	{
-		Msg("worldtouch\n");
+		DevMsg("worldtouch\n");
 		Vector vecAbsVelocity = GetAbsVelocity();
+		Vector vec = vecAbsVelocity;
+		VectorNormalize(vec);
+		vec = Vector(vec.x, vec.y, 0.f);
 
 		//do the bounce
 		float backoff = DotProduct(vecAbsVelocity, pTrace->plane.normal) * 2.0f;
 		Vector change = pTrace->plane.normal * backoff;
 		vecAbsVelocity -= change;
-		vecAbsVelocity *= 0.6;
+		vecAbsVelocity *= 0.9f;
 		return;
 	}
 

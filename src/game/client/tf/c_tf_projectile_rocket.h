@@ -70,8 +70,9 @@ public:
 	C_TFProjectile_FlakBall();
 	~C_TFProjectile_FlakBall();
 
+
 	virtual void	CreateRocketTrails(void);
-	virtual const char *GetTrailParticleName(void) { return "rockettrail"; }
+	virtual const char *GetTrailParticleName();
 
 	int			m_bCritical;
 

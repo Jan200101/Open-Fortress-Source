@@ -263,6 +263,19 @@ C_TFProjectile_FlakBall::~C_TFProjectile_FlakBall(void)
 {
 	ParticleProp()->StopEmission();
 }
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+
+const char *C_TFProjectile_FlakBall::GetTrailParticleName(void)
+{
+	if (GetTeamNumber() == TF_TEAM_BLUE)
+		return "pipebombtrail_blue";
+	else if (GetTeamNumber() == TF_TEAM_RED)
+		return "pipebombtrail_red";
+	else
+		return "pipebombtrail_dm";
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -293,9 +306,6 @@ void C_TFProjectile_FlakBall::CreateRocketTrails(void)
 			break;
 		case TF_TEAM_MERCENARY:
 			pPlayer->m_Shared.UpdateParticleColor(ParticleProp()->Create("critical_rocket_dm", PATTACH_ABSORIGIN_FOLLOW));
-			break;
-		case TF_TEAM_NPC:
-			ParticleProp()->Create("eyeboss_projectile", PATTACH_ABSORIGIN_FOLLOW);
 			break;
 		default:
 			break;

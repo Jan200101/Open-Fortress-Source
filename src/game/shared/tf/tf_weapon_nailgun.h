@@ -81,6 +81,7 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 	virtual int		GetWeaponID(void) const			{ return TF_WEAPON_FLAKCANNON; }
+	void			SecondaryAttack();
 
 #ifdef GAME_DLL
 	DECLARE_DATADESC();

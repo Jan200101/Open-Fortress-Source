@@ -5,6 +5,12 @@
 #include "cbase.h"
 #include "tf_weapon_nailgun.h"
 
+#ifdef CLIENT_DLL
+	#include "c_tf_player.h"
+#else
+	#include "tf_player.h"
+#endif
+
 //=============================================================================
 //
 // Weapon SMG tables.
@@ -79,6 +85,38 @@ LINK_ENTITY_TO_CLASS(tf_weapon_flakcannon, CTFFlakCannon);
 BEGIN_DATADESC( CTFFlakCannon )
 END_DATADESC()
 #endif
+
+//-----------------------------------------------------------------------------
+// Purpose: Detonate active pipebombs
+//-----------------------------------------------------------------------------
+void CTFFlakCannon::SecondaryAttack(void)
+{
+	Msg("Second Attack\n");
+	
+	if ((m_iReserveAmmo - 5) >= 0)
+	{
+		m_iReserveAmmo = m_iReserveAmmo - 5;
+		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
+
+		if (m_flNextSecondaryAttack > gpGlobals->curtime)
+			return;
+
+		CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+		if (!pPlayer)
+			return;
+
+		FireFlakBall(pPlayer);
+		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
+
+		float flFiringInterval = GetFireRate();
+		m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;
+		m_flNextPrimaryAttack = gpGlobals->curtime + flFiringInterval;
+	}
+	else
+	{
+		Msg("No, you can't shot, idiot.\n");
+	}
+}
 
 //=============================================================================
 //
