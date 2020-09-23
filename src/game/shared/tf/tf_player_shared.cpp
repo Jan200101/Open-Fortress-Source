@@ -646,13 +646,6 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		OnAddCritBoosted();
 		break;
 
-	case TF_COND_HALLOWEEN_QUICK_HEAL:
-		AddCond( TF_COND_MEGAHEAL );
-#ifdef GAME_DLL
-		Heal( m_pOuter, 100 );
-#endif
-		break;
-
 	case TF_COND_BERSERK:
 		OnAddBerserk();
 		break;
@@ -748,13 +741,6 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 		OnRemoveCritBoosted();
 		break;
 
-	case TF_COND_HALLOWEEN_QUICK_HEAL:
-		RemoveCond( TF_COND_MEGAHEAL );
-#ifdef GAME_DLL
-		StopHealing( m_pOuter );
-#endif
-		break;
-
 	case TF_COND_BERSERK:
 		OnRemoveBerserk();
 		break;
@@ -792,14 +778,7 @@ int CTFPlayerShared::GetMaxBuffedHealth( void )
 {
 	float flBoostMax;
 
-	float flmultiplier;
-
-	if ( InCond( TF_COND_MEGAHEAL ) && tf_max_health_boost.GetFloat() <= 2 )
-		flmultiplier = 2;
-	else
-		flmultiplier = tf_max_health_boost.GetFloat();
-
-	flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * flmultiplier;
+	flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * tf_max_health_boost.GetFloat();
 
 	int iRoundDown = floor( flBoostMax / 5 );
 	iRoundDown = iRoundDown * 5;
@@ -811,14 +790,7 @@ int CTFPlayerShared::GetMaxBuffedHealthDM( void )
 {
 	float flBoostMax;
 
-	float flmultiplier;
-
-	if ( InCond( TF_COND_MEGAHEAL ) && of_dm_max_health_boost.GetFloat() <= 2 )
-		flmultiplier = 2;
-	else
-		flmultiplier = of_dm_max_health_boost.GetFloat();
-
-	flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * flmultiplier;
+	flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * of_dm_max_health_boost.GetFloat();
 
 	int iRoundDown = floor( flBoostMax / 5 );
 	iRoundDown = iRoundDown * 5;
