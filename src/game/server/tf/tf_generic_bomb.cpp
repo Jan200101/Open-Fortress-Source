@@ -77,8 +77,6 @@ CTFGenericBomb::CTFGenericBomb()
 //-----------------------------------------------------------------------------
 void CTFGenericBomb::Spawn()
 {
-	m_takedamage = DAMAGE_YES;
-
 	char *szModel = (char *)STRING( GetModelName() );
 
 	if (!szModel || !*szModel )
@@ -98,6 +96,9 @@ void CTFGenericBomb::Spawn()
 	SetSolid( SOLID_VPHYSICS );
 
 	BaseClass::Spawn();
+
+	// force it here, because our base classes could have set it to DAMAGE_EVENTS_ONLY
+	m_takedamage = DAMAGE_YES;
 }
 
 //-----------------------------------------------------------------------------
