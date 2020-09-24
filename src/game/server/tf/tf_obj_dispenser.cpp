@@ -288,8 +288,11 @@ void CObjectDispenser::OnGoActive( void )
 
 	m_flNextAmmoDispense = gpGlobals->curtime + 0.5;
 
-	if( !m_hTouchTrigger )
+	if ( !m_hTouchTrigger )
+	{
 		m_hTouchTrigger = CBaseEntity::Create( "dispenser_touch_trigger", GetAbsOrigin(), vec3_angle, this );
+		m_hTouchTrigger->SetParent( this );
+	}
 
 	BaseClass::OnGoActive();
 
