@@ -887,6 +887,9 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		float fTotalHealAmount = 0.0f;
 		for ( int i = 0; i < m_aHealers.Count(); i++ )
 		{
+			if ( InCond( TF_COND_MEGAHEAL ) ) // if this was added by cond 73, it will only last a single tick, as there is no source for the uber, the cond is removed on ConditionGameRulesThink()
+				flScale *= 3.0f;
+
 			Assert( m_aHealers[i].pPlayer );
 
 			// Dispensers don't heal above 100%
@@ -1078,6 +1081,10 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 	{
 		pWeapon->DrainCharge();
 	}
+
+	// Workaround to make condition 73 act like live tf2, blame valve
+	if ( InCond( TF_COND_MEGAHEAL ) )
+		RemoveCond( TF_COND_MEGAHEAL );
 
 	if ( InCondUber() )
 	{
