@@ -649,7 +649,7 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 	case TF_COND_HALLOWEEN_QUICK_HEAL:
 		AddCond( TF_COND_MEGAHEAL );
 #ifdef GAME_DLL
-		Heal( m_pOuter, 100 );
+		Heal( m_pOuter, 30.0f );
 #endif
 		break;
 
@@ -794,7 +794,7 @@ int CTFPlayerShared::GetMaxBuffedHealth( void )
 
 	float flmultiplier;
 
-	if ( InCond( TF_COND_MEGAHEAL ) && tf_max_health_boost.GetFloat() <= 2 )
+	if ( InCond( TF_COND_HALLOWEEN_QUICK_HEAL ) && tf_max_health_boost.GetFloat() <= 2 )
 		flmultiplier = 2;
 	else
 		flmultiplier = tf_max_health_boost.GetFloat();
@@ -813,7 +813,7 @@ int CTFPlayerShared::GetMaxBuffedHealthDM( void )
 
 	float flmultiplier;
 
-	if ( InCond( TF_COND_MEGAHEAL ) && of_dm_max_health_boost.GetFloat() <= 2 )
+	if ( InCond( TF_COND_HALLOWEEN_QUICK_HEAL ) && of_dm_max_health_boost.GetFloat() <= 2 )
 		flmultiplier = 2;
 	else
 		flmultiplier = of_dm_max_health_boost.GetFloat();
@@ -855,7 +855,8 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 				float flReduction = gpGlobals->frametime;
 
 				// If we're being healed, we reduce bad conditions faster
-				if ( i > TF_COND_HEALTH_BUFF && m_aHealers.Count() > 0 )
+				if ( ( i == TF_COND_BURNING || i == TF_COND_URINE || i == TF_COND_BLEEDING || i == TF_COND_MAD_MILK || i == TF_COND_GAS ) // Add any condition that should be reduced by healing here.
+					&& m_aHealers.Count() > 0 )
 				{
 					flReduction += ( m_aHealers.Count() * flReduction * 4 );
 				}
