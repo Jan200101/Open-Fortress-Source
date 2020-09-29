@@ -10,6 +10,9 @@
 #pragma once
 #endif
 
+#ifdef CLIENT_DLL
+#define CTFGravityGauntlet C_TFGravityGauntlet
+#endif
 
 
 //-----------------------------------------------------------------------------
@@ -26,5 +29,51 @@ float PlayerPickupGetHeldObjectMass( CBaseEntity *pPickupControllerEntity, IPhys
 float PhysCannonGetHeldObjectMass( CBaseCombatWeapon *pActiveWeapon, IPhysicsObject *pHeldObject );
 
 CBaseEntity *PhysCannonGetHeldEntity( CBaseCombatWeapon *pActiveWeapon );
+
+#include "tf_weaponbase_melee.h"
+#ifdef CLIENT_DLL
+#include "particles_simple.h"
+#endif
+//=============================================================================
+//
+// Gravity Gauntlet class.
+//
+class CTFGravityGauntlet : public CTFWeaponBaseMelee
+{
+public:
+
+	DECLARE_CLASS( CTFGravityGauntlet, CTFWeaponBaseMelee );
+	DECLARE_NETWORKCLASS(); 
+	DECLARE_PREDICTABLE();
+
+	CTFGravityGauntlet();
+	~CTFGravityGauntlet();
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRAVITY_GAUNTLET; }
+	virtual void		ItemPostFrame( void );
+	void				OnPull( CBaseEntity *pPullTarget );
+	virtual bool		IsMeleeWeapon()const { return false; };
+	virtual void		PrimaryAttack();
+	virtual void		Smack( void );
+	// Skip the melee functions because they cause us to always be considered has having ammo
+	virtual bool		HasPrimaryAmmo()								{ return CTFWeaponBase::HasPrimaryAmmo(); }
+	virtual bool		CanBeSelected()									{ return CTFWeaponBase::CanBeSelected(); }	
+	virtual void		OnAirblast( CBaseEntity *pEntity );
+#ifdef CLIENT_DLL
+	void				StopPullEffect( void );
+	void				UpdatePullEffect( void );
+#endif
+private:
+
+	CTFGravityGauntlet( const CTFGravityGauntlet & ) {}
+	CNetworkVector( m_vecPullPos );
+#ifdef CLIENT_DLL
+	HPARTICLEFFECT m_hPullEffect;
+	HPARTICLEFFECT m_hHoverEffect;
+	float	flNextError;
+	bool	bIsHovering;
+#else
+	float	m_flAmmoConsumption;
+#endif
+};
 
 #endif // OFD_WEAPON_PHYSGAUNTLET_H

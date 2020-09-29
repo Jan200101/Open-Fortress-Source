@@ -16,6 +16,7 @@
 #include "coordsize.h"
 #include "tf_weapon_grapple.h"
 #include "tf_weapon_shotgun.h"
+#include "of_weapon_physcannon.h"
 
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
@@ -128,6 +129,10 @@ private:
 	void		CheckRamp(float *flMul, int rampMode);
 	void		CheckFootStepsSound(bool CSliding, const CBaseEntity *hook);
 
+	void		Hover(void);
+	void		EndHover(void);
+	void		Pull(void);
+	
 private:
 
 	Vector		m_vecWaterPoint;
@@ -406,6 +411,70 @@ void CTFGameMovement::AirDash(bool meatHook)
 	m_pTFPlayer->DoAnimationEvent(PLAYERANIMEVENT_DOUBLEJUMP);
 }
 
+ConVar of_grav_hover_range("of_grav_hover_range", "60", FCVAR_REPLICATED);
+ConVar of_grav_hover_force("of_grav_hover_force", "40", FCVAR_REPLICATED);
+ConVar of_grav_hover_threshold("of_grav_hover_threshold", "40", FCVAR_REPLICATED);
+
+ConVar of_grav_pull_distance("of_grav_pull_distance", "1256", FCVAR_REPLICATED);
+ConVar of_grav_pull_force("of_grav_pull_force", "1000", FCVAR_REPLICATED);
+ConVar of_grav_pull_force_factor("of_grav_pull_force_factor", "0.04", FCVAR_REPLICATED);
+
+void CTFGameMovement::Hover()
+{
+	m_pTFPlayer->m_Shared.SetHovering(true);
+	Vector vecStart = mv->GetAbsOrigin();
+	Vector vecEnd = vecStart + Vector( 0, 0, -1 ) * of_grav_hover_range.GetFloat();
+	trace_t tr;
+	// see if we hit anything solid a little bit below the player
+	UTIL_TraceLine(vecStart, vecEnd, MASK_SOLID, m_pTFPlayer, COLLISION_GROUP_NONE, &tr);
+		float flLenght = vecStart.z - tr.endpos.z;
+
+	// The farther away from the ground the less power you should give
+	// Trace line cant do more than the specified range, so we dont need to worry if they're above that
+	float flResult = of_grav_hover_force.GetFloat() * (max(of_grav_hover_range.GetFloat() - flLenght, 0.0f) / of_grav_hover_range.GetFloat());
+
+	if( m_pTFPlayer->GetAbsVelocity().z < 0.0f || (of_grav_hover_range.GetFloat() > flLenght && mv->m_vecVelocity.z < of_grav_hover_threshold.GetFloat()) )
+		mv->m_vecVelocity.z += flResult;
+}
+
+void CTFGameMovement::EndHover()
+{
+	m_pTFPlayer->m_Shared.SetHovering(false);
+}
+
+void CTFGameMovement::Pull()
+{
+	Vector vecStart = m_pTFPlayer->Weapon_ShootPosition();
+
+	Vector vecShootForward;
+	AngleVectors( m_pTFPlayer->EyeAngles(), &vecShootForward, NULL, NULL );
+	vecShootForward.NormalizeInPlace();
+	Vector vecEnd = vecStart + vecShootForward * of_grav_pull_distance.GetFloat();
+
+	trace_t tr;
+	UTIL_TraceHull( vecStart, vecEnd, -Vector(6,6,6), Vector(6,6,6), ( MASK_SOLID | CONTENTS_HITBOX ), m_pTFPlayer, COLLISION_GROUP_NONE, &tr );
+
+	// There's no fucking way that this should fail, if it does im going to cry - Kay
+	CTFGravityGauntlet *pWeapon = static_cast<CTFGravityGauntlet*>( m_pTFPlayer->GetActiveTFWeapon() );
+	
+	if( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
+	{
+		Vector vecDir = tr.m_pEnt->EyePosition() - vecStart;
+		VectorNormalize(vecDir);
+
+		vecDir *= of_grav_pull_force.GetFloat();
+
+//		if(vecDir.z > mv->m_vecVelocity.z)
+//			vecDir.z = mv->m_vecVelocity.z;
+		
+		mv->m_vecVelocity += (vecDir - mv->m_vecVelocity) * of_grav_pull_force_factor.GetFloat();
+
+		pWeapon->OnPull( tr.m_pEnt );
+	}
+	else
+		pWeapon->OnPull( NULL );
+}
+
 // Only allow bunny jumping up to 1.2x server / player maxspeed setting
 //#define BUNNYJUMP_MAX_SPEED_FACTOR 1.2f
 
@@ -478,11 +547,12 @@ bool CTFGameMovement::CheckJumpButton()
 	bool bCanAirDash = m_pTFPlayer->GetPlayerClass()->CanAirDash();
 	bool bOnGround = bMeatHook ? false : player->GetGroundEntity() != NULL;
 
+	bool bHasGravGauntlet = m_pTFPlayer->GetActiveTFWeapon() && m_pTFPlayer->GetActiveTFWeapon()->IsWeapon(TF_WEAPON_GRAVITY_GAUNTLET);
 	//jumping cvars
-	bool CrouchJump = of_crouchjump.GetBool() && !of_cslide.GetBool();
-
-	// Cannot jump while ducked.
-	if (player->GetFlags() & FL_DUCKING)
+	bool CrouchJump = (of_crouchjump.GetBool() && !of_cslide.GetBool()) || bHasGravGauntlet;
+	
+	// Cannot jump while ducked unless we can hover or the option is enabled
+	if((player->GetFlags() & FL_DUCKING) && !bHasGravGauntlet)
 	{
 		// Let a scout do it.
 		bool bAllow = (bCanAirDash && !bOnGround) || (CrouchJump && bOnGround);
@@ -515,7 +585,7 @@ bool CTFGameMovement::CheckJumpButton()
 	{
 		// Cannot jump again until the jump button has been released.
 		int bHop = of_bunnyhop.GetInt();
-		if (mv->m_nOldButtons & IN_JUMP)
+		if( (mv->m_nOldButtons & IN_JUMP) && !m_pTFPlayer->m_Shared.IsHovering() ) // Ignore these checks if we're hovering
 		{
 			if (!bOnGround ||																				//not on ground
 				!bHop ||																					//nobody can bhop
@@ -524,19 +594,23 @@ bool CTFGameMovement::CheckJumpButton()
 				return false;
 		}
 	}
-
+	
 	// In air, so ignore jumps (unless you are a scout or you are using the meathook).
 	if (!bOnGround)
 	{
-		if ((bCanAirDash && m_pTFPlayer->m_Shared.GetAirDashCount() < m_pTFPlayer->GetPlayerClass()->MaxAirDashCount()) || bMeatHook)
+		if( (bCanAirDash && m_pTFPlayer->m_Shared.GetAirDashCount() < m_pTFPlayer->GetPlayerClass()->MaxAirDashCount()) || bMeatHook )
 		{
 			AirDash(bMeatHook);
 			return true;
 		}
-		else
+		else if( bHasGravGauntlet )
 		{
-			return false;
+			Hover();
+			return true;
 		}
+		else
+			EndHover();
+			return false;
 	}
 
 	PreventBunnyJumping();
@@ -1494,6 +1568,7 @@ void CTFGameMovement::FullWalkMoveUnderwater()
 	}
 	else
 	{
+		EndHover();
 		m_pTFPlayer->m_Shared.SetJumpBuffer(false);
 	}
 
@@ -1622,12 +1697,13 @@ void CTFGameMovement::FullWalkMove()
 	}
 	else
 	{
+		EndHover();
 		m_pTFPlayer->m_Shared.SetJumpBuffer(false);
 	}
 
 	// Make sure velocity is valid.
 	CheckVelocity();
-
+	
 	bool bCSliding = false;
 	bool bCSlideOn = of_cslide.GetBool();
 	CBaseEntity *pHook = m_pTFPlayer->m_Shared.GetHook();
@@ -1686,6 +1762,12 @@ void CTFGameMovement::FullWalkMove()
 	CheckFalling();
 
 	// Make sure velocity is valid.
+	if( m_pTFPlayer->GetActiveTFWeapon() && m_pTFPlayer->GetActiveTFWeapon()->IsWeapon(TF_WEAPON_GRAVITY_GAUNTLET) 
+		&& (mv->m_nButtons & IN_ATTACK2) )
+	{
+		Pull();
+	}
+	
 	CheckVelocity();
 
 	//Cslide sound turn on/off

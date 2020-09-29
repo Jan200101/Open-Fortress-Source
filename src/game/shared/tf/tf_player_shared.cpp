@@ -145,6 +145,7 @@ RecvPropInt( RECVINFO( m_iCritMult ) ),
 RecvPropBool( RECVINFO( m_bAirDash ) ),
 RecvPropBool( RECVINFO( m_bBlockJump ) ),
 RecvPropInt( RECVINFO( m_iAirDashCount ) ),
+RecvPropBool( RECVINFO( m_bHovering ) ),
 RecvPropFloat( RECVINFO( m_flGHookProp ) ),
 RecvPropInt( RECVINFO( m_nPlayerState ) ),
 RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
@@ -172,6 +173,7 @@ DEFINE_PRED_FIELD( m_bIsTopThree, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( bWatchReady, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_bIsZombie, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_bHovering, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_bBlockJump, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_flGHookProp, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
@@ -209,7 +211,8 @@ SendPropInt( SENDINFO( bWatchReady ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_bIsZombie ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropBool( SENDINFO( m_bAirDash ) ),
+SendPropBool( SENDINFO( m_bHovering ) ),
 SendPropInt( SENDINFO( m_bBlockJump ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_iAirDashCount ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropFloat( SENDINFO( m_flGHookProp ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
@@ -246,6 +249,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_bAirDash = false;
 	m_iAirDashCount = 0,
 	m_bBlockJump = false;
+	m_bHovering = false;
 	m_Hook = NULL;
 	m_flGHookProp = 0.f;
 	m_flStealthNoAttackExpire = 0.0f;
@@ -4032,4 +4036,11 @@ const char *CTFPlayer::GetOverrideStepSound( const char *pszBaseStepSoundName )
 	}
 
 	return pszBaseStepSoundName;
+}
+
+void CTFPlayer::OnAirblast( CBaseEntity *pEntity )
+{
+	BaseClass::OnAirblast( pEntity );
+	if( GetActiveTFWeapon() )
+		GetActiveTFWeapon()->OnAirblast( pEntity );
 }

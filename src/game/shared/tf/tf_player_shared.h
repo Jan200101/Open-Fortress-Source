@@ -225,6 +225,9 @@ public:
 	int     GetAirDashCount( void ) { return m_iAirDashCount; }
 	void    AddAirDashCount();
 	void    SetAirDashCount( int iAirDashCount );
+	
+	bool    IsHovering( void ) { return m_bHovering; }
+	void	SetHovering( bool bHovering ){ m_bHovering = bHovering; };
 	//Grappling hook
 	CBaseEntity *GetHook( void ) { return m_Hook; }
 	void    SetHook(CBaseEntity *hook);
@@ -410,6 +413,8 @@ private:
 	CNetworkVar( bool, m_bJumping );
 	CNetworkVar( bool, m_bAirDash );
 	CNetworkVar( int,  m_iAirDashCount );
+	
+	CNetworkVar( bool, m_bHovering );
 #ifdef GAME_DLL
 	CNetworkHandle( CBaseEntity, m_Hook );
 #else

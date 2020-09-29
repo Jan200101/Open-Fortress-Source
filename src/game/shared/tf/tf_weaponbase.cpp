@@ -58,6 +58,62 @@ extern ConVar of_multiweapons;
 //
 
 //-----------------------------------------------------------------------------
+// Purpose: Airblast a player / npc
+//
+// Special thanks to sigsegv for the majority of this function
+// Source: https://gist.github.com/sigsegv-mvm/269d1e0abacb29040b5c
+// 
+//-----------------------------------------------------------------------------
+void AirBlastCharacter( CBaseCombatCharacter *pCharacter, CBaseEntity *pEntOwner, const Vector &vec_in )
+{
+	CTFPlayer *pOwner = ToTFPlayer( pEntOwner );
+	if ( !pOwner )
+		return;
+
+	pOwner->OnAirblast( pCharacter );
+
+	if ( ( pCharacter->InSameTeam( pOwner ) && pCharacter->GetTeamNumber() != TF_TEAM_MERCENARY ) )
+		return;
+#ifdef GAME_DLL
+
+	CTFPlayer *pTFPlayer = ToTFPlayer(pCharacter);
+
+	Vector vec = vec_in;
+
+	float impulse = 360;
+	impulse = MIN( 1000, impulse );
+
+	vec *= impulse;
+
+	vec.z += 350.0f;
+
+	if ( pTFPlayer )
+	{
+		pTFPlayer->AddDamagerToHistory( pOwner );
+	}
+
+	pCharacter->ApplyAirBlastImpulse( vec );
+#endif
+}
+
+void AirBlastProjectile( CBaseEntity *pEntity, CBaseEntity *pOwnerEnt, CTFWeaponBase *pWeapon, const Vector &vec_in )
+{
+	CTFPlayer *pOwner = ToTFPlayer( pOwnerEnt );
+	if ( !pOwner )
+		return;
+
+	pOwnerEnt->OnAirblast( pEntity );
+	
+	if ( ( pEntity->InSameTeam( pOwner ) && pEntity->GetTeamNumber() != TF_TEAM_MERCENARY ) )
+		return;
+#ifdef GAME_DLL
+	Vector vec = vec_in;
+
+	pEntity->Deflected( pEntity, vec );
+#endif
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: Callback for the soft-zoom speed convars. Caches them in variables for efficiency!
 //-----------------------------------------------------------------------------
 
@@ -807,6 +863,78 @@ int CTFWeaponBase::GetDefaultClip1(void) const
 	if (LoadsManualy())
 		DefClip = 0;
 	return DefClip;
+}
+
+
+class CTraceFilterIgnoreTeammates : public CTraceFilterSimple
+{
+public:
+	// It does have a base, but we'll never network anything below here..
+	DECLARE_CLASS(CTraceFilterIgnoreTeammates, CTraceFilterSimple);
+
+	CTraceFilterIgnoreTeammates(const IHandleEntity *passentity, int collisionGroup, int iIgnoreTeam)
+		: CTraceFilterSimple(passentity, collisionGroup), m_iIgnoreTeam(iIgnoreTeam)
+	{
+	}
+
+	virtual bool ShouldHitEntity(IHandleEntity *pServerEntity, int contentsMask)
+	{
+		CBaseEntity *pEntity = EntityFromEntityHandle(pServerEntity);
+
+		if (pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	int m_iIgnoreTeam;
+};
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Return the origin & angles for a projectile fired from the player's gun
+//-----------------------------------------------------------------------------
+void CTFWeaponBase::GetProjectileAirblastSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, bool bHitTeammates /* = true */ )
+{
+	Vector vecForward, vecRight, vecUp;
+	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
+
+	Vector vecShootPos = pPlayer->Weapon_ShootPosition();
+
+	// Estimate end point
+	Vector endPos = vecShootPos + vecForward * 2000;	
+
+	// Trace forward and find what's in front of us, and aim at that
+	trace_t tr;
+
+	if ( bHitTeammates )
+	{
+		CTraceFilterSimple filter( pPlayer, COLLISION_GROUP_NONE );
+		UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );
+	}
+	else
+	{
+		int team = pPlayer->GetTeamNumber();
+		if ( team == TF_TEAM_MERCENARY ) team = 0;		
+		CTraceFilterIgnoreTeammates filter( pPlayer, COLLISION_GROUP_NONE, team );
+		UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );
+	}
+
+	// Find angles that will get us to our desired end point
+	// Only use the trace end if it wasn't too close, which results
+	// in visually bizarre forward angles
+	if ( tr.fraction > 0.1 )
+	{
+		*vecSrc = tr.endpos - vecOffset;
+	}
+	else
+	{
+		*vecSrc = endPos - vecOffset;
+	}
+
+	VectorNormalize( *vecSrc );
 }
 
 //-----------------------------------------------------------------------------
@@ -1696,7 +1824,7 @@ void CTFWeaponBase::SoftZoomCheck(void)
 	}
 	else
 	{
-		if ((pOwner->m_Shared.m_flNextZoomTime <= gpGlobals->curtime))
+		if( (pOwner->m_Shared.m_flNextZoomTime <= gpGlobals->curtime) && !pOwner->m_Shared.InCond(TF_COND_AIMING) )
 		{
 			if (pOwner->GetFOV() == flZoomLevel)
 				pOwner->m_Shared.m_flNextZoomTime = gpGlobals->curtime + fConVarQuickZoomOutTime;

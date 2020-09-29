@@ -600,7 +600,7 @@ void CTFFlameThrower::SecondaryAttack()
 			CBaseCombatCharacter *pCharacter = dynamic_cast<CBaseCombatCharacter *>( pEntity );
 
 			if ( pCharacter )
-				AirBlastCharacter( pCharacter, vForwardDir );
+				AirBlastCharacter( pCharacter, pOwner, vForwardDir );
 		}
 		else
 		{
@@ -612,7 +612,7 @@ void CTFFlameThrower::SecondaryAttack()
 			// TODO: handle trails here i guess?
 			GetProjectileAirblastSetup( GetTFPlayerOwner(), vecPos, &vecAirBlast, false );
 
-			AirBlastProjectile( pEntity, vecAirBlast );
+			AirBlastProjectile( pEntity, pOwner, this, vecAirBlast );
 		}
 	}
 
@@ -621,71 +621,28 @@ void CTFFlameThrower::SecondaryAttack()
 }
 
 #ifdef GAME_DLL
-//-----------------------------------------------------------------------------
-// Purpose: Airblast a player / npc
-//
-// Special thanks to sigsegv for the majority of this function
-// Source: https://gist.github.com/sigsegv-mvm/269d1e0abacb29040b5c
-// 
-//-----------------------------------------------------------------------------
-void CTFFlameThrower::AirBlastCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in )
+void CTFFlameThrower::OnAirblast( CBaseEntity *pEntity )
 {
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-	if ( !pOwner )
-		return;
+	CTFPlayer *pTFPlayer = ToTFPlayer( pEntity );
+	CBaseEntity *pOwner = GetOwner();
 
-	CTFPlayer *pTFPlayer = ToTFPlayer( pCharacter );
-
-	if ( ( pCharacter->InSameTeam( pOwner ) && pCharacter->GetTeamNumber() != TF_TEAM_MERCENARY ) )
+	if( ( pEntity->InSameTeam( pOwner ) && pEntity->GetTeamNumber() != TF_TEAM_MERCENARY ) )
 	{
-		if ( pTFPlayer && pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
+		if( pTFPlayer && pTFPlayer->m_Shared.InCond( TF_COND_BURNING ) )
 		{
 			pTFPlayer->m_Shared.RemoveCond( TF_COND_BURNING );
-
 			pTFPlayer->EmitSound( "TFPlayer.FlameOut" );
 		}
+		else
+			return;
 	}
 	else
 	{
-		Vector vec = vec_in;
-	
-		float impulse = 360;
-		impulse = MIN( 1000, impulse );
-	
-		vec *= impulse;
-	
-		vec.z += 350.0f;
-
-		if ( pTFPlayer )
-		{
-			pTFPlayer->AddDamagerToHistory( pOwner );
+		if( pTFPlayer )
 			pTFPlayer->EmitSound( "TFPlayer.AirBlastImpact" );
-		}
-
-		pCharacter->ApplyAirBlastImpulse( vec );
+		else
+			pEntity->EmitSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
 	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFFlameThrower::AirBlastProjectile( CBaseEntity *pEntity, const Vector &vec_in )
-{
-	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
-	if ( !pOwner )
-		return;
-
-	if ( ( pEntity->InSameTeam( pOwner ) && pEntity->GetTeamNumber() != TF_TEAM_MERCENARY ) )
-		return;
-
-	Vector vec = vec_in;
-	Vector vecAirBlast;
-
-	GetProjectileAirblastSetup( pOwner, pEntity->GetAbsOrigin(), &vecAirBlast, false );
-
-	pEntity->Deflected( pEntity, vec );
-
-	pEntity->EmitSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
 }
 #endif
 

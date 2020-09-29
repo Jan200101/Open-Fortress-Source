@@ -1024,7 +1024,9 @@ public:
 	virtual bool					IsCombatItem( void ) const { return false; }
 
 	virtual bool					IsBaseTrain( void ) const { return false; }
-
+#ifdef OF_CLIENT_DLL
+	virtual void					OnAirblast( C_BaseEntity *pEntity ){ return; };
+#endif
 	// Returns the eye point + angles (used for viewing + shooting)
 	virtual Vector			EyePosition( void );
 	virtual const QAngle&	EyeAngles( void );		// Direction of eyes

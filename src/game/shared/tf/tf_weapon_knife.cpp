@@ -208,15 +208,15 @@ float CTFKnife::GetMeleeDamage( CBaseEntity *pTarget, int &iCustomDamage )
 bool CTFKnife::IsBehindAndFacingTarget( CBaseEntity *pTarget )
 {
 	CTFPlayer *pTargetPlayer = ToTFPlayer(pTarget);
-	if ( !pTargetPlayer ) 
+	if ( !pTargetPlayer || !GetTFPlayerOwner() ) 
 		return false;
 
-	Vector2D wsc_spy_to_victim = ( pTargetPlayer->WorldSpaceCenter() - GetOwner()->WorldSpaceCenter() ).AsVector2D();
+	Vector2D wsc_spy_to_victim = ( pTargetPlayer->WorldSpaceCenter() - GetTFPlayerOwner()->WorldSpaceCenter() ).AsVector2D();
 	wsc_spy_to_victim.NormalizeInPlace();
 
 	Vector temp1;
 	
-	pTargetPlayer->EyeVectors( &temp1 );
+	GetTFPlayerOwner()->EyeVectors( &temp1 );
 	Vector2D eye_spy = temp1.AsVector2D();
 	eye_spy.NormalizeInPlace();
 

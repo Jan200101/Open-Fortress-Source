@@ -38,13 +38,13 @@
 #include "shake.h"
 #include "beam_shared.h"
 #include "Sprite.h"
+#include "tf_weaponbase.h"
+#include "tf_weaponbase_gun.h"
 #include "of_weapon_physcannon.h"
 #include "physics_saverestore.h"
 #include "movevars_shared.h"
-#include "tf_weaponbase.h"
 #include "vphysics/friction.h"
 #include "debugoverlay_shared.h"
-#include "tf_weaponbase_gun.h"
 #include "tf_viewmodel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -3655,4 +3655,304 @@ CBaseEntity *GetPlayerHeldEntity( CBasePlayer *pPlayer )
 	return pObject;
 }
 
+#endif
+
+//=============================================================================
+//
+// SMG
+//
+//=============================================================================
+IMPLEMENT_NETWORKCLASS_ALIASED( TFGravityGauntlet, DT_TFWeaponGravityGauntlet )
+
+BEGIN_NETWORK_TABLE( CTFGravityGauntlet, DT_TFWeaponGravityGauntlet )
+#ifdef GAME_DLL
+SendPropVector( SENDINFO( m_vecPullPos ), 32 ,SPROP_COORD ),
+#else
+RecvPropVector( RECVINFO( m_vecPullPos ) ),
+#endif
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA( CTFGravityGauntlet )
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS( tf_weapon_gravitygauntlet, CTFGravityGauntlet );
+
+#ifdef GAME_DLL
+ConVar of_grav_pull_drain_time ( "of_grav_pull_drain_time", "40", FCVAR_REPLICATED );
+ConVar of_grav_hover_drain_time( "of_grav_hover_drain_time", "40", FCVAR_REPLICATED );
+extern ConVar of_infiniteammo;
+#endif
+
+CTFGravityGauntlet::CTFGravityGauntlet()
+{
+#ifdef CLIENT_DLL
+	m_hPullEffect = NULL;
+	m_hHoverEffect = NULL;
+	flNextError = 0.0f;
+#else
+	m_flAmmoConsumption = 0.0f;
+#endif
+}
+
+CTFGravityGauntlet::~CTFGravityGauntlet()
+{
+#ifdef CLIENT_DLL
+	StopPullEffect();
+	ParticleProp()->StopEmission();
+	m_hHoverEffect = NULL;
+	bIsHovering = false;
+#endif
+}
+
+void CTFGravityGauntlet::PrimaryAttack( void )
+{
+	if( ReserveAmmo() <= 0 )
+	{
+		HandleFireOnEmpty();
+		return;
+	}
+
+	BaseClass::PrimaryAttack();
+}
+
+void CTFGravityGauntlet::Smack( void )
+{
+	BaseClass::Smack();
+#ifdef GAME_DLL
+	if( !of_infiniteammo.GetBool() )
+		m_iReserveAmmo = max( m_iReserveAmmo - GetTFWpnData().GetWeaponData( m_iWeaponMode ).m_iAmmoPerShot, 0 );
+#endif
+}
+
+void CTFGravityGauntlet::OnPull( CBaseEntity *pPullTarget )
+{
+	if( pPullTarget )
+	{
+#ifdef GAME_DLL
+		float chargerate = of_grav_pull_drain_time.GetFloat(); // Amount of time needed to fully deplete your ammo
+		float flChargeAmount = (gpGlobals->frametime / chargerate) * GetMaxReserveAmmo();
+		float flNewLevel = m_flAmmoConsumption + flChargeAmount;
+
+		if( !of_infiniteammo.GetBool() )
+			m_flAmmoConsumption = flNewLevel;
+#endif
+		// Get somwhere around the middle of the model
+		m_vecPullPos = pPullTarget->EyePosition() - ((pPullTarget->EyePosition() - pPullTarget->GetAbsOrigin()) / 2.0f);
+	}
+	else
+		m_vecPullPos = Vector( 0.0f, 0.0f, -999999.0f );
+}
+
+void CTFGravityGauntlet::ItemPostFrame( void )
+{
+	if( ReserveAmmo() <= 0 )
+	{
+		HandleFireOnEmpty();
+		return;
+	}	
+	
+	CTFPlayer *m_pPlayer = GetTFPlayerOwner();
+	if( !m_pPlayer )
+		return;
+
+#ifdef CLIENT_DLL
+	if( !(m_pPlayer->m_nButtons & IN_ATTACK2) )
+	{
+		StopPullEffect();
+	}
+	else if( m_vecPullPos.GetZ() == -999999.0f )
+	{
+		if( flNextError < gpGlobals->curtime )
+		{
+			WeaponSound( EMPTY );
+			flNextError = gpGlobals->curtime + 0.8f;
+		}
+		StopPullEffect();
+	}
+	else
+		UpdatePullEffect();
+#endif
+
+	if( m_pPlayer->m_Shared.IsHovering() )
+	{
+#ifdef GAME_DLL
+		float chargerate = of_grav_hover_drain_time.GetFloat(); // Amount of time needed to fully deplete your ammo
+		float flChargeAmount = (gpGlobals->frametime / chargerate) * GetMaxReserveAmmo();
+		float flNewLevel = m_flAmmoConsumption + flChargeAmount;
+
+		if( !of_infiniteammo.GetBool() )
+			m_flAmmoConsumption = flNewLevel;
+#else
+		if( !m_hHoverEffect )
+		{
+			if ( ShouldDrawUsingViewModel() && m_pPlayer )
+			{
+				CBaseViewModel *vm = m_pPlayer->GetViewModel();
+				if ( vm )
+					m_hHoverEffect = vm->ParticleProp()->Create("gravity_hover", PATTACH_POINT_FOLLOW, "hover_attach");
+			}
+		}
+		bIsHovering = true;
+	}
+	else
+	{
+		bIsHovering = false;
+		if( m_hHoverEffect )
+		{
+			if ( ShouldDrawUsingViewModel() && m_pPlayer )
+			{
+				CBaseViewModel *vm = m_pPlayer->GetViewModel();
+				if ( vm )
+					vm->ParticleProp()->StopEmission(m_hHoverEffect);
+			}
+			m_hHoverEffect = NULL;
+		}
+#endif
+	}
+	
+#ifdef CLIENT_DLL
+	
+	if ( ShouldDrawUsingViewModel() && m_pPlayer )
+	{
+		CBaseViewModel *vm = m_pPlayer->GetViewModel();
+		if ( vm )
+		{
+			char *pszPullName = !bIsHovering ? "pull_r_param" : "pull_l_param";
+
+			float flNewLevel = vm->GetPoseParameter((vm->LookupPoseParameter(pszPullName))) - (gpGlobals->frametime / 0.2f);
+			flNewLevel = max( flNewLevel, 0.0f);
+			vm->SetPoseParameter( pszPullName, flNewLevel );
+			
+			if( bIsHovering )
+			{
+				flNewLevel = vm->GetPoseParameter((vm->LookupPoseParameter("hover_param"))) + (gpGlobals->frametime / 0.2f);
+				flNewLevel = min( flNewLevel, 1.0f);
+				vm->SetPoseParameter( "hover_param", flNewLevel );
+			}
+			else
+			{
+				flNewLevel = vm->GetPoseParameter((vm->LookupPoseParameter("hover_param"))) - (gpGlobals->frametime / 0.2f);
+				flNewLevel = max( flNewLevel, 0.0f);
+				vm->SetPoseParameter( "hover_param", flNewLevel );			
+			}
+		}
+	}
+#endif
+
+#ifdef GAME_DLL
+	if( m_flAmmoConsumption > 1.0f )
+	{
+		int iRemovedAmmo = (int)m_flAmmoConsumption;
+		m_iReserveAmmo = max(m_iReserveAmmo - iRemovedAmmo, 0);
+		m_flAmmoConsumption -= iRemovedAmmo;
+	}
+#endif
+	BaseClass::ItemPostFrame();
+}
+
+void CTFGravityGauntlet::OnAirblast( CBaseEntity *pEntity )
+{
+	if( pEntity->IsWorld() )
+		return;
+
+	CBaseEntity *pOwner = GetOwner();
+
+	if( ( pEntity->InSameTeam( pOwner ) && pEntity->GetTeamNumber() != TF_TEAM_MERCENARY ) )
+		return;
+
+#ifdef CLIENT_DLL
+	C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+	
+	CNewParticleEffect *pParticle = NULL;
+	
+	char *pszParticleEffect = "gravity_force";
+	
+	if( pLocalPlayer && pLocalPlayer == GetOwner() && pLocalPlayer->GetViewModel() )
+	{
+		pParticle = pLocalPlayer->GetViewModel()->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "swing_attach" );
+	}
+	else
+	{		
+		pParticle = ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "swing_attach" );
+	}
+
+	if( pParticle )
+		pParticle->SetControlPoint( 1, pEntity->EyePosition() );
+#endif
+}
+
+#ifdef CLIENT_DLL
+void CTFGravityGauntlet::StopPullEffect()
+{
+	CTFPlayer *m_pPlayer = GetTFPlayerOwner();
+	
+	if ( ShouldDrawUsingViewModel() && m_pPlayer )
+	{
+		CBaseViewModel *vm = m_pPlayer->GetViewModel();
+		if ( vm )
+		{
+			char *pszPullName = bIsHovering ? "pull_r_param" : "pull_l_param";
+
+			float flNewLevel = vm->GetPoseParameter((vm->LookupPoseParameter(pszPullName))) - (gpGlobals->frametime / 0.2f);
+			flNewLevel = max( flNewLevel, 0.0f);
+			vm->SetPoseParameter( pszPullName, flNewLevel );
+		}
+	}
+
+	if( m_hPullEffect )
+	{
+		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+		if ( pLocalPlayer && pLocalPlayer == GetOwner() )
+		{
+			if ( pLocalPlayer->GetViewModel() )
+			{
+				pLocalPlayer->GetViewModel()->ParticleProp()->StopEmission(m_hPullEffect);
+			}
+		}
+		else
+		{		
+			ParticleProp()->StopEmission(m_hPullEffect);
+		}
+	}
+	m_hPullEffect = NULL;
+}
+
+void CTFGravityGauntlet::UpdatePullEffect()
+{
+	char *pszParticleEffect = "gravity_pull";
+	if( !m_hPullEffect )
+	{
+		// Start the effect on the viewmodel if our owner is the local player
+		C_BasePlayer *pLocalPlayer = C_BasePlayer::GetLocalPlayer();
+		if( pLocalPlayer && pLocalPlayer == GetOwner() && pLocalPlayer->GetViewModel() )
+		{
+			m_hPullEffect = pLocalPlayer->GetViewModel()->ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "pull_attach" );
+		}
+		else
+		{		
+			m_hPullEffect = ParticleProp()->Create( pszParticleEffect, PATTACH_POINT_FOLLOW, "pull_attach" );
+		}
+		if( m_hPullEffect )
+			m_hPullEffect->SetControlPoint( 1, m_vecPullPos );
+	}
+	else
+	{
+		m_hPullEffect->SetControlPoint(1, m_vecPullPos);
+	}
+		
+	
+	CTFPlayer *m_pPlayer = GetTFPlayerOwner();
+	
+	if ( ShouldDrawUsingViewModel() && m_pPlayer )
+	{
+		CBaseViewModel *vm = m_pPlayer->GetViewModel();
+		if ( vm )
+		{
+			char *pszPullName = bIsHovering ? "pull_r_param" : "pull_l_param";
+			float flNewLevel = vm->GetPoseParameter((vm->LookupPoseParameter(pszPullName))) + (gpGlobals->frametime / 0.2f);
+			flNewLevel = min( flNewLevel, 1.0f );
+			vm->SetPoseParameter( pszPullName, flNewLevel );
+		}
+	}
+}
 #endif

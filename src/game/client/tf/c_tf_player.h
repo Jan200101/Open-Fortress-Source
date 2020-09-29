@@ -243,6 +243,8 @@ public:
 	int		GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
 
 	float	GetSurfaceFriction() { return m_surfaceFriction; }
+	
+	virtual void		OnAirblast( C_BaseEntity *pEntity );
 
 public:
 	// Ragdolls.

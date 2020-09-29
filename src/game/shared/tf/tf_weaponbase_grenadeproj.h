@@ -50,8 +50,8 @@ public:
 	virtual int			GetDamageType();
 	virtual int			GetCustomDamageType();
 
-#ifdef GAME_DLL
 	virtual bool	IsDeflectable( void ) { return true; }
+#ifdef GAME_DLL
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 #endif
 		CNetworkVar( float,		m_flSpawnTime );
@@ -72,7 +72,7 @@ public:
 	
 	virtual C_BaseEntity	*GetItemTintColorOwner( void ) { return GetThrower(); }
 
-	CNewParticleEffect		*m_hTimerParticle;
+	HPARTICLEFFECT			m_hTimerParticle;
 	// Server specific.
 #else
 

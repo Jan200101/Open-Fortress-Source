@@ -12,6 +12,7 @@
 #ifdef GAME_DLL
 	#include "tf_gamestats.h"
 	#include "ilagcompensationmanager.h"
+	#include "tf_fx.h"
 #endif
 
 //=============================================================================
@@ -470,6 +471,37 @@ bool CTFWeaponBaseMelee::DoSwingTrace( trace_t &trace )
 	return ( trace.fraction < 1.0f );
 }
 
+#ifdef GAME_DLL
+class CPathTrack;
+class CTraceFilterIgnoreTeammates : public CTraceFilterSimple
+{
+public:
+	// It does have a base, but we'll never network anything below here..
+	DECLARE_CLASS( CTraceFilterIgnoreTeammates, CTraceFilterSimple );
+
+	CTraceFilterIgnoreTeammates( const IHandleEntity *passentity, int collisionGroup, int iIgnoreTeam )
+		: CTraceFilterSimple( passentity, collisionGroup ), m_iIgnoreTeam( iIgnoreTeam )
+	{
+	}
+
+	virtual bool ShouldHitEntity( IHandleEntity *pServerEntity, int contentsMask )
+	{
+		CBaseEntity *pEntity = EntityFromEntityHandle( pServerEntity );
+
+		if ( pEntity->IsPlayer() && pEntity->GetTeamNumber() == m_iIgnoreTeam )
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	int m_iIgnoreTeam;
+};
+ConVar of_grav_debug("of_grav_debug", "1", FCVAR_ARCHIVE);
+#endif
+
+ConVar of_grav_blast_dist("of_grav_blast_dist", "150", FCVAR_REPLICATED);
 // -----------------------------------------------------------------------------
 // Purpose:
 // Note: Think function to delay the impact decal until the animation is finished 
@@ -487,6 +519,8 @@ void CTFWeaponBaseMelee::Smack( void )
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->StartLagCompensation( pPlayer, pPlayer->GetCurrentCommand() );
 #endif
+
+	CBaseEntity *pTargetEnt = NULL;
 
 	// We hit, setup the smack.
 	if ( DoSwingTrace( trace ) )
@@ -506,6 +540,85 @@ void CTFWeaponBaseMelee::Smack( void )
 		CTFPlayer *pPlayer = GetTFPlayerOwner();
 		if ( !pPlayer )
 			return;
+
+		if( GetTFWpnData().m_bExplosionOnHit )
+		{
+#ifdef GAME_DLL
+			CPVSFilter filter( trace.endpos );
+			
+			if ( trace.m_pEnt && trace.m_pEnt->IsPlayer() )
+			{
+				TE_TFExplosion( filter, 0.0f, trace.endpos, trace.plane.normal, trace.m_pEnt->entindex(), GetWeaponID(), this );
+			}
+			else
+			{
+				TE_TFExplosion(filter, 0.0f,  trace.endpos, trace.plane.normal, -1, GetWeaponID(), this );
+			}
+			
+			// Use the thrower's position as the reported position
+			Vector vecReported = trace.endpos;
+			
+			CPathTrack *pSource = static_cast<CPathTrack*>( CBaseEntity::Create( "path_track", trace.endpos, QAngle(0,0,0), pPlayer ) );
+			
+			int iCustomDamage = TF_DMG_CUSTOM_NONE;
+			float flDamage = GetMeleeDamage( trace.m_pEnt, iCustomDamage );
+			CTakeDamageInfo info( pSource, pPlayer, this, trace.endpos, trace.endpos, flDamage, GetDamageType(), 0, &vecReported );
+			info.SetWeapon( this );
+			info.SetDamagePosition( trace.endpos );
+			info.SetDamageCustom( GetDamageType() );
+	
+			float flRadius = GetDamageRadius();
+
+			RadiusDamage( info, trace.endpos, flRadius, CLASS_NONE, NULL );
+
+			// Don't decal players with scorch.
+			if ( trace.m_pEnt && !trace.m_pEnt->IsPlayer() )
+			{
+				UTIL_DecalTrace( &trace, "Scorch" );
+			}
+			
+			UTIL_Remove( pSource );
+#endif
+			if( GetTFWpnData().m_bAirblastOnSwing )
+			{
+				// Where are we aiming?
+				Vector vForward;
+				QAngle vAngles = pPlayer->EyeAngles();
+				AngleVectors( vAngles, &vForward);
+				
+				// First airblast the target entity, since its farther away from the other ranges and a successfull target shot should be rewarded
+				if( trace.m_pEnt )
+				{
+					if ( trace.m_pEnt->IsCombatCharacter() )
+					{
+						// Convert angles to vector
+						Vector vForwardDir;
+						AngleVectors( vAngles, &vForwardDir );
+
+						CBaseCombatCharacter *pCharacter = dynamic_cast<CBaseCombatCharacter *>( trace.m_pEnt );
+
+						if ( pCharacter )
+						{
+							pTargetEnt = pCharacter;
+							AirBlastCharacter( pCharacter, pPlayer, vForwardDir );
+						}
+					}
+					else
+					{
+						// TODO: vphysics specific tracing!
+
+						Vector vecPos = trace.m_pEnt->GetAbsOrigin();
+						Vector vecAirBlast;
+
+						// TODO: handle trails here i guess?
+						GetProjectileAirblastSetup( pPlayer, vecPos, &vecAirBlast, false );
+						
+						pTargetEnt = trace.m_pEnt;
+						AirBlastProjectile( trace.m_pEnt, pPlayer, this, vecAirBlast );
+					}
+				}
+			}
+		}
 
 		Vector vecForward; 
 		AngleVectors( pPlayer->EyeAngles(), &vecForward );
@@ -540,7 +653,105 @@ void CTFWeaponBaseMelee::Smack( void )
 #endif
 			m_bConnected = true;
 		}
+	}
 
+	if( GetTFWpnData().m_bAirblastOnSwing )
+	{
+		// Get the current player.
+		CTFPlayer *pPlayer = GetTFPlayerOwner();
+		if ( pPlayer )
+		{
+			// Where are we aiming?
+			Vector vForward;
+			QAngle vAngles = pPlayer->EyeAngles();
+			AngleVectors( vAngles, &vForward);
+
+			// TODO: this isn't an accurate distance
+			// offset the box origin from our shoot position
+			float flDist = of_grav_blast_dist.GetFloat();
+
+			// Used as the centre of the box trace
+			Vector vOrigin = pPlayer->Weapon_ShootPosition() + vForward * flDist;
+
+			//CBaseEntity *pList[ 32 ];
+			CBaseEntity *pList[ 64 ];
+#ifdef GAME_DLL
+			if ( of_grav_debug.GetBool() )
+				NDebugOverlay::Sphere(pPlayer->EyePosition(), of_grav_blast_dist.GetFloat(), 0, 255, 0, false, 3.0f);
+#endif
+			int count = UTIL_EntitiesInSphere(pList, 64, pPlayer->EyePosition(), of_grav_blast_dist.GetFloat(), 0 );
+
+			for ( int i = 0; i < count; i++ )
+			{
+				CBaseEntity *pEntity = pList[ i ];
+
+				if ( !pEntity )
+					continue;
+				
+				if( pEntity == pTargetEnt )
+					continue;
+
+				if ( !pEntity->IsAlive() )
+					continue;
+
+				if ( pEntity->GetTeamNumber() < TF_TEAM_RED )
+					continue;
+
+				if ( pEntity == pPlayer )
+					continue;
+				
+				if ( !pEntity->IsDeflectable() )
+					continue;
+
+				Vector2D vec_player_to_target = (pEntity->WorldSpaceCenter() - pPlayer->WorldSpaceCenter()).AsVector2D();
+				vec_player_to_target.NormalizeInPlace();
+
+				Vector temp1;
+
+				GetTFPlayerOwner()->EyeVectors(&temp1);
+				Vector2D eye_vec = temp1.AsVector2D();
+				eye_vec.NormalizeInPlace();
+				float flAngle = DotProduct2D(vec_player_to_target, eye_vec) / (vec_player_to_target.Length() * eye_vec.Length());
+
+				if( flAngle < 0.7f )
+					continue;
+
+				trace_t trWorld;
+
+				// now, let's see if the flame visual could have actually hit this player.  Trace backward from the
+				// point of impact to where the flame was fired, see if we hit anything.  Since the point of impact was
+				// determined using the flame's bounding box and we're just doing a ray test here, we extend the
+				// start point out by the radius of the box.
+				// UTIL_TraceLine( GetAbsOrigin() + vDir * WorldAlignMaxs().x, m_vecInitialPos, MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &trWorld );		
+				UTIL_TraceLine( pPlayer->Weapon_ShootPosition(), pEntity->WorldSpaceCenter(), MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &trWorld );
+
+				// can't see it!
+				if ( trWorld.fraction != 1.0f )
+					continue;
+
+				if ( pEntity->IsCombatCharacter() )
+				{
+					// Convert angles to vector
+					Vector vForwardDir;
+					AngleVectors( vAngles, &vForwardDir );
+
+					CBaseCombatCharacter *pCharacter = dynamic_cast<CBaseCombatCharacter *>( pEntity );
+
+					if ( pCharacter )
+						AirBlastCharacter( pCharacter, pPlayer, vForwardDir );
+				}
+				else
+				{
+					// TODO: vphysics specific tracing!
+
+					Vector vecPos = pEntity->GetAbsOrigin();
+					Vector vecAirBlast;
+
+					GetProjectileAirblastSetup( pPlayer, vecPos, &vecAirBlast, false );
+					AirBlastProjectile( pEntity, pPlayer, this, vecAirBlast );
+				}
+			}
+		}
 	}
 
 #if !defined (CLIENT_DLL)

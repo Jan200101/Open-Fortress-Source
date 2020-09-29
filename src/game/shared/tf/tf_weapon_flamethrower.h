@@ -60,11 +60,6 @@ public:
 	virtual void	DestroySounds( void );
 	virtual bool CanSoftZoom( void ) { return false; }
 
-#ifdef GAME_DLL
-	void			AirBlastCharacter( CBaseCombatCharacter *pCharacter, const Vector &vec_in );
-	void			AirBlastProjectile( CBaseEntity *pEntity, const Vector &vec_in );
-#endif
-
 	Vector GetVisualMuzzlePos();
 	Vector GetFlameOriginPos();
 
@@ -84,6 +79,8 @@ public:
 	// constant pilot light sound
 	void 			StartPilotLight();
 	void 			StopPilotLight();
+#else
+	void			OnAirblast( CBaseEntity *pEntity );
 #endif
 
 private:

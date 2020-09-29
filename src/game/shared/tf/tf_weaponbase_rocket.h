@@ -63,6 +63,8 @@ public:
 	
 	float	m_flCreationTime;
 
+	virtual bool	IsDeflectable( void ) { return true; }
+	
 //=============================================================================
 //
 // Client specific.
@@ -121,7 +123,6 @@ public:
 	
 	CNetworkVar( int,	m_bCritical );
 
-	virtual bool	IsDeflectable( void ) { return true; }
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 
 protected:
