@@ -531,7 +531,7 @@ void CTFSniperRifle::ZoomOut( void )
 void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 {
 	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
-	if ( ReserveAmmo() <= 0 || Clip1() <= 0 )
+	if ( ReserveAmmo() <= 0 || ( Clip1() <= 0 && UsesClipsForAmmo1() ) )
 	{
 		HandleFireOnEmpty();
 		return;

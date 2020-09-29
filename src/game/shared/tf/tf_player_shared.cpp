@@ -1158,6 +1158,33 @@ void CTFPlayerShared::ConditionThink( void )
 			}
 		}
 	}
+#ifdef CLIENT_DLL
+	if( m_pOuter->GetHealth() > GetDefaultHealth() )
+	{
+		if( !m_pOverhealEffect )
+		{
+			char *pTeamEx;
+			switch( m_pOuter->GetTeamNumber() )
+			{
+				case TF_TEAM_RED:
+				pTeamEx = "red";
+				break;
+				case TF_TEAM_BLUE:
+				pTeamEx = "blue";
+				break;
+				default:
+				case TF_TEAM_MERCENARY:
+				pTeamEx = "dm";
+				break;
+			}
+			
+			m_pOverhealEffect = m_pOuter->ParticleProp()->Create( VarArgs("overhealedplayer_%s_pluses", pTeamEx ), PATTACH_ABSORIGIN_FOLLOW );
+			UpdateParticleColor( m_pOverhealEffect );
+		}
+	}
+	else if( m_pOverhealEffect )
+		m_pOuter->ParticleProp()->StopEmission(m_pOverhealEffect);
+#endif
 }
 
 //-----------------------------------------------------------------------------

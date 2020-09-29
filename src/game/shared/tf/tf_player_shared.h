@@ -370,6 +370,7 @@ private:
 	float m_flInvulnerableOffTime;
 #else
 	HPARTICLEFFECT m_pCritBoostEffect;
+	HPARTICLEFFECT m_pOverhealEffect;
 #endif
 
 	// Burn handling
