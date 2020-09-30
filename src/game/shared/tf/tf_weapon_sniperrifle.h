@@ -94,6 +94,7 @@ public:
 	virtual void Spawn();
 	virtual void Precache();
 	void		 ResetTimers( void );
+	virtual void SetReloadTimer(float flReloadTime);
 
 	virtual bool Reload( void );
 	virtual bool CanHolster( void ) const;

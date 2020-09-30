@@ -583,50 +583,6 @@ void CTFWeaponBaseGun::GetProjectileFireSetup( CTFPlayer *pPlayer, Vector vecOff
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Return the origin & angles for a projectile fired from the player's gun
-//-----------------------------------------------------------------------------
-void CTFWeaponBaseGun::GetProjectileAirblastSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, bool bHitTeammates /* = true */ )
-{
-	Vector vecForward, vecRight, vecUp;
-	AngleVectors( pPlayer->EyeAngles(), &vecForward, &vecRight, &vecUp );
-
-	Vector vecShootPos = pPlayer->Weapon_ShootPosition();
-
-	// Estimate end point
-	Vector endPos = vecShootPos + vecForward * 2000;	
-
-	// Trace forward and find what's in front of us, and aim at that
-	trace_t tr;
-
-	if ( bHitTeammates )
-	{
-		CTraceFilterSimple filter( pPlayer, COLLISION_GROUP_NONE );
-		UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );
-	}
-	else
-	{
-		int team = pPlayer->GetTeamNumber();
-		if ( team == TF_TEAM_MERCENARY ) team = 0;		
-		CTraceFilterIgnoreTeammates filter( pPlayer, COLLISION_GROUP_NONE, team );
-		UTIL_TraceLine( vecShootPos, endPos, MASK_SOLID, &filter, &tr );
-	}
-
-	// Find angles that will get us to our desired end point
-	// Only use the trace end if it wasn't too close, which results
-	// in visually bizarre forward angles
-	if ( tr.fraction > 0.1 )
-	{
-		*vecSrc = tr.endpos - vecOffset;
-	}
-	else
-	{
-		*vecSrc = endPos - vecOffset;
-	}
-
-	VectorNormalize( *vecSrc );
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: Fire a BFG Projectile
 //-----------------------------------------------------------------------------
 CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
@@ -1021,7 +977,6 @@ CBaseEntity *CTFWeaponBaseGun::FireBouncer(CTFPlayer *pPlayer)
 		vecOffset.y = 0.0f; // left right
 		vecOffset.z = -8.0f; //up down
 	}
-
 	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
 
 	CTFProjectile_BouncyRocket *pProjectile = CTFProjectile_BouncyRocket::Create(this, vecSrc, angForward, pPlayer, pPlayer);

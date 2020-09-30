@@ -44,6 +44,8 @@ CTFWeaponInfo::CTFWeaponInfo()
 	m_bNoSniperCharge = false;
 	m_bAlwaysDrop = false;
 	m_bCanSoftZoom = true;
+	m_bExplosionOnHit = false;
+	m_bAirblastOnSwing = false;
 	
 	m_flDespawnTime = 30.0f;
 	
@@ -347,6 +349,9 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bNoSniperCharge = ( pKeyValuesData->GetInt( "NoSniperCharge", 0 ) != 0 );
 	m_bAlwaysDrop = ( pKeyValuesData->GetInt( "AlwaysDrop", 0 ) != 0 );
 	m_bCanSoftZoom = ( pKeyValuesData->GetInt( "CanSoftZoom", 1 ) != 0 );
+	m_bExplosionOnHit = ( pKeyValuesData->GetInt( "ExplosionOnHit", 0 ) != 0 );
+	m_bAirblastOnSwing = ( pKeyValuesData->GetInt( "AirblastOnSwing", 0 ) != 0 );
+
 	m_flEffectDuration = pKeyValuesData->GetFloat("EffectDuration", 0.0f);
 	m_flWeaponSpeedReduction = pKeyValuesData->GetFloat("WeaponSpeedReduction", 0.0f);
 	m_flSpeedReduction = pKeyValuesData->GetFloat("SpeedReduction", 0.0f);

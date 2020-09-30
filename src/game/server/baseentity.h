@@ -924,7 +924,9 @@ public:
 
 	// Notifier that I've killed some other entity. (called from Victim's Event_Killed).
 	virtual void	Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &info ) { return; }
-
+#ifdef OF_DLL
+	virtual void	OnAirblast( CBaseEntity *pEntity ){ return; };
+#endif
 	// UNDONE: Make this data?
 	virtual int				BloodColor( void );
 

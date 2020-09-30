@@ -145,6 +145,7 @@ RecvPropInt( RECVINFO( m_iCritMult ) ),
 RecvPropBool( RECVINFO( m_bAirDash ) ),
 RecvPropBool( RECVINFO( m_bBlockJump ) ),
 RecvPropInt( RECVINFO( m_iAirDashCount ) ),
+RecvPropBool( RECVINFO( m_bHovering ) ),
 RecvPropFloat( RECVINFO( m_flGHookProp ) ),
 RecvPropInt( RECVINFO( m_nPlayerState ) ),
 RecvPropInt( RECVINFO( m_iDesiredPlayerClass ) ),
@@ -172,6 +173,7 @@ DEFINE_PRED_FIELD( m_bIsTopThree, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( bWatchReady, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_bIsZombie, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_bAirDash, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
+DEFINE_PRED_FIELD( m_bHovering, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_bBlockJump, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_iAirDashCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_flGHookProp, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
@@ -209,7 +211,8 @@ SendPropInt( SENDINFO( bWatchReady ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_bIsZombie ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_nNumHealers ), 5, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_iCritMult ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
-SendPropInt( SENDINFO( m_bAirDash ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
+SendPropBool( SENDINFO( m_bAirDash ) ),
+SendPropBool( SENDINFO( m_bHovering ) ),
 SendPropInt( SENDINFO( m_bBlockJump ), 1, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropInt( SENDINFO( m_iAirDashCount ), 8, SPROP_UNSIGNED | SPROP_CHANGES_OFTEN ),
 SendPropFloat( SENDINFO( m_flGHookProp ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
@@ -246,6 +249,7 @@ CTFPlayerShared::CTFPlayerShared()
 	m_bAirDash = false;
 	m_iAirDashCount = 0,
 	m_bBlockJump = false;
+	m_bHovering = false;
 	m_Hook = NULL;
 	m_flGHookProp = 0.f;
 	m_flStealthNoAttackExpire = 0.0f;
@@ -646,6 +650,13 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		OnAddCritBoosted();
 		break;
 
+	case TF_COND_HALLOWEEN_QUICK_HEAL:
+		AddCond( TF_COND_MEGAHEAL );
+#ifdef GAME_DLL
+		Heal( m_pOuter, 30.0f );
+#endif
+		break;
+
 	case TF_COND_BERSERK:
 		OnAddBerserk();
 		break;
@@ -741,6 +752,13 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 		OnRemoveCritBoosted();
 		break;
 
+	case TF_COND_HALLOWEEN_QUICK_HEAL:
+		RemoveCond( TF_COND_MEGAHEAL );
+#ifdef GAME_DLL
+		StopHealing( m_pOuter );
+#endif
+		break;
+
 	case TF_COND_BERSERK:
 		OnRemoveBerserk();
 		break;
@@ -778,7 +796,14 @@ int CTFPlayerShared::GetMaxBuffedHealth( void )
 {
 	float flBoostMax;
 
-	flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * tf_max_health_boost.GetFloat();
+	float flmultiplier;
+
+	if ( InCond( TF_COND_HALLOWEEN_QUICK_HEAL ) && tf_max_health_boost.GetFloat() <= 2 )
+		flmultiplier = 2;
+	else
+		flmultiplier = tf_max_health_boost.GetFloat();
+
+	flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * flmultiplier;
 
 	int iRoundDown = floor( flBoostMax / 5 );
 	iRoundDown = iRoundDown * 5;
@@ -790,7 +815,14 @@ int CTFPlayerShared::GetMaxBuffedHealthDM( void )
 {
 	float flBoostMax;
 
-	flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * of_dm_max_health_boost.GetFloat();
+	float flmultiplier;
+
+	if ( InCond( TF_COND_HALLOWEEN_QUICK_HEAL ) && of_dm_max_health_boost.GetFloat() <= 2 )
+		flmultiplier = 2;
+	else
+		flmultiplier = of_dm_max_health_boost.GetFloat();
+
+	flBoostMax = m_pOuter->GetPlayerClass()->GetMaxHealth() * flmultiplier;
 
 	int iRoundDown = floor( flBoostMax / 5 );
 	iRoundDown = iRoundDown * 5;
@@ -827,7 +859,8 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 				float flReduction = gpGlobals->frametime;
 
 				// If we're being healed, we reduce bad conditions faster
-				if ( i > TF_COND_HEALTH_BUFF && m_aHealers.Count() > 0 )
+				if ( ( i == TF_COND_BURNING || i == TF_COND_URINE || i == TF_COND_BLEEDING || i == TF_COND_MAD_MILK || i == TF_COND_GAS ) // Add any condition that should be reduced by healing here.
+					&& m_aHealers.Count() > 0 )
 				{
 					flReduction += ( m_aHealers.Count() * flReduction * 4 );
 				}
@@ -858,6 +891,9 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		float fTotalHealAmount = 0.0f;
 		for ( int i = 0; i < m_aHealers.Count(); i++ )
 		{
+			if ( InCond( TF_COND_MEGAHEAL ) ) // if this was added by cond 73, it will only last a single tick, as there is no source for the uber, the cond is removed on ConditionGameRulesThink()
+				flScale *= 3.0f;
+
 			Assert( m_aHealers[i].pPlayer );
 
 			// Dispensers don't heal above 100%
@@ -1050,6 +1086,10 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 		pWeapon->DrainCharge();
 	}
 
+	// Workaround to make condition 73 act like live tf2, blame valve
+	if ( InCond( TF_COND_MEGAHEAL ) )
+		RemoveCond( TF_COND_MEGAHEAL );
+
 	if ( InCondUber() )
 	{
 		bool bRemoveInvul = false;
@@ -1118,6 +1158,33 @@ void CTFPlayerShared::ConditionThink( void )
 			}
 		}
 	}
+#ifdef CLIENT_DLL
+	if( m_pOuter->GetHealth() > GetDefaultHealth() )
+	{
+		if( !m_pOverhealEffect )
+		{
+			char *pTeamEx;
+			switch( m_pOuter->GetTeamNumber() )
+			{
+				case TF_TEAM_RED:
+				pTeamEx = "red";
+				break;
+				case TF_TEAM_BLUE:
+				pTeamEx = "blue";
+				break;
+				default:
+				case TF_TEAM_MERCENARY:
+				pTeamEx = "dm";
+				break;
+			}
+			
+			m_pOverhealEffect = m_pOuter->ParticleProp()->Create( VarArgs("overhealedplayer_%s_pluses", pTeamEx ), PATTACH_ABSORIGIN_FOLLOW );
+			UpdateParticleColor( m_pOverhealEffect );
+		}
+	}
+	else if( m_pOverhealEffect )
+		m_pOuter->ParticleProp()->StopEmission(m_pOverhealEffect);
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -3996,4 +4063,11 @@ const char *CTFPlayer::GetOverrideStepSound( const char *pszBaseStepSoundName )
 	}
 
 	return pszBaseStepSoundName;
+}
+
+void CTFPlayer::OnAirblast( CBaseEntity *pEntity )
+{
+	BaseClass::OnAirblast( pEntity );
+	if( GetActiveTFWeapon() )
+		GetActiveTFWeapon()->OnAirblast( pEntity );
 }

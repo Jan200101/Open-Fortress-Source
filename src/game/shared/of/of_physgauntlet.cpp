@@ -44,7 +44,7 @@
 #include "tf_weaponbase.h"
 #include "vphysics/friction.h"
 #include "debugoverlay_shared.h"
-#include "tf_weaponbase_gun.h"
+#include "tf_weaponbase_melee.h"
 #include "tf_viewmodel.h"
 
 // memdbgon must be the last include file in a .cpp file!!!

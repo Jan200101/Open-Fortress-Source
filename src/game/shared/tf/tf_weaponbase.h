@@ -143,6 +143,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	C_BaseAnimating *GetOwnModel( void );
 #endif
 
+	void		 GetProjectileAirblastSetup( CTFPlayer *pPlayer, Vector vecOffset, Vector *vecSrc, bool bHitTeammates = true );
+
 	virtual void Drop( const Vector &vecVelocity );
 	virtual void Detach();
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo = NULL );
@@ -361,6 +363,9 @@ protected:
 private:
 	CTFWeaponBase( const CTFWeaponBase & );
 };
+
+extern void AirBlastCharacter(CBaseCombatCharacter *pCharacter, CBaseEntity *pEntOwner, const Vector &vec_in);
+extern void AirBlastProjectile(CBaseEntity *pEntity, CBaseEntity *pOwnerEnt, CTFWeaponBase *pWeapon, const Vector &vec_in);
 
 #ifdef GAME_DLL
 typedef CHandle<CTFWeaponBase> WeaponHandle;

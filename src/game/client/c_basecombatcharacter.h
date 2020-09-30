@@ -89,6 +89,10 @@ public:
 	float				GetNextAttack() const { return m_flNextAttack; }
 	void				SetNextAttack( float flWait ) { m_flNextAttack = flWait; }
 
+#ifdef OF_CLIENT_DLL
+	virtual bool	IsDeflectable( void ) { return true; }
+#endif
+	
 	virtual int			BloodColor();
 
 	// Blood color (see BLOOD_COLOR_* macros in baseentity.h)

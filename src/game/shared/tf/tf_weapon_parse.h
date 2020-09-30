@@ -119,12 +119,13 @@ public:
 	bool	m_bUsesCritAnimation;
 	bool	m_bGibOnOverkill;
 	bool	m_bGibOnHeadshot;	
+
 	// Used exclusivley for the Berserk powerup for now so that you don't loose it in gun game
 	bool	m_bNeverStrip;
+
 	// Bomblet functions for the dynamite pack and GIB
 	bool 	m_bDropBomblets;
 	int 	m_iBombletAmount;
-
 	
 	float	m_flBombletTimer;
 	float	m_flBombletDamage;
@@ -133,6 +134,7 @@ public:
 	bool 	m_bBombletEffectTeamColored;
 	char	m_szBombletModel[MAX_WEAPON_STRING];
 	char	m_szBombletTrailParticle[MAX_WEAPON_STRING];
+	
 	// Misc
 	bool 	m_bAllowDrop;
 	float	m_flPickupMultiplier;
@@ -144,6 +146,8 @@ public:
 	bool	m_bNoSniperCharge;
 	bool	m_bAlwaysDrop;
 	bool 	m_bCanSoftZoom;
+	bool	m_bExplosionOnHit;
+	bool	m_bAirblastOnSwing;
 	
 	float	m_flDespawnTime;
 	

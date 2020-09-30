@@ -100,7 +100,6 @@ bool CTFHudWeaponAmmo::ShouldDraw( void )
 	}
 
 	CTFWeaponBase *pWeapon = pPlayer->GetActiveTFWeapon();
-
 	
 	if ( !pWeapon )
 	{

@@ -115,6 +115,7 @@ public:
 
 	int					FindEffect( const char *pEffectName, int nStart = 0 );
 	inline CNewParticleEffect *GetParticleEffectFromIdx( int idx );
+	int					ParticleEffectCount(){ return m_ParticleEffects.Count(); };
 
 private:
 	int					GetParticleAttachment( C_BaseEntity *pEntity, const char *pszAttachmentName, const char *pszParticleName );

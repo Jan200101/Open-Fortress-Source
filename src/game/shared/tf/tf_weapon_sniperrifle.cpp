@@ -151,12 +151,22 @@ void CTFSniperRifle::ResetTimers( void )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFSniperRifle::SetReloadTimer(float flReloadTime)
+{
+	float flSecondary = m_flNextSecondaryAttack;
+	BaseClass::SetReloadTimer(flReloadTime);
+	m_flNextSecondaryAttack = flSecondary;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 bool CTFSniperRifle::Reload( void )
 {
 	// We currently don't reload.
-	return true;
+	return BaseClass::Reload();
 }
 
 //-----------------------------------------------------------------------------
@@ -252,11 +262,11 @@ void CTFSniperRifle::HandleZooms( void )
 			m_flRezoomTime = -1;
 		}
 	}
-	int HoldToZoom = 0;
+	int bHoldToZoom = 0;
 #ifdef GAME_DLL
-		HoldToZoom = pPlayer->IsFakeClient() ? 0 : V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom"));
+		bHoldToZoom = pPlayer->IsFakeClient() ? 0 : V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom"));
 #else
-		HoldToZoom = V_atoi(of_holdtozoom.GetString());
+		bHoldToZoom = V_atoi(of_holdtozoom.GetString());
 #endif	
 
 	if ( ( pPlayer->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime ) )
@@ -268,12 +278,12 @@ void CTFSniperRifle::HandleZooms( void )
 			m_flNextSecondaryAttack = m_flRezoomTime + TF_WEAPON_SNIPERRIFLE_ZOOM_TIME;
 			m_flRezoomTime = -1;
 		}
-		else if ( (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && !pPlayer->m_Shared.InCond(TF_COND_AIMING) || HoldToZoom == 0)
+		else if ( (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && !pPlayer->m_Shared.InCond(TF_COND_AIMING) || bHoldToZoom == 0)
 		{
 			Zoom();
 		}
 	}
-	else if ( (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && pPlayer->m_Shared.InCond(TF_COND_AIMING) && !(pPlayer->m_nButtons & IN_ATTACK2) && HoldToZoom == 1)
+	else if ( (GetWeaponID() != TFC_WEAPON_SNIPER_RIFLE) && pPlayer->m_Shared.InCond(TF_COND_AIMING) && !(pPlayer->m_nButtons & IN_ATTACK2) && bHoldToZoom == 1)
 	{
 		Zoom();
 	}
@@ -292,6 +302,28 @@ void CTFSniperRifle::ItemPostFrame( void )
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 	if ( !pPlayer )
 		return;
+
+	if (UsesClipsForAmmo1())
+	{
+		CheckReload();
+	}
+
+	// -----------------------
+	//  Reload pressed / Clip Empty
+	//  Can only start the Reload Cycle after the firing cycle
+	if (pPlayer->m_nButtons & IN_RELOAD
+		&& m_flNextPrimaryAttack <= gpGlobals->curtime && UsesClipsForAmmo1() && !m_bInReload)
+	{
+		// reload when reload is pressed or if we're loading a barrage, or if no buttons are down and weapon is empty.
+		Reload();
+		m_fFireDuration = 0.0f;
+	}
+
+	// Check for reload singly interrupts.
+	if (m_bReloadsSingly)
+	{
+		ReloadSinglyPostFrame();
+	}
 
 	if ( !CanAttack() )
 	{
@@ -312,14 +344,14 @@ void CTFSniperRifle::ItemPostFrame( void )
 	}
 #endif
 
-	bool HoldToZoom = 0;
+	bool bHoldToZoom = 0;
 #ifdef GAME_DLL
-	HoldToZoom = pPlayer->IsFakeClient() ? 0 : (V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom")) > 0);
+	bHoldToZoom = pPlayer->IsFakeClient() ? 0 : (V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom")) > 0);
 #else
-	HoldToZoom = of_holdtozoom.GetBool();
+	bHoldToZoom = of_holdtozoom.GetBool();
 #endif	
 	float flChargeAfter = m_flNextSecondaryAttack;
-	if ( HoldToZoom )
+	if ( bHoldToZoom )
 	  flChargeAfter = m_flNextPrimaryAttack;
 
 	if ( flChargeAfter <= gpGlobals->curtime )
@@ -499,7 +531,7 @@ void CTFSniperRifle::ZoomOut( void )
 void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 {
 	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
-	if ( ReserveAmmo() <= 0 )
+	if ( ReserveAmmo() <= 0 || ( Clip1() <= 0 && UsesClipsForAmmo1() ) )
 	{
 		HandleFireOnEmpty();
 		return;
@@ -527,7 +559,14 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 	else
 	{
 		// Prevent primary fire preventing zooms
-		m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+	int bHoldToZoom = 0;
+#ifdef GAME_DLL
+		bHoldToZoom = pPlayer->IsFakeClient() ? 0 : V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "of_holdtozoom"));
+#else
+		bHoldToZoom = V_atoi(of_holdtozoom.GetString());
+#endif
+
+		m_flNextSecondaryAttack = bHoldToZoom > 0 ? gpGlobals->curtime : gpGlobals->curtime + GetFireRate();
 	}
 
 	m_flChargedDamage = 0.0f;
@@ -713,10 +752,10 @@ void CTFCSniperRifle::ItemPostFrame(void)
 		return;
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
-	if (!pPlayer)
+	if( !pPlayer )
 		return;
 
-	if (!CanAttack())
+	if( !CanAttack() )
 	{
 		if (IsZoomed())
 		{

@@ -133,7 +133,7 @@ public:
 	virtual	void		GotKilled(){ m_bGotKilled = true; };
 	virtual void		Event_Killed( const CTakeDamageInfo &info );
 	virtual void		PlayerDeathThink( void );
-
+	
 	virtual int			OnTakeDamage( const CTakeDamageInfo &inputInfo );
 	virtual int			OnTakeDamage_Alive( const CTakeDamageInfo &info );
 	void				ApplyDamageKnockback( const CTakeDamageInfo &info, bool noKnockback = false, Vector *dir = NULL );
@@ -215,6 +215,8 @@ public:
 	virtual int			GiveAmmo( int iCount, int iAmmoIndex, bool bSuppressSound = false );
 	int					GetMaxAmmo( int iAmmoIndex, int iClassNumber = -1 );
 
+	virtual void		OnAirblast( CBaseEntity *pEntity );
+	
 	bool				CanAttack( void );
 	
 	virtual void		OnNavAreaChanged( CNavArea *enteredArea, CNavArea *leftArea );

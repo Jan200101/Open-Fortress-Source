@@ -47,8 +47,8 @@ public:
 
 	virtual void	UpdateOnRemove( void );
 
-#ifdef GAME_DLL
 	virtual bool	IsDeflectable( void ) { return true; }
+#ifdef GAME_DLL
 	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 #endif
 
@@ -59,6 +59,7 @@ public:
 	virtual const char *GetTrailParticleName( void );
 	virtual int     DrawModel( int flags );
 	virtual void	Simulate( void );
+	virtual void	SetDormant(bool bDormant);
 #else
 
 	DECLARE_DATADESC();

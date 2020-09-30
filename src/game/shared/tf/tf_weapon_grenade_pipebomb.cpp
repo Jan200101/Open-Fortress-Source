@@ -251,13 +251,19 @@ void CTFGrenadePipebombProjectile::OnDataChanged(DataUpdateType_t updateType)
 
 extern ConVar tf_grenadelauncher_livetime;
 
+void CTFGrenadePipebombProjectile::SetDormant(bool bDormant)
+{
+	BaseClass::SetDormant(bDormant);
+}
+
 void CTFGrenadePipebombProjectile::Simulate( void )
 {
 	BaseClass::Simulate();
 
 	float flTimer = (m_flDetonateTime - m_flSpawnTime) ? (m_flDetonateTime - m_flSpawnTime) : 1.0f;
+
 	if( m_hTimerParticle )
-		m_hTimerParticle->SetControlPoint( RADIUS_CP1, Vector( 1.0f - (( m_flDetonateTime - gpGlobals->curtime ) / flTimer) , 0, 0 ) );
+		m_hTimerParticle->SetControlPoint(RADIUS_CP1, Vector(1.0f - ((m_flDetonateTime - gpGlobals->curtime) / flTimer), 0, 0));
 	
 	if ( m_iType != TF_GL_MODE_REMOTE_DETONATE )
 		return;
