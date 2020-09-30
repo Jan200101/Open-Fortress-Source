@@ -85,7 +85,7 @@ public:
 //-----------------------------------------------------------------------------
 class CTFProjectile_FlakNail : public CTFBaseProjectile
 {
-#define FLAKCANNON_SPEED 2000.0f
+#define FLAKCANNON_SPEED 100.0f
 
 	DECLARE_CLASS(CTFProjectile_FlakNail, CTFBaseProjectile);
 

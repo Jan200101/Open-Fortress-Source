@@ -96,7 +96,7 @@ void CTFFlakCannon::SecondaryAttack(void)
 		m_iReserveAmmo = m_iReserveAmmo - 5;
 		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 
-		if (m_flNextSecondaryAttack > gpGlobals->curtime)
+		if ((m_flNextSecondaryAttack > gpGlobals->curtime) || (m_flNextPrimaryAttack > gpGlobals->curtime))
 			return;
 
 		CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
@@ -112,7 +112,7 @@ void CTFFlakCannon::SecondaryAttack(void)
 	}
 	else
 	{
-		Msg("No, you can't shot, idiot.\n");
+		DevMsg("No, you can't shot, idiot.\n");
 	}
 }
 
