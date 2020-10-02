@@ -138,6 +138,7 @@ CCaptureFlag::CCaptureFlag()
 #ifdef CLIENT_DLL
 	m_pGlowTrailEffect = NULL;
 	m_pPaperTrailEffect = NULL;
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
 #else
 	m_hReturnIcon = NULL;
 #endif	
@@ -190,6 +191,7 @@ void CCaptureFlag::OnPreDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 void CCaptureFlag::OnDataChanged( DataUpdateType_t updateType )
 {
+	ClientThink();
 	if ( m_nOldFlagStatus != m_nFlagStatus )
 	{
 		IGameEvent *pEvent = gameeventmanager->CreateEvent( "flagstatus_update" );
@@ -1224,6 +1226,34 @@ int CCaptureFlag::UpdateTransmitState()
 
 #else
 
+void CCaptureFlag::ClientThink()
+{
+	m_bGlowEnabled = true;
+	UpdateGlowEffect();
+	BaseClass::ClientThink();
+
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CCaptureFlag::GetGlowEffectColor( float *r, float *g, float *b )
+{
+	switch ( GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			*r = 0.62; *g = 0.21; *b = 0.13;
+			break;
+		case TF_TEAM_BLUE:
+			*r = 0.3; *g = 0.42; *b = 0.5;
+			break;
+		default:
+			*r = 0.76; *g = 0.76; *b = 0.76;
+			break;
+	}
+}
+	
 float CCaptureFlag::GetReturnProgress()
 {
 	float flEventTime = max( m_flResetTime.m_Value, m_flNeutralTime.m_Value );

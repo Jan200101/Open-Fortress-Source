@@ -181,6 +181,9 @@ public:
 
 #else // CLIENT DLL Functions
 
+	virtual void 	ClientThink();
+	virtual void	GetGlowEffectColor( float *r, float *g, float *b );
+
 	virtual const char	*GetIDString( void ) { return "entity_capture_flag"; };
 
 	virtual void	OnPreDataChanged( DataUpdateType_t updateType );
@@ -264,6 +267,7 @@ private:
 	IMaterial	*m_pReturnProgressMaterial_Full;		
 
 	int			m_nOldFlagStatus;
+	CGlowObject	*m_pGlowEffect;
 
 #endif
 
