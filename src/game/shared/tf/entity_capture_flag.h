@@ -152,6 +152,7 @@ public:
 // Game DLL Functions
 #ifdef GAME_DLL
 	virtual void	Activate( void );
+	virtual void	SetParent( CBaseEntity* pNewParent, int iAttachment = -1 );
 
 	// Input handlers
 	void			InputEnable( inputdata_t &inputdata );
@@ -242,6 +243,10 @@ private:
 #ifdef GAME_DLL
 	Vector			m_vecResetPos;		// The position the flag should respawn (reset) at.
 	QAngle			m_vecResetAng;		// The angle the flag should respawn (reset) at.
+	Vector			m_vecResetPosOffset;
+	QAngle			m_vecResetAngOffset;
+	
+	EHANDLE			m_pOriginParent;
 
 	COutputEvent	m_outputOnReturn;	// Fired when the flag is returned via timer.
 	COutputEvent	m_outputOnPickUp;	// Fired when the flag is picked up.

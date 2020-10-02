@@ -294,6 +294,21 @@ void CCaptureFlag::Activate( void )
 	m_nSkin = ( GetTeamNumber() == TEAM_UNASSIGNED ) ? 2 : (GetTeamNumber() - 2);
 	
 }
+
+void CCaptureFlag::SetParent( CBaseEntity *pParentEntity, int iAttachment )
+{
+	// Kind of a hack, but, whenver we parent ourselves, instead of returning to a set position
+	// We return to our parent's position + our initial offset to it
+	if( pParentEntity && !pParentEntity->IsPlayer() )
+	{
+		m_vecResetPosOffset = pParentEntity->GetAbsOrigin() - GetAbsOrigin();
+		m_vecResetAngOffset = pParentEntity->GetAbsAngles() - GetAbsAngles();
+		m_pOriginParent = pParentEntity;
+	}
+
+	BaseClass::SetParent( pParentEntity, iAttachment );
+}
+
 #endif
 
 
@@ -304,8 +319,14 @@ void CCaptureFlag::Reset( void )
 {
 #ifdef GAME_DLL
 	// Set the flag position.
-	SetAbsOrigin( m_vecResetPos );
-	SetAbsAngles( m_vecResetAng );
+	if( m_pOriginParent )
+	{
+		SetAbsOrigin( m_pOriginParent->GetAbsOrigin() - m_vecResetPosOffset );
+		SetAbsAngles( m_pOriginParent->GetAbsAngles() - m_vecResetAngOffset );
+	}
+	else
+		SetAbsOrigin( m_vecResetPos );
+		SetAbsAngles( m_vecResetAng );
 
 	// No longer dropped, if it was.
 	SetFlagStatus( TF_FLAGINFO_NONE );
@@ -322,6 +343,10 @@ void CCaptureFlag::Reset( void )
 	}
 
 	SetMoveType( MOVETYPE_NONE );
+	if( m_pOriginParent )
+	{
+		SetParent( m_pOriginParent );
+	}
 #endif 
 }
 

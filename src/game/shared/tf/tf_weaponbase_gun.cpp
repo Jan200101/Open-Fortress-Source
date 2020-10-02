@@ -615,6 +615,14 @@ CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
 	return NULL;
 }
 
+Vector vecQuadOffset[] =
+{
+	Vector( 0, 0,-8 ),
+	Vector( 0,-8,-8 ),
+	Vector( 0,-8, 0 ),
+	Vector( 0, 0, 0 ),
+};
+
 //-----------------------------------------------------------------------------
 // Purpose: Fire a rocket
 //-----------------------------------------------------------------------------
@@ -642,6 +650,9 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 		vecOffset.y = 0.0f; // left right
 		vecOffset.z = -8.0f; //up down
 	}
+	
+	if( GetWeaponID() == TF_WEAPON_SUPER_ROCKETLAUNCHER )
+		vecOffset += vecQuadOffset[Clip1() - (Clip1() / 5) - 1];
 	
 	GetProjectileFireSetup( pPlayer, vecOffset, &vecSrc, &angForward, false );
 
