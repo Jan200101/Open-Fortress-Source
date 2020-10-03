@@ -2657,37 +2657,66 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 	return false;
 }
 
-#define SPAWNPOINT_ITERATIONS 5
+// Really expensive function that gets if one spawnpoint is farther away from any all players than the other
+int DistanceToPlayerSort(CBaseEntity* const *p1, CBaseEntity* const *p2)
+{
+	// Look, i know this is hacky and that we should rather set these on the first loop but cmon man i dont got all day - Kay
+	float flClosestDistance1 = 99999999999999999.0f;
+	float flClosestDistance2 = 99999999999999999.0f;
+
+	for (int i = 1; i <= gpGlobals->maxClients; i++)
+	{
+		CBasePlayer *pPlayer = UTIL_PlayerByIndex(i);
+
+		if( !pPlayer )
+			continue;
+
+		if ( !pPlayer->IsAlive() )
+			continue;
+
+		if( pPlayer->GetTeamNumber() < TF_TEAM_RED )
+			continue;
+
+		float flTemp = pPlayer->GetAbsOrigin().DistToSqr((*p1)->GetAbsOrigin());
+		if( flClosestDistance1 > flTemp )
+			flClosestDistance1 = flTemp;
+
+		flTemp = pPlayer->GetAbsOrigin().DistToSqr((*p2)->GetAbsOrigin());
+
+		if( flClosestDistance2 > flTemp )
+			flClosestDistance2 = flTemp;
+	}
+
+	// check the priority
+	if( flClosestDistance2 > flClosestDistance1 )
+	{
+		return 1;
+	}
+
+	return -1;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Spawning for deathmatch
 //-----------------------------------------------------------------------------
 bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSpot )
 {
-	// Get an initial spawn point.
-	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-	if ( !pSpot )
-	{
-		// Sometimes the first spot can be NULL????
-		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-	}
-
-	// Randomize the spawnpoint a bit (not sure if 5 is a good value here)
-	for ( int i = random->RandomInt( 0, SPAWNPOINT_ITERATIONS ); i < ( SPAWNPOINT_ITERATIONS + 1 ); i++ )
-	{
-		pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
-	}
-
 	// First we try to find a spawn point that is fully clear. If that fails,
-	// we look for a spawnpoint that's clear except for another players. We
+	// we look for a spawnpoint that's clear except for other players. We
 	// don't collide with our team members, so we should be fine.
 
 	// Find furthest spawn point
 	CBaseEntity *pFirstSpot = pSpot;
-	// The furthest point
-	float flFurthest = 0.0f;
-	// Distance to such point
 	CBaseEntity *pFurthest = NULL;
+
+	CUtlVector<CBaseEntity*> hSpawnPoints;
+	
+	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
+
+	// Check the distance from all other players
+
+	// Are players in the map?
+	bool bPlayers = !!UTIL_PlayerByIndex(1);
 
 	do
 	{
@@ -2707,43 +2736,15 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 				continue;
 			}
 
-			// Check the distance from all other players
-
-			// Are players in the map?
-			bool bPlayers = false;
-
-			float flClosestPlayerDistance = FLT_MAX;
-
-			
-			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
-			{
-				CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-
-				// Loop again if our guy is someone who isn't a player, who isn't alive, who is themselves or on unassigned/spec team
-				if ( !pPlayer || !pPlayer->IsAlive() || pPlayer == this || pPlayer->GetTeamNumber() < TF_TEAM_RED )
-					continue;
-
-				bPlayers = true;
-
-				float flDistanceSqr = ( pPlayer->GetAbsOrigin() - pSpot->GetAbsOrigin() ).LengthSqr();
-
-				if ( flDistanceSqr < flClosestPlayerDistance )
-				{
-					flClosestPlayerDistance = flDistanceSqr;
-				}
-			}
-
 			// No players then just pick one
 			if ( !bPlayers )
 			{
 				pFurthest = pSpot;
 				break;
 			}
-
-			if ( flClosestPlayerDistance > flFurthest )
+			else
 			{
-				flFurthest = flClosestPlayerDistance;
-				pFurthest = pSpot;
+				hSpawnPoints.AddToTail(pSpot);
 			}
 		}
 
@@ -2753,6 +2754,19 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 	// Continue until a valid spawn point is found or we hit the start.
 	while ( pSpot != pFirstSpot );
 
+	if( bPlayers && hSpawnPoints.Count() )
+	{
+		// Sort to get the farthest spawn points
+		hSpawnPoints.Sort(DistanceToPlayerSort);
+
+		// Get one of the 3 farthest spawn points
+		int iRand = random->RandomInt(0, min(2, hSpawnPoints.Count()));
+
+		pFurthest = hSpawnPoints[iRand];
+	}
+	else
+		pFurthest = pFirstSpot;
+
 	if ( pFurthest )
 	{
 		pSpot = pFurthest;
@@ -2760,6 +2774,8 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 		if ( pSpot )
 		{
 			// zombies don't telefrag
+
+			// Why not? - Kay
 			if ( !m_Shared.IsZombie() )
 			{
 				// telefragging
@@ -2774,9 +2790,12 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 					CBaseEntity *ent = pList[ i ];
 					if ( ent != this && ( ent->GetTeamNumber() != GetTeamNumber() || ent->GetTeamNumber() == TF_TEAM_MERCENARY ) )
 					{
+						ent->m_iHealth = 0;
 						// special damage type to bypass uber or spawn protection in DM
-						CTakeDamageInfo info( pSpot, this, 1000, DMG_ACID | DMG_BLAST, TF_DMG_CUSTOM_TELEFRAG );
-						ent->TakeDamage( info );
+						CTakeDamageInfo info(pSpot, this, 0, DMG_PREVENT_PHYSICS_FORCE | (DMG_BLAST | DMG_ALWAYSGIB), TF_DMG_CUSTOM_TELEFRAG);
+						ent->Event_Killed(info);
+						if( ent->IsPlayer() )
+							ToBasePlayer(ent)->Event_Dying(info);
 					}
 				}	
 			}

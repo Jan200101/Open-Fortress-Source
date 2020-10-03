@@ -193,7 +193,7 @@ void CTFClaws::ItemPostFrame(void)
 
 	if (pOwner->IsAlive())
 	{
-		if (pOwner->m_Shared.IsLunging())
+		if( pOwner->m_Shared.IsLunging() )
 		{
 			trace_t trace;
 			if (DoSwingTrace(trace) && trace.m_pEnt->IsPlayer())
@@ -206,19 +206,19 @@ void CTFClaws::ItemPostFrame(void)
 				m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
 			}
 		}
-		else if ((pOwner->m_nButtons & IN_ATTACK) && m_flNextPrimaryAttack < gpGlobals->curtime)
-		{
-			PrimaryAttack();
-			m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
-		}
 	}
 
-	// Check for smack.	
-	if ((m_flSmackTime > 0.0f && gpGlobals->curtime > m_flSmackTime))
-	{
-		Smack();
-		m_flSmackTime = -1.0f;
-	}
+	BaseClass::ItemPostFrame();
+}
 
-	ShieldChargeThink();
+void CTFClaws::PrimaryAttack()
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetPlayerOwner());
+	if( !pOwner )
+		return;
+
+	if( pOwner->m_Shared.IsLunging() )
+		return;
+	
+	BaseClass::PrimaryAttack();
 }

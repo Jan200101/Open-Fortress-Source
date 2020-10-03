@@ -4323,33 +4323,19 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 // Purpose: Checks to see if the player is on the correct team and whether or
 //          not the spawn point is available.
 //-----------------------------------------------------------------------------
-bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers )
+bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, bool bIgnorePlayers, bool bForgiving )
 {
-	// WTFWTF 
+	CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
+	if( !pTFPlayer )
+		return false;
 
-    // zombies can spawn everywhere
-	if ( TFGameRules()->IsInfGamemode() && pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
-	{
-	}
-	else if ( pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
-	{
-		// some fools assigned teampoints to spectator team so i have to check this too
-		if ( ( pSpot->GetTeamNumber() < FIRST_GAME_TEAM || pSpot->GetTeamNumber() == TF_TEAM_MERCENARY ) && ( TFGameRules()->IsFreeRoam() && TFGameRules()->IsDMGamemode() ) )
-		{
-		}
-		else
-		{
-			// Hack: DM maps are supported in infection, but the spawnpoints have no teams assigned
-			// Therefore just allow every spawnpoint if the map is prefixed with dm_ ...
-			if ( ( TFGameRules()->IsInfGamemode() && TFGameRules()->IsFreeRoam() ) )
-			{
-			}
-			else
-			{
-				return false;
-			}
-		}
-	}
+	if(	!pTFPlayer->m_Shared.IsZombie() &&	// Zombies can spawn anywhere
+		pSpot->GetTeamNumber() != TEAM_UNASSIGNED && 	// Neutral spawn points can be used by anyone
+		pSpot->GetTeamNumber() != TEAM_SPECTATOR &&  	// Neutral spawn points can be used by anyone
+		pSpot->GetTeamNumber() != TEAM_ANY &&        	// Neutral spawn points can be used by anyone
+		pSpot->GetTeamNumber() != TF_TEAM_MERCENARY &&  // Neutral spawn points can be used by anyone
+		pSpot->GetTeamNumber() != pPlayer->GetTeamNumber() )
+		return false;
 
 	if ( !pSpot->IsTriggered( pPlayer ) )
 		return false;
@@ -4364,12 +4350,10 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		// therefore, avoid spawnpoints that are flagged as Loser or Winner for the comp end screen
 		if ( pCTFSpawn->GetMatchSummary() >= 1 )
 			return false;
-		
-		CTFPlayer *pTFPlayer = ToTFPlayer( pPlayer );
 
 		int iClassIndex = pTFPlayer->GetPlayerClass()->GetClassIndex();
 
-		switch (iClassIndex)
+		switch( iClassIndex )
 		{
 			case TF_CLASS_UNDEFINED:
 				Warning( "CTFGameRules::IsSpawnPointValid: Player has undefined class" );
@@ -4441,6 +4425,9 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		Vector vTestMaxs = pSpot->GetAbsOrigin() + maxs;
 		return UTIL_IsSpaceEmpty( pPlayer, vTestMins, vTestMaxs );
 	}
+
+	if( bForgiving )
+		return true;
 
 	trace_t trace;
 	UTIL_TraceHull( pSpot->GetAbsOrigin(), pSpot->GetAbsOrigin(), mins, maxs, MASK_PLAYERSOLID, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &trace );

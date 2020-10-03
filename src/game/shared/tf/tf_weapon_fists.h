@@ -78,7 +78,7 @@ public:
 	CTFClaws() {}
 	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_CLAWS; }
 	virtual void		ItemPostFrame(void);
-	bool				CanPrimaryAttack(void) { return m_flNextPrimaryAttack < gpGlobals->curtime; }
+	virtual void		PrimaryAttack(void);
 
 private:
 

@@ -2359,7 +2359,7 @@ bool CTFPlayerShared::DoLungeCheck( void )
 		if ( !pWeapon )
 			return false;
 
-		if ( (m_pOuter->m_nButtons & IN_ATTACK2) && pWeapon->CanPrimaryAttack() )
+		if ( (m_pOuter->m_nButtons & IN_ATTACK2) )
 		{
 			if ( m_flNextLungeTime <= gpGlobals->curtime )
 			{
