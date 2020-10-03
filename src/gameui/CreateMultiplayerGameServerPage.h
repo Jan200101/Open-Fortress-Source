@@ -30,7 +30,7 @@ public:
 	bool IsRandomMapSelected();
 	const char *GetMapName();
 
-	// CS Bots
+	// OF Bots
 	void EnableBots( KeyValues *data );
 	int GetBotQuota( void );
 	bool GetBotsEnabled( void );
@@ -45,7 +45,6 @@ private:
 
 	vgui::ComboBox *m_pMapList;
 	vgui::CheckButton *m_pEnableBotsCheck;
-	CCvarToggleCheckButton *m_pEnableTutorCheck;
 	KeyValues *m_pSavedData;
 
 	enum { DATA_STR_LENGTH = 64 };
