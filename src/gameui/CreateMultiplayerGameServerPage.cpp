@@ -73,11 +73,11 @@ void CCreateMultiplayerGameServerPage::EnableBots( KeyValues *data )
 {
 	m_pSavedData = data;
 
-	int quota = data->GetInt( "bot_quota", 0 );
+	int quota = data->GetInt( "tf_bot_quota", 0 );
 	SetControlInt( "BotQuotaCombo", quota );
 	m_pEnableBotsCheck->SetSelected( (quota > 0) );
 
-	int difficulty = data->GetInt( "bot_difficulty", 0 );
+	int difficulty = data->GetInt( "tf_bot_difficulty", 0 );
 	difficulty = MAX( difficulty, 0 );
 	difficulty = MIN( 3, difficulty );
 
@@ -105,9 +105,9 @@ void CCreateMultiplayerGameServerPage::OnApplyChanges()
 		{
 			quota = 0;
 		}
-		m_pSavedData->SetInt( "bot_quota", quota );
-		ConVarRef bot_quota( "bot_quota" );
-		bot_quota.SetValue( quota );
+		m_pSavedData->SetInt( "tf_bot_quota", quota );
+		ConVarRef tf_bot_quota("tf_bot_quota");
+		tf_bot_quota.SetValue(quota);
 
 		int difficulty = 0;
 		for ( int i=0; i<4; ++i )
@@ -124,9 +124,9 @@ void CCreateMultiplayerGameServerPage::OnApplyChanges()
 				}
 			}
 		}
-		m_pSavedData->SetInt( "bot_difficulty", difficulty );
-		ConVarRef bot_difficulty( "bot_difficulty" );
-		bot_difficulty.SetValue( difficulty );
+		m_pSavedData->SetInt( "tf_bot_difficulty", difficulty );
+		ConVarRef tf_bot_difficulty("tf_bot_difficulty");
+		tf_bot_difficulty.SetValue(difficulty);
 	}
 }
 

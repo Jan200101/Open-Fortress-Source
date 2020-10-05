@@ -70,8 +70,8 @@ private:
 	EHANDLE			m_hEntity;
 
 	CTFArrowPanel	*m_pArrow;
-	CTFImagePanel	*m_pStatusIcon;
-	CTFImagePanel	*m_pBriefcase;
+	vgui::ImagePanel		*m_pStatusIcon;
+	vgui::ImagePanel		*m_pBriefcase;
 };
 
 
@@ -101,19 +101,19 @@ private:
 
 private:
 
-	CTFImagePanel			*m_pCarriedImage;
+	vgui::ImagePanel		*m_pCarriedImage;
 
 	CExLabel				*m_pPlayingTo;
-	CTFImagePanel			*m_pPlayingToBG;
+	vgui::ImagePanel		*m_pPlayingToBG;
 
 	CTFFlagStatus			*m_pRedFlag;
 	CTFFlagStatus			*m_pBlueFlag;
-	CTFFlagStatus			*m_pMercenaryFlag;
-	CTFFlagStatus			*m_pNeutralFlag;
 	CTFArrowPanel			*m_pCapturePoint;
 
 	bool					m_bFlagAnimationPlayed;
 	bool					m_bCarryingFlag;
+	
+	int						m_iGameMode;
 
 	vgui::ImagePanel		*m_pSpecCarriedImage;
 };

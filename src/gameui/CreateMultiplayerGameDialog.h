@@ -15,7 +15,10 @@
 
 class CCreateMultiplayerGameServerPage;
 class CCreateMultiplayerGameGameplayPage;
-class CCreateMultiplayerGameBotPage;
+class CCreateMultiplayerGameMovementPage;
+class CCreateMultiplayerGameWeaponsPage;
+class CCreateMultiplayerGameMiscPage;
+
 
 //-----------------------------------------------------------------------------
 // Purpose: dialog for launching a listenserver
@@ -32,9 +35,11 @@ protected:
 	virtual bool OnOK(bool applyOnly);
 
 private:
-	CCreateMultiplayerGameServerPage *m_pServerPage;
-	CCreateMultiplayerGameGameplayPage *m_pGameplayPage;
-	CCreateMultiplayerGameBotPage *m_pBotPage;
+	CCreateMultiplayerGameServerPage	*m_pServerPage;
+	CCreateMultiplayerGameGameplayPage	*m_pGameplayPage;
+	CCreateMultiplayerGameMovementPage	*m_pMovementPage;
+	CCreateMultiplayerGameWeaponsPage	*m_pWeaponsPage;
+	CCreateMultiplayerGameMiscPage		*m_pMiscPage;
 
 	bool m_bBotsEnabled;
 

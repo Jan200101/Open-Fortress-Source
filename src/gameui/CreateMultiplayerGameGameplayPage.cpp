@@ -76,7 +76,6 @@ int CCreateMultiplayerGameGameplayPage::GetMaxPlayers()
 {
 	return atoi(GetValue("maxplayers", "32"));
 }
-
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

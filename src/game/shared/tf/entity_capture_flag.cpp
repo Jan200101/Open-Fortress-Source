@@ -138,6 +138,7 @@ CCaptureFlag::CCaptureFlag()
 #ifdef CLIENT_DLL
 	m_pGlowTrailEffect = NULL;
 	m_pPaperTrailEffect = NULL;
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
 #else
 	m_hReturnIcon = NULL;
 #endif	
@@ -190,6 +191,7 @@ void CCaptureFlag::OnPreDataChanged( DataUpdateType_t updateType )
 //-----------------------------------------------------------------------------
 void CCaptureFlag::OnDataChanged( DataUpdateType_t updateType )
 {
+	ClientThink();
 	if ( m_nOldFlagStatus != m_nFlagStatus )
 	{
 		IGameEvent *pEvent = gameeventmanager->CreateEvent( "flagstatus_update" );
@@ -294,6 +296,21 @@ void CCaptureFlag::Activate( void )
 	m_nSkin = ( GetTeamNumber() == TEAM_UNASSIGNED ) ? 2 : (GetTeamNumber() - 2);
 	
 }
+
+void CCaptureFlag::SetParent( CBaseEntity *pParentEntity, int iAttachment )
+{
+	// Kind of a hack, but, whenver we parent ourselves, instead of returning to a set position
+	// We return to our parent's position + our initial offset to it
+	if( pParentEntity && !pParentEntity->IsPlayer() )
+	{
+		m_vecResetPosOffset = pParentEntity->GetAbsOrigin() - GetAbsOrigin();
+		m_vecResetAngOffset = pParentEntity->GetAbsAngles() - GetAbsAngles();
+		m_pOriginParent = pParentEntity;
+	}
+
+	BaseClass::SetParent( pParentEntity, iAttachment );
+}
+
 #endif
 
 
@@ -304,8 +321,14 @@ void CCaptureFlag::Reset( void )
 {
 #ifdef GAME_DLL
 	// Set the flag position.
-	SetAbsOrigin( m_vecResetPos );
-	SetAbsAngles( m_vecResetAng );
+	if( m_pOriginParent )
+	{
+		SetAbsOrigin( m_pOriginParent->GetAbsOrigin() - m_vecResetPosOffset );
+		SetAbsAngles( m_pOriginParent->GetAbsAngles() - m_vecResetAngOffset );
+	}
+	else
+		SetAbsOrigin( m_vecResetPos );
+		SetAbsAngles( m_vecResetAng );
 
 	// No longer dropped, if it was.
 	SetFlagStatus( TF_FLAGINFO_NONE );
@@ -322,6 +345,10 @@ void CCaptureFlag::Reset( void )
 	}
 
 	SetMoveType( MOVETYPE_NONE );
+	if( m_pOriginParent )
+	{
+		SetParent( m_pOriginParent );
+	}
 #endif 
 }
 
@@ -1199,6 +1226,34 @@ int CCaptureFlag::UpdateTransmitState()
 
 #else
 
+void CCaptureFlag::ClientThink()
+{
+	m_bGlowEnabled = true;
+	UpdateGlowEffect();
+	BaseClass::ClientThink();
+
+	SetNextClientThink( CLIENT_THINK_ALWAYS );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CCaptureFlag::GetGlowEffectColor( float *r, float *g, float *b )
+{
+	switch ( GetTeamNumber() )
+	{
+		case TF_TEAM_RED:
+			*r = 0.62; *g = 0.21; *b = 0.13;
+			break;
+		case TF_TEAM_BLUE:
+			*r = 0.3; *g = 0.42; *b = 0.5;
+			break;
+		default:
+			*r = 0.76; *g = 0.76; *b = 0.76;
+			break;
+	}
+}
+	
 float CCaptureFlag::GetReturnProgress()
 {
 	float flEventTime = max( m_flResetTime.m_Value, m_flNeutralTime.m_Value );

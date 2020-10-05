@@ -8,7 +8,9 @@
 #include "CreateMultiplayerGameDialog.h"
 #include "CreateMultiplayerGameServerPage.h"
 #include "CreateMultiplayerGameGameplayPage.h"
-#include "CreateMultiplayerGameBotPage.h"
+#include "CreateMultiplayerGameMovementPage.h"
+#include "CreateMultiplayerGameWeaponsPage.h"
+#include "CreateMultiplayerGameMiscPage.h"
 
 #include "EngineInterface.h"
 #include "ModInfo.h"
@@ -32,7 +34,6 @@ extern ConVar ui_scaling;
 //-----------------------------------------------------------------------------
 CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui::Panel *parent) : PropertyDialog(parent, "CreateMultiplayerGameDialog")
 {
-	m_bBotsEnabled = false;
 	SetProportional( ui_scaling.GetBool() );
 	SetDeleteSelfOnClose( true );
 	SetSize(420, 516);
@@ -41,17 +42,18 @@ CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui::Panel *parent) 
 	SetTitle("#GameUI_CreateServer", true);
 	SetOKButtonText("#GameUI_Start");
 
-	if (!stricmp( ModInfo().GetGameName(), "Counter-Strike Source" ))
-	{
-		m_bBotsEnabled = true;
-	}
-
 	m_pServerPage = new CCreateMultiplayerGameServerPage(this, "ServerPage");
 	m_pGameplayPage = new CCreateMultiplayerGameGameplayPage(this, "GameplayPage");
-	m_pBotPage = NULL;
+	m_pMovementPage = new CCreateMultiplayerGameMovementPage(this, "MovementPage");
+	m_pWeaponsPage = new CCreateMultiplayerGameWeaponsPage(this, "WeaponsPage");
+	m_pMiscPage = new CCreateMultiplayerGameMiscPage(this, "MiscPage");
+
 
 	AddPage(m_pServerPage, "#GameUI_Server");
 	AddPage(m_pGameplayPage, "#GameUI_Game");
+	AddPage(m_pMovementPage, "#GameUI_Movement");
+	AddPage(m_pWeaponsPage, "#GameUI_Weapons");
+	AddPage(m_pMiscPage, "#GameUI_Misc");
 
 	// create KeyValues object to load/save config options
 
@@ -73,15 +75,7 @@ CCreateMultiplayerGameDialog::CCreateMultiplayerGameDialog(vgui::Panel *parent) 
 #else
 	m_pSavedData = NULL;
 #endif
-
-	if ( m_bBotsEnabled )
-	{
-		// add a page of advanced bot controls
-		// NOTE: These controls will use the bot keys to initialize their values
-		m_pBotPage = new CCreateMultiplayerGameBotPage( this, "BotPage", m_pSavedData );
-		AddPage( m_pBotPage, "#GameUI_CPUPlayerOptions" );
-		m_pServerPage->EnableBots( m_pSavedData );
-	}
+	m_pServerPage->EnableBots( m_pSavedData );
 }
 
 //-----------------------------------------------------------------------------
