@@ -163,8 +163,11 @@ public:
 	float 	m_flSpeedReduction;
 	//Weapon Speed Reduction
 	float 	m_flWeaponSpeedReduction;
-	// Mag
 
+	//Weapon Self Knockbac
+	float m_flSelfKnockBack;
+
+	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function
 	bool    m_bDropsMag;

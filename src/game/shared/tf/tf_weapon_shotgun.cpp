@@ -52,6 +52,7 @@ CREATE_SIMPLE_WEAPON_TABLE( TFSuperShotgun, tf_weapon_supershotgun )
 CREATE_SIMPLE_WEAPON_TABLE( TFScatterGun, tf_weapon_scattergun )
 CREATE_SIMPLE_WEAPON_TABLE( TFCShotgunSB, tfc_weapon_shotgun_sb )
 CREATE_SIMPLE_WEAPON_TABLE( TFCShotgunDB, tfc_weapon_shotgun_db )
+CREATE_SIMPLE_WEAPON_TABLE( TFLeverAction, tf_weapon_lever_action)
 
 //=============================================================================
 //

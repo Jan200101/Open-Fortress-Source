@@ -355,6 +355,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flEffectDuration = pKeyValuesData->GetFloat("EffectDuration", 0.0f);
 	m_flWeaponSpeedReduction = pKeyValuesData->GetFloat("WeaponSpeedReduction", 0.0f);
 	m_flSpeedReduction = pKeyValuesData->GetFloat("SpeedReduction", 0.0f);
+	m_flSelfKnockBack = pKeyValuesData->GetFloat("SelfKnockBack", 0.0f);
 
 	m_flDespawnTime	= pKeyValuesData->GetFloat( "DespawnTime", 30.0f );
 

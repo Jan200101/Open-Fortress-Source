@@ -110,10 +110,6 @@ void CTFFlakCannon::SecondaryAttack(void)
 		m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;
 		m_flNextPrimaryAttack = gpGlobals->curtime + flFiringInterval;
 	}
-	else
-	{
-		DevMsg("No, you can't shot, idiot.\n");
-	}
 }
 
 //=============================================================================

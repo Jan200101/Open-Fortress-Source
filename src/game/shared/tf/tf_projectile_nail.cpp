@@ -437,7 +437,16 @@ CTFProjectile_FlakNail::~CTFProjectile_FlakNail()
 //-----------------------------------------------------------------------------
 CTFProjectile_FlakNail *CTFProjectile_FlakNail::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, int bCritical)
 {
-	return static_cast<CTFProjectile_FlakNail*>(CTFBaseProjectile::Create("tf_projectile_flaknail", vecOrigin, vecAngles, pOwner, CTFProjectile_FlakNail::GetInitialVelocity(), g_sModelIndexTranq, FLAKNAIL_DISPATCH_EFFECT, pScorer, bCritical));
+	//return static_cast<CTFProjectile_FlakNail*>(CTFBaseProjectile::Create("tf_projectile_flaknail", vecOrigin, vecAngles, pOwner, CTFProjectile_FlakNail::GetInitialVelocity(), g_sModelIndexTranq, FLAKNAIL_DISPATCH_EFFECT, pScorer, bCritical));
+	CTFProjectile_FlakNail *pFlakNail = static_cast<CTFProjectile_FlakNail*>(CTFBaseProjectile::Create("tf_projectile_flaknail", vecOrigin, vecAngles, pOwner, CTFProjectile_FlakNail::GetInitialVelocity(), g_sModelIndexTranq, FLAKNAIL_DISPATCH_EFFECT, pScorer, bCritical));
+	if (!pFlakNail)
+		return NULL;
+
+	pFlakNail->SetMoveType(MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM);
+
+	pFlakNail->RemoveEffects(EF_NODRAW);
+
+	return pFlakNail;
 }
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -488,10 +497,10 @@ void CTFProjectile_FlakNail::ProjectileTouch(CBaseEntity *pOther)
 			Vector vecAbsVelocity = GetAbsVelocity();
 
 			//do the bounce
-			float backoff = DotProduct(vecAbsVelocity, pTrace->plane.normal) * 2.0f;
+			float backoff = DotProduct(vecAbsVelocity, pTrace->plane.normal);
 			Vector change = pTrace->plane.normal * backoff;
 			vecAbsVelocity -= change;
-			vecAbsVelocity *= GetElasticity();
+			vecAbsVelocity *= 0.9f;
 			return;
 		}
 		else

@@ -401,6 +401,7 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	iDefaultClip2 = 0;
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	iMaxReserveAmmo = 0;
+	iAmmoPerReload = 0;
 	iDefaultReserveAmmo = 0;
 #endif
 	iWeight = 0;
@@ -476,6 +477,7 @@ void FileWeaponInfo_t::Parse( KeyValues *pKeyValuesData, const char *szWeaponNam
 	iDefaultClip2 = pKeyValuesData->GetInt( "default_clip2", iMaxClip2 );		// amount of secondary ammo placed in the secondary clip when it's picked up
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	iMaxReserveAmmo = pKeyValuesData->GetInt( "MaxAmmo", WEAPON_NOCLIP );	
+	iAmmoPerReload = pKeyValuesData->GetInt("AmmoPerReload", 1);
 	iDefaultReserveAmmo = pKeyValuesData->GetInt( "DefaultAmmo", iMaxReserveAmmo );
 #endif
 	iWeight = pKeyValuesData->GetInt( "weight", 0 );
