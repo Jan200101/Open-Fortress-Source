@@ -80,42 +80,5 @@ public:
 	static float	GetInitialVelocity(void) { return 1000.0; }
 };
 
-//-----------------------------------------------------------------------------
-// Purpose: Flak Cannon projectile 
-//-----------------------------------------------------------------------------
-class CTFProjectile_FlakNail : public CTFBaseProjectile
-{
-#define FLAKCANNON_SPEED 500.0f
-
-	DECLARE_CLASS(CTFProjectile_FlakNail, CTFBaseProjectile);
-
-public:
-
-	CTFProjectile_FlakNail();
-	~CTFProjectile_FlakNail();
-
-	// Creation.
-	static CTFProjectile_FlakNail *Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, int bCritical = false);
-
-	virtual const char *GetProjectileModelName(void);
-	virtual float GetGravity(void);
-	void BounceSound(const short data);
-
-#ifdef GAME_DLL
-	virtual void ProjectileTouch(CBaseEntity *pOther);
-#endif
-	
-	static float	GetInitialVelocity(void) { return FLAKCANNON_SPEED; }
-
-private:
-	QAngle	m_rotationVector;
-	float	m_flLastBounce;
-	int		m_iOldWaterLevel;
-
-	char	szImpactHard[64];
-	char	szImpactSoft[64];
-	int		m_INailBounce;
-};
-
 
 #endif	//TF_PROJECTILE_NAIL_H

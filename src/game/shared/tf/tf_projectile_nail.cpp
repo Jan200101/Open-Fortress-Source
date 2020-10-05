@@ -148,7 +148,10 @@ CTFProjectile_Nail::~CTFProjectile_Nail()
 CTFProjectile_Nail *CTFProjectile_Nail::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, int bCritical)
 {
 	CTFProjectile_Nail *pNail = static_cast<CTFProjectile_Nail*>(CTFBaseProjectile::Create("tf_projectile_nail", vecOrigin, vecAngles, pOwner, CTFProjectile_Nail::GetInitialVelocity(), g_sModelIndexNail, NAILGUN_NAIL_DISPATCH_EFFECT, pScorer, bCritical));
+//	pNail->SetExplosionDamage(iExplosionDamage);
+//	pNail->SetExplosionRadius(flExplosionRadius);
 	return pNail;
+	//return static_cast<CTFProjectile_Nail*>(CTFBaseProjectile::Create("tf_projectile_nail", vecOrigin, vecAngles, pOwner, CTFProjectile_Nail::GetInitialVelocity(), g_sModelIndexNail, NAILGUN_NAIL_DISPATCH_EFFECT, pScorer, bCritical));
 }
 
 //-----------------------------------------------------------------------------
@@ -226,7 +229,7 @@ DECLARE_CLIENT_EFFECT(NAILGUN_NAIL_DISPATCH_EFFECT, ClientsideProjectileNailCall
 //
 // TF Tranq Projectile functions (Server specific).
 //
-//=============================================================================
+
 #define TRANQ_MODEL				"models/weapons/w_models/w_classic_tranq_proj.mdl"
 #define TRANQ_DISPATCH_EFFECT	"ClientProjectile_Tranq"
 #define TRANQ_GRAVITY	0.01f
@@ -274,9 +277,7 @@ float CTFProjectile_Tranq::GetGravity(void)
 {
 	return TRANQ_GRAVITY;
 }
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
+
 #ifdef GAME_DLL
 void CTFProjectile_Tranq::ProjectileTouch(CBaseEntity *pOther)
 {
@@ -402,193 +403,4 @@ void ClientsideProjectileTranqCallback(const CEffectData &data)
 
 DECLARE_CLIENT_EFFECT(TRANQ_DISPATCH_EFFECT, ClientsideProjectileTranqCallback);
 
-#endif
-//=============================================================================
-//
-// TF FlakNail Projectile functions (Server specific).
-//
-//=============================================================================
-#define FLAKNAIL_MODEL				"models/weapons/w_models/w_nail.mdl"
-#define FLAKNAIL_DISPATCH_EFFECT	"ClientProjectile_FlakNail"
-#define FLAKNAIL_GRAVITY	0.01f
-
-LINK_ENTITY_TO_CLASS(tf_projectile_flaknail, CTFProjectile_FlakNail);
-PRECACHE_REGISTER(tf_projectile_flaknail);
-
-short g_sModelIndexFlakNail;
-void PrecacheFlakNail(void *pUser)
-{
-	g_sModelIndexFlakNail = modelinfo->GetModelIndex(FLAKNAIL_MODEL);
-}
-
-PRECACHE_REGISTER_FN(PrecacheFlakNail);
-
-
-CTFProjectile_FlakNail::CTFProjectile_FlakNail()
-{
-}
-
-CTFProjectile_FlakNail::~CTFProjectile_FlakNail()
-{
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-CTFProjectile_FlakNail *CTFProjectile_FlakNail::Create(const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, int bCritical)
-{
-	//return static_cast<CTFProjectile_FlakNail*>(CTFBaseProjectile::Create("tf_projectile_flaknail", vecOrigin, vecAngles, pOwner, CTFProjectile_FlakNail::GetInitialVelocity(), g_sModelIndexTranq, FLAKNAIL_DISPATCH_EFFECT, pScorer, bCritical));
-	CTFProjectile_FlakNail *pFlakNail = static_cast<CTFProjectile_FlakNail*>(CTFBaseProjectile::Create("tf_projectile_flaknail", vecOrigin, vecAngles, pOwner, CTFProjectile_FlakNail::GetInitialVelocity(), g_sModelIndexTranq, FLAKNAIL_DISPATCH_EFFECT, pScorer, bCritical));
-	if (!pFlakNail)
-		return NULL;
-
-	pFlakNail->SetMoveType(MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM);
-
-	pFlakNail->RemoveEffects(EF_NODRAW);
-
-	return pFlakNail;
-}
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-const char *CTFProjectile_FlakNail::GetProjectileModelName(void)
-{
-	return FLAKNAIL_MODEL;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-float CTFProjectile_FlakNail::GetGravity(void)
-{
-	return FLAKNAIL_GRAVITY;
-}
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-#ifdef GAME_DLL
-void CTFProjectile_FlakNail::ProjectileTouch(CBaseEntity *pOther)
-{
-	// Verify a correct "other."
-	Assert(pOther);
-	if (!pOther->IsSolid() || pOther->IsSolidFlagSet(FSOLID_VOLUME_CONTENTS))
-		return;
-
-	// Handle hitting skybox (disappear).
-	const trace_t *pTrace = &CBaseEntity::GetTouchTrace();
-	trace_t *pNewTrace = const_cast<trace_t*>(pTrace);
-
-	if (pTrace->surface.flags & SURF_SKY)
-	{
-		UTIL_Remove(this);
-		return;
-	}
-
-	// pass through ladders
-	if (pTrace->surface.flags & CONTENTS_LADDER)
-		return;
-
-	if (pOther->IsWorld())
-	{
-		if (m_INailBounce < 5)
-		{
-			m_INailBounce++;
-			Msg("m_INailBounce: %i\n", m_INailBounce);
-			Vector vecAbsVelocity = GetAbsVelocity();
-
-			//do the bounce
-			float backoff = DotProduct(vecAbsVelocity, pTrace->plane.normal);
-			Vector change = pTrace->plane.normal * backoff;
-			vecAbsVelocity -= change;
-			vecAbsVelocity *= 0.9f;
-			return;
-		}
-		else
-		{
-			UTIL_Remove(this);
-			return;
-		}
-	}
-
-	// determine the inflictor, which is the weapon which fired this projectile
-	CBaseEntity *pInflictor = NULL;
-	CTFPlayer *pTFOwner = ToTFPlayer(GetOwnerEntity());
-
-	if (pTFOwner)
-		pInflictor = pTFOwner->Weapon_OwnsThisID(GetWeaponID());
-
-	CTakeDamageInfo info;
-	info.SetAttacker(pTFOwner);					// the player who operated the thing that emitted nails
-	info.SetInflictor(pInflictor);				// the weapon that emitted this projectile
-	info.SetDamage(GetDamage());
-	info.SetDamageForce(GetDamageForce());
-	info.SetDamagePosition(GetAbsOrigin());
-	info.SetDamageType(GetDamageType());
-	info.SetDamageCustom(GetCustomDamageType());
-
-	Vector dir;
-	AngleVectors(GetAbsAngles(), &dir);
-
-	pOther->DispatchTraceAttack(info, dir, pNewTrace);
-	ApplyMultiDamage();
-
-	UTIL_Remove(this);
-}
-#endif
-
-#ifdef CLIENT_DLL
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-// Output : const char
-//-----------------------------------------------------------------------------
-const char *GetFlakNailTrailParticleName(int iTeamNumber, bool bCritical)
-{
-	if (iTeamNumber == TF_TEAM_BLUE)
-	{
-		return (bCritical ? "nailtrails_super_blue_crit" : "nailtrails_super_blue");
-	}
-	else if (iTeamNumber == TF_TEAM_RED)
-	{
-		return (bCritical ? "nailtrails_super_red_crit" : "nailtrails_super_red");
-	}
-	else
-	{
-		return (bCritical ? "nailtrails_super_dm_crit" : "nailtrails_super_dm");
-	}
-}
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void ClientsideProjectileFlakNailCallback(const CEffectData &data)
-{
-	C_TFPlayer *pPlayer = dynamic_cast<C_TFPlayer*>(ClientEntityList().GetBaseEntityFromHandle(data.m_hEntity));
-	if (pPlayer)
-	{
-		C_LocalTempEntity *pFlakNail = ClientsideProjectileCallback(data, FLAKNAIL_GRAVITY);
-		if (pFlakNail)
-		{
-			switch (pPlayer->GetTeamNumber())
-			{
-			case TF_TEAM_RED:
-				pFlakNail->m_nSkin = 0;
-				break;
-			case TF_TEAM_BLUE:
-				pFlakNail->m_nSkin = 1;
-				break;
-			case TF_TEAM_MERCENARY:
-				pFlakNail->m_nSkin = 2;
-				break;
-			}
-			bool bCritical = ((data.m_nDamageType & DMG_CRITICAL) != 0);
-			pPlayer->m_Shared.UpdateParticleColor(pFlakNail->AddParticleEffect(GetFlakNailTrailParticleName(pPlayer->GetTeamNumber(), bCritical)));
-			pFlakNail->AddEffects(EF_NOSHADOW);
-			pFlakNail->flags |= FTENT_CLIENTSIDEPARTICLES;
-			pFlakNail->SetMoveType(MOVETYPE_FLYGRAVITY, MOVECOLLIDE_FLY_CUSTOM);
-		}
-	}
-}
-
-DECLARE_CLIENT_EFFECT(FLAKNAIL_DISPATCH_EFFECT, ClientsideProjectileFlakNailCallback);
 #endif

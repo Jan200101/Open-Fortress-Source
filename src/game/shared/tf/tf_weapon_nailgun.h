@@ -15,7 +15,6 @@
 #define CTFNailgun C_TFNailgun
 #define CTFCNailgun C_TFCNailgun
 #define CTFCNailgunSuper C_TFCNailgunSuper
-#define CTFFlakCannon C_TFFlakCannon
 #endif
 
 //=============================================================================
@@ -67,21 +66,6 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 	virtual int		GetWeaponID( void ) const			{ return TFC_WEAPON_NAILGUN_SUPER; }
-
-#ifdef GAME_DLL
-	DECLARE_DATADESC();
-#endif
-};
-
-class CTFFlakCannon : public CTFNailgun
-{
-public:
-
-	DECLARE_CLASS(CTFFlakCannon, CTFNailgun);
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-	virtual int		GetWeaponID(void) const			{ return TF_WEAPON_FLAKCANNON; }
-	void			SecondaryAttack();
 
 #ifdef GAME_DLL
 	DECLARE_DATADESC();
