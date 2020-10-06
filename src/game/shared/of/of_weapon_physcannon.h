@@ -11,7 +11,7 @@
 #endif
 
 #ifdef CLIENT_DLL
-#define CTFGravityGauntlet C_TFGravityGauntlet
+#define CTFGravityGauntlets C_TFGravityGauntlets
 #endif
 
 
@@ -38,17 +38,17 @@ CBaseEntity *PhysCannonGetHeldEntity( CBaseCombatWeapon *pActiveWeapon );
 //
 // Gravity Gauntlet class.
 //
-class CTFGravityGauntlet : public CTFWeaponBaseMelee
+class CTFGravityGauntlets : public CTFWeaponBaseMelee
 {
 public:
 
-	DECLARE_CLASS( CTFGravityGauntlet, CTFWeaponBaseMelee );
+	DECLARE_CLASS( CTFGravityGauntlets, CTFWeaponBaseMelee );
 	DECLARE_NETWORKCLASS(); 
 	DECLARE_PREDICTABLE();
 
-	CTFGravityGauntlet();
-	~CTFGravityGauntlet();
-	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRAVITY_GAUNTLET; }
+	CTFGravityGauntlets();
+	~CTFGravityGauntlets();
+	virtual int			GetWeaponID( void ) const			{ return TF_WEAPON_GRAVITY_GAUNTLETS; }
 	virtual void		ItemPostFrame( void );
 	void				OnPull( CBaseEntity *pPullTarget );
 	virtual bool		IsMeleeWeapon()const { return false; };
@@ -64,7 +64,7 @@ public:
 #endif
 private:
 
-	CTFGravityGauntlet( const CTFGravityGauntlet & ) {}
+	CTFGravityGauntlets( const CTFGravityGauntlets & ) {}
 	CNetworkVector( m_vecPullPos );
 #ifdef CLIENT_DLL
 	HPARTICLEFFECT m_hPullEffect;

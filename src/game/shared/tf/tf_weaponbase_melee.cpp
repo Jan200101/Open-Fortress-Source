@@ -498,7 +498,7 @@ public:
 
 	int m_iIgnoreTeam;
 };
-ConVar of_grav_debug("of_grav_debug", "1", FCVAR_ARCHIVE);
+ConVar of_grav_debug("of_grav_debug", "0", FCVAR_NONE);
 #endif
 
 ConVar of_grav_blast_dist("of_grav_blast_dist", "150", FCVAR_REPLICATED);

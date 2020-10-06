@@ -455,7 +455,7 @@ void CTFGameMovement::Pull()
 	UTIL_TraceHull( vecStart, vecEnd, -Vector(6,6,6), Vector(6,6,6), ( MASK_SOLID | CONTENTS_HITBOX ), m_pTFPlayer, COLLISION_GROUP_NONE, &tr );
 
 	// There's no fucking way that this should fail, if it does im going to cry - Kay
-	CTFGravityGauntlet *pWeapon = static_cast<CTFGravityGauntlet*>( m_pTFPlayer->GetActiveTFWeapon() );
+	CTFGravityGauntlets *pWeapon = static_cast<CTFGravityGauntlets*>( m_pTFPlayer->GetActiveTFWeapon() );
 	
 	if( tr.m_pEnt && tr.m_pEnt->IsPlayer() )
 	{
@@ -547,7 +547,7 @@ bool CTFGameMovement::CheckJumpButton()
 	bool bCanAirDash = m_pTFPlayer->GetPlayerClass()->CanAirDash();
 	bool bOnGround = bMeatHook ? false : player->GetGroundEntity() != NULL;
 
-	bool bHasGravGauntlet = m_pTFPlayer->GetActiveTFWeapon() && m_pTFPlayer->GetActiveTFWeapon()->IsWeapon(TF_WEAPON_GRAVITY_GAUNTLET);
+	bool bHasGravGauntlet = m_pTFPlayer->GetActiveTFWeapon() && m_pTFPlayer->GetActiveTFWeapon()->IsWeapon(TF_WEAPON_GRAVITY_GAUNTLETS);
 	//jumping cvars
 	bool CrouchJump = (of_crouchjump.GetBool() && !of_cslide.GetBool()) || bHasGravGauntlet;
 	
@@ -1762,7 +1762,7 @@ void CTFGameMovement::FullWalkMove()
 	CheckFalling();
 
 	// Make sure velocity is valid.
-	if( m_pTFPlayer->GetActiveTFWeapon() && m_pTFPlayer->GetActiveTFWeapon()->IsWeapon(TF_WEAPON_GRAVITY_GAUNTLET) 
+	if( m_pTFPlayer->GetActiveTFWeapon() && m_pTFPlayer->GetActiveTFWeapon()->IsWeapon(TF_WEAPON_GRAVITY_GAUNTLETS) 
 		&& (mv->m_nButtons & IN_ATTACK2) )
 	{
 		Pull();
