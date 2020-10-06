@@ -410,16 +410,6 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
 
-	case TF_PROJECTILE_FLAKNAIL:
-		pProjectile = FireNail(pPlayer, iProjectile);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
-		break;
-
-	case TF_PROJECTILE_FLAKBALL:
-		pProjectile = FireFlakBall(pPlayer);
-		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
-		break;
-
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -732,10 +722,6 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		
     case TF_PROJECTILE_NAIL:
 		pProjectile = CTFProjectile_Nail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
-		break;
-
-	case TF_PROJECTILE_FLAKNAIL:
-		pProjectile = CTFProjectile_FlakNail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
 		break;
 
 	default:

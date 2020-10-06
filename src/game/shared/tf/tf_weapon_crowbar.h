@@ -17,6 +17,8 @@
 #define CTFUmbrella C_TFUmbrella
 #define CTFCCrowbar C_TFCCrowbar
 #define CTFCUmbrella C_TFCUmbrella
+#define CTFPoisonShank C_TFPoisonShank
+#define CTFLeadPipe C_TFLeadPipe
 #endif
 
 extern acttable_t m_acttableMeleeAllClass[];
@@ -90,4 +92,40 @@ private:
 	CTFCUmbrella( const CTFCUmbrella & ) {}
 };
 
+class CTFPoisonShank : public CTFWeaponBaseMelee
+{
+public:
+
+	DECLARE_CLASS(CTFPoisonShank, CTFWeaponBaseMelee);
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	CTFPoisonShank();
+	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_POISONSHANK; }
+	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
+
+private:
+
+	CTFPoisonShank(const CTFPoisonShank &) {}
+};
+
+class CTFLeadPipe : public CTFWeaponBaseMelee
+{
+public:
+
+	DECLARE_CLASS(CTFLeadPipe, CTFWeaponBaseMelee);
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+	CNetworkVar(float, m_flChargedDamage);
+
+	CTFLeadPipe();
+	virtual void		PrimaryAttack(void);
+	virtual void		ItemPostFrame(void);
+	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_LEAD_PIPE; }
+	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
+
+private:
+
+	CTFLeadPipe(const CTFLeadPipe &) {}
+};
 #endif // TF_WEAPON_CROWBAR_H

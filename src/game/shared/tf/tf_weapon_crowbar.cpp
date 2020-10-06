@@ -6,6 +6,7 @@
 
 #include "cbase.h"
 #include "tf_weapon_crowbar.h"
+#include "in_buttons.h"
 
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
@@ -61,6 +62,28 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tfc_weapon_umbrella, CTFCUmbrella );
 //PRECACHE_WEAPON_REGISTER( tfc_weapon_umbrella );
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFPoisonShank, DT_TFWeaponPoisonShank)
+
+BEGIN_NETWORK_TABLE(CTFPoisonShank, DT_TFWeaponPoisonShank)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFPoisonShank)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_poisonshank, CTFPoisonShank);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_poisonshank );
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFLeadPipe, DT_TFWeaponLeadPipe)
+
+BEGIN_NETWORK_TABLE(CTFLeadPipe, DT_TFWeaponLeadPipe)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFLeadPipe)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_lead_pipe, CTFLeadPipe);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_lead_pipe );
+
 //=============================================================================
 //
 // Weapon Crowbar functions.
@@ -81,7 +104,12 @@ CTFCCrowbar::CTFCCrowbar()
 CTFCUmbrella::CTFCUmbrella()
 {
 }
-
+CTFPoisonShank::CTFPoisonShank()
+{
+}
+CTFLeadPipe::CTFLeadPipe()
+{
+}
 acttable_t m_acttableMeleeAllClass[] =
 {
 	{ ACT_MP_STAND_IDLE,						ACT_MP_STAND_MELEE_ALLCLASS,			        false },		
@@ -132,4 +160,128 @@ acttable_t *CTFCrowbar::ActivityList( int &iActivityCount )
 		return m_acttableMeleeAllClass;
 	}
 	return BaseClass::ActivityList( iActivityCount );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Do backstab damage
+//-----------------------------------------------------------------------------
+float CTFPoisonShank::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
+{
+	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
+
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+
+	#ifdef GAME_DLL
+	CTFPlayer *pTFPlayer = ToTFPlayer(pTarget);
+	#endif 
+
+	if ( pTarget->IsPlayer() )
+	{
+		if (GetEnemyTeam(pTarget) == pPlayer->GetTeamNumber())
+		{
+		#ifdef GAME_DLL
+			CTakeDamageInfo info;
+
+			info.SetAttacker(GetOwnerEntity());		// the player who operated the thing that emitted nails
+			info.SetInflictor(pPlayer);				// the weapon that emitted this projectile
+
+			pTFPlayer->m_Shared.Poison(pPlayer, GetTFWpnData().m_flEffectDuration);
+
+			iCustomDamage = TF_DMG_CUSTOM_POISON;
+		#endif
+		}
+	}
+
+	return flBaseDamage;
+}
+//-----------------------------------------------------------------------------
+// Purpose: Do backstab damage
+//-----------------------------------------------------------------------------
+float CTFLeadPipe::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
+{
+	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
+
+	if (m_flChargedDamage > GetDamage())
+	{
+		flBaseDamage = m_flChargedDamage;
+		m_flChargedDamage = 0;
+
+	}
+
+	return flBaseDamage;
+}
+
+//---------------------------------------------------------------------------- -
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLeadPipe::ItemPostFrame(void)
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetPlayerOwner());
+	if (!pOwner)
+		return;
+
+	if (pOwner->m_afButtonPressed & IN_ATTACK2)
+			m_flChargedDamage = 0;
+
+	if (pOwner->m_nButtons & IN_ATTACK2)
+	{
+		float flChargeAfter = m_flNextPrimaryAttack;
+
+		if (flChargeAfter <= gpGlobals->curtime) 
+			{
+				m_flChargedDamage = min( (m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
+				float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
+				Msg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
+			}
+
+		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+			{
+				pOwner->m_Shared.AddCond(TF_COND_AIMING);
+				pOwner->TeamFortress_SetSpeed();
+				#ifdef GAME_DLL
+				pOwner->ClearExpression();
+				#endif
+			}
+	}
+
+	if ((pOwner->m_afButtonReleased & IN_ATTACK2) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
+	{
+		Msg("m_flChargedDamage is %f\n", m_flChargedDamage);
+		Swing(pOwner);
+		pOwner->m_Shared.RemoveCond(TF_COND_AIMING);
+		pOwner->TeamFortress_SetSpeed();
+	#ifdef GAME_DLL
+		pOwner->ClearExpression();
+	#endif
+	}
+
+	BaseClass::ItemPostFrame();
+}
+
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+void CTFLeadPipe::PrimaryAttack()
+{
+	// Get the current player.
+	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	if (!pPlayer)
+		return;
+
+	if (!CanAttack())
+		return;
+
+	// Set the weapon usage mode - primary, secondary.
+	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
+	m_bConnected = false;
+
+	// Swing the weapon.
+	if (!(pPlayer->m_nButtons & IN_ATTACK2))
+	{
+		m_flChargedDamage = 0;
+		Swing(pPlayer);
+	}
+#if !defined( CLIENT_DLL ) 
+	pPlayer->SpeakWeaponFire();
+#endif
 }
