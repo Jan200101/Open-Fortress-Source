@@ -3662,9 +3662,9 @@ CBaseEntity *GetPlayerHeldEntity( CBasePlayer *pPlayer )
 // SMG
 //
 //=============================================================================
-IMPLEMENT_NETWORKCLASS_ALIASED( TFGravityGauntlet, DT_TFWeaponGravityGauntlet )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFGravityGauntlets, DT_TFWeaponGravityGauntlets )
 
-BEGIN_NETWORK_TABLE( CTFGravityGauntlet, DT_TFWeaponGravityGauntlet )
+BEGIN_NETWORK_TABLE( CTFGravityGauntlets, DT_TFWeaponGravityGauntlets )
 #ifdef GAME_DLL
 SendPropVector( SENDINFO( m_vecPullPos ), 32 ,SPROP_COORD ),
 #else
@@ -3672,10 +3672,10 @@ RecvPropVector( RECVINFO( m_vecPullPos ) ),
 #endif
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CTFGravityGauntlet )
+BEGIN_PREDICTION_DATA( CTFGravityGauntlets )
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( tf_weapon_gravitygauntlet, CTFGravityGauntlet );
+LINK_ENTITY_TO_CLASS( tf_weapon_gravitygauntlets, CTFGravityGauntlets );
 
 #ifdef GAME_DLL
 ConVar of_grav_pull_drain_time ( "of_grav_pull_drain_time", "40", FCVAR_REPLICATED );
@@ -3683,7 +3683,7 @@ ConVar of_grav_hover_drain_time( "of_grav_hover_drain_time", "40", FCVAR_REPLICA
 extern ConVar of_infiniteammo;
 #endif
 
-CTFGravityGauntlet::CTFGravityGauntlet()
+CTFGravityGauntlets::CTFGravityGauntlets()
 {
 #ifdef CLIENT_DLL
 	m_hPullEffect = NULL;
@@ -3694,7 +3694,7 @@ CTFGravityGauntlet::CTFGravityGauntlet()
 #endif
 }
 
-CTFGravityGauntlet::~CTFGravityGauntlet()
+CTFGravityGauntlets::~CTFGravityGauntlets()
 {
 #ifdef CLIENT_DLL
 	StopPullEffect();
@@ -3704,7 +3704,7 @@ CTFGravityGauntlet::~CTFGravityGauntlet()
 #endif
 }
 
-void CTFGravityGauntlet::PrimaryAttack( void )
+void CTFGravityGauntlets::PrimaryAttack( void )
 {
 	if( ReserveAmmo() <= 0 )
 	{
@@ -3715,7 +3715,7 @@ void CTFGravityGauntlet::PrimaryAttack( void )
 	BaseClass::PrimaryAttack();
 }
 
-void CTFGravityGauntlet::Smack( void )
+void CTFGravityGauntlets::Smack( void )
 {
 	BaseClass::Smack();
 #ifdef GAME_DLL
@@ -3724,7 +3724,7 @@ void CTFGravityGauntlet::Smack( void )
 #endif
 }
 
-void CTFGravityGauntlet::OnPull( CBaseEntity *pPullTarget )
+void CTFGravityGauntlets::OnPull( CBaseEntity *pPullTarget )
 {
 	if( pPullTarget )
 	{
@@ -3743,7 +3743,7 @@ void CTFGravityGauntlet::OnPull( CBaseEntity *pPullTarget )
 		m_vecPullPos = Vector( 0.0f, 0.0f, -999999.0f );
 }
 
-void CTFGravityGauntlet::ItemPostFrame( void )
+void CTFGravityGauntlets::ItemPostFrame( void )
 {
 	if( ReserveAmmo() <= 0 )
 	{
@@ -3850,7 +3850,7 @@ void CTFGravityGauntlet::ItemPostFrame( void )
 	BaseClass::ItemPostFrame();
 }
 
-void CTFGravityGauntlet::OnAirblast( CBaseEntity *pEntity )
+void CTFGravityGauntlets::OnAirblast( CBaseEntity *pEntity )
 {
 	if( pEntity->IsWorld() )
 		return;
@@ -3882,7 +3882,7 @@ void CTFGravityGauntlet::OnAirblast( CBaseEntity *pEntity )
 }
 
 #ifdef CLIENT_DLL
-void CTFGravityGauntlet::StopPullEffect()
+void CTFGravityGauntlets::StopPullEffect()
 {
 	CTFPlayer *m_pPlayer = GetTFPlayerOwner();
 	
@@ -3917,7 +3917,7 @@ void CTFGravityGauntlet::StopPullEffect()
 	m_hPullEffect = NULL;
 }
 
-void CTFGravityGauntlet::UpdatePullEffect()
+void CTFGravityGauntlets::UpdatePullEffect()
 {
 	char *pszParticleEffect = "gravity_pull";
 	if( !m_hPullEffect )

@@ -463,3 +463,111 @@ void CWeaponSpawner::InputSetWeaponName( inputdata_t &inputdata )
 		Update();
 	}
 }
+
+class CWeaponGiver : public CBaseEntity
+{
+public:
+	DECLARE_CLASS( CWeaponGiver, CBaseEntity );
+	DECLARE_DATADESC();
+	
+	void	GiveWeaponToActivator( inputdata_t &inputdata );
+	void	RemoveWeaponFromActivator( inputdata_t &inputdata );
+};
+
+BEGIN_DATADESC(CWeaponGiver)
+DEFINE_INPUTFUNC( FIELD_STRING, "GiveWeapon", GiveWeaponToActivator ),
+DEFINE_INPUTFUNC( FIELD_STRING, "RemoveWeapon", RemoveWeaponFromActivator ),
+END_DATADESC()
+
+LINK_ENTITY_TO_CLASS( of_weapon_giver, CWeaponGiver );
+
+void CWeaponGiver::RemoveWeaponFromActivator(inputdata_t &inputdata)
+{
+	const char *name = inputdata.value.String();
+
+	if( name )
+	{
+		CTFPlayer *pPlayer = ToTFPlayer(inputdata.pActivator);
+		if( pPlayer )
+		{
+				CTFWeaponBase *pWeapon = (CTFWeaponBase *)pPlayer->GetWeapon(0);
+				for (int iWeapon = 0; iWeapon < TF_WEAPON_COUNT; iWeapon++)
+				{
+					pWeapon = (CTFWeaponBase *)pPlayer->GetWeapon(iWeapon);
+					if( FStrEq( pWeapon->GetSchemaName(), name ) )
+					{
+						if( pPlayer->GetActiveTFWeapon() == pWeapon )
+							pPlayer->SwitchToNextBestWeapon(NULL);
+
+						pPlayer->m_hWeaponInSlot[pWeapon->GetSlot()][pWeapon->GetPosition()] = NULL;
+
+						pPlayer->Weapon_Detach(pWeapon);
+						UTIL_Remove(pWeapon);
+					}
+				}
+		}
+	}
+}
+
+void CWeaponGiver::GiveWeaponToActivator( inputdata_t &inputdata )
+{
+	const char *name = inputdata.value.String();
+
+	if ( name ) 
+	{
+		// precache the weapon...
+		UTIL_PrecacheSchemaWeapon( name );
+
+		WEAPON_FILE_INFO_HANDLE m_hWpnInfo = LookupWeaponInfoSlot(name);
+
+		CTFPlayer *pPlayer = ToTFPlayer( inputdata.pActivator );
+		if( pPlayer )
+		{
+			CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>(GetFileWeaponInfoFromHandle(m_hWpnInfo));
+			if( !pWeaponInfo )
+				return;
+
+			if( !TFGameRules() )
+				return;
+
+			int iSlot;
+
+			if ( TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode())
+				iSlot = pWeaponInfo->iSlotDM;
+			else if (pWeaponInfo->m_iClassSlot[pPlayer->GetPlayerClass()->GetClassIndex()] != -1)
+				iSlot = pWeaponInfo->m_iClassSlot[pPlayer->GetPlayerClass()->GetClassIndex()];
+			else
+				iSlot = pWeaponInfo->iSlot;
+
+			int iPos = pWeaponInfo->iPosition;
+			if (TFGameRules()->UsesDMBuckets() && !TFGameRules()->IsGGGamemode())
+				iPos = pWeaponInfo->iPositionDM;
+
+			if (!pPlayer->m_hWeaponInSlot)
+			{
+				return;
+			}
+
+			// We have it already, dont take it Freeman, but get ammo
+			if (pPlayer->m_hWeaponInSlot[iSlot][iPos] && pPlayer->m_hWeaponInSlot[iSlot][iPos]->GetWeaponFileInfoHandle() == m_hWpnInfo)
+			{
+				if (pPlayer->m_hWeaponInSlot[iSlot][iPos]->ReserveAmmo() < pWeaponInfo->iMaxReserveAmmo)
+					pPlayer->m_hWeaponInSlot[iSlot][iPos]->m_iReserveAmmo = pWeaponInfo->iMaxReserveAmmo;
+				else
+					return;
+			}
+
+			if (pPlayer->m_hWeaponInSlot[iSlot][iPos] && !pPlayer->m_hWeaponInSlot[iSlot][iPos]->CanHolster())
+			{
+				return;
+			}
+
+			CTFWeaponBase *pGivenWeapon = (CTFWeaponBase *)pPlayer->GiveNamedItem(name);  // Create the specified weapon
+			if( pGivenWeapon )
+			{
+				pGivenWeapon->GiveTo(pPlayer); 											// Give it to the player
+				pPlayer->Weapon_Switch(pGivenWeapon);
+			}
+		}
+	}
+}

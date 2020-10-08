@@ -359,8 +359,34 @@ static ConVar s_cl_load_hl1_content("cl_load_hl1_content", "0", FCVAR_ARCHIVE, "
 #endif
 
 #ifdef OF_CLIENT_DLL
-ConVar of_picmip( "of_picmip", "-1", FCVAR_ARCHIVE, "Overwrites the texture quality, from -10 to 10. Requires game restart when changed.");
+// We need of_picmip for this, but of_picmip needs this void too, so...
+void OFPicmipChangedCallBack(IConVar *var, const char *pOldString, float flOldValue);
+
+ConVar of_picmip("of_picmip", "-1", FCVAR_ARCHIVE, "Overwrites the texture quality, from -10 to 10. Requires game restart when changed.", OFPicmipChangedCallBack );
 ConVar of_prop_fading( "of_prop_fading", "1", FCVAR_ARCHIVE, "Enable or disable prop fading. Requires game restart when changed. Enabling this will disable the -makedevshots functions.");
+
+void OFPicmipChangedCallBack(IConVar *var, const char *pOldString, float flOldValue)
+{
+	ConVar *mat_picmip = NULL;
+	mat_picmip = g_pCVar->FindVar("mat_picmip");
+
+	if (mat_picmip)
+	{
+		int iPicmip = of_picmip.GetInt();
+
+		if (iPicmip < -10)
+			iPicmip = -10;
+		else if (iPicmip > 10)
+			iPicmip = 10;
+
+		DevMsg("Hijacking mat_picmip with a value of %i...\n", iPicmip);
+
+		// hijack the convar's clamp values to use our own range
+		mat_picmip->SetMin(iPicmip);
+		mat_picmip->SetMax(iPicmip);
+		mat_picmip->SetValue(iPicmip);
+	}
+}
 #endif
 
 // Physics system
@@ -1419,32 +1445,26 @@ void CHLClient::PostInit()
 
 	// What is the reasoning for this mess?
 	// The engine clamps mat_picmip to -1 - 2 every rendering frame and we don't have access to change this
-	// Therefore we set the desired picmip from another convar and then immediately nuke it on the same frame
-	// So the engine doesn't have time to clamp, and it will stay at that level permanently
-	if ( of_picmip.GetInt() != 0 ) 
+	// Therefore we set the min and max to our of_picmip value
+	// So every time the engine tries to change it, it gets clamped to the desired value
+	ConVar *mat_picmip = NULL;
+	mat_picmip = g_pCVar->FindVar( "mat_picmip" );
+
+	if ( mat_picmip )
 	{
-		ConVar *mat_picmip = NULL;
-		mat_picmip = g_pCVar->FindVar( "mat_picmip" );
+		int iPicmip = of_picmip.GetInt();
 
-		if ( mat_picmip )
-		{
-			int iPicmip = of_picmip.GetInt();
+		if ( iPicmip < -10 )
+			iPicmip = -10;
+		else if ( iPicmip > 10 )
+			iPicmip = 10;
 
-			if ( iPicmip < -10 )
-				iPicmip = -10;
-			else if ( iPicmip > 10 )
-				iPicmip = 10;
+		DevMsg( "Hijacking mat_picmip with a value of %i...\n", iPicmip );
 
-			DevMsg( "Hijacking mat_picmip with a value of %i...\n", iPicmip );
-
-			// hijack the convar's clamp values to use our own range
-			mat_picmip->SetMin( -10.0f );
-			mat_picmip->SetMax( 10.0f );
-			mat_picmip->SetValue( iPicmip );
-
-			// delete the convar
-			mat_picmip->Nuke();
-		}
+		// hijack the convar's clamp values to use our own range
+		mat_picmip->SetMin( iPicmip );
+		mat_picmip->SetMax( iPicmip );
+		mat_picmip->SetValue( iPicmip );
 	}
 
 	ConVar *cl_updaterate = NULL;
