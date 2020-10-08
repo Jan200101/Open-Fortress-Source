@@ -206,59 +206,85 @@ float CTFLeadPipe::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 	{
 		flBaseDamage = m_flChargedDamage;
 		m_flChargedDamage = GetDamage();
-
 	}
 
 	return flBaseDamage;
 }
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFLeadPipe::SendWeaponAnim(int iActivity)
+{
+	if (iActivity == ACT_VM_IDLE && m_bReady)
+	{
+		return BaseClass::SendWeaponAnim(ACT_BACKSTAB_VM_IDLE);
+	}
 
+	return BaseClass::SendWeaponAnim(iActivity);
+}
 //---------------------------------------------------------------------------- -
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFLeadPipe::ItemPostFrame(void)
 {
 	CTFPlayer *pOwner = ToTFPlayer(GetPlayerOwner());
+
 	if (!pOwner)
 		return;
 
 	if (pOwner->m_afButtonPressed & IN_ATTACK2)
-			m_flChargedDamage = 0;
+	{
+		m_bReady = false;
+		m_flChargedDamage = GetDamage();
+	}
 
 	if (pOwner->m_nButtons & IN_ATTACK2)
 	{
 		float flChargeAfter = m_flNextPrimaryAttack;
 
-		if (flChargeAfter <= gpGlobals->curtime) 
-			{
-				m_flChargedDamage = min( (m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
-				//float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
-				//Msg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
-			}
+		if (flChargeAfter <= gpGlobals->curtime)
+		{
+			m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
+			float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
+			DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
 
-		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+			if (!m_bReady)
 			{
-				pOwner->m_Shared.AddCond(TF_COND_AIMING);
-				pOwner->TeamFortress_SetSpeed();
-				#ifdef GAME_DLL
-				pOwner->ClearExpression();
-				#endif
+				m_bReady = true;
+
+				SendWeaponAnim(ACT_BACKSTAB_VM_UP);
+
 			}
+		}
 	}
 
 	if ((pOwner->m_afButtonReleased & IN_ATTACK2) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
-		//Msg("m_flChargedDamage is %f\n", m_flChargedDamage);
+		if (m_bReady)
+		{
+			m_bReady = false;
+		}
+
 		Swing(pOwner);
-		pOwner->m_Shared.RemoveCond(TF_COND_AIMING);
-		pOwner->TeamFortress_SetSpeed();
-	#ifdef GAME_DLL
-		pOwner->ClearExpression();
-	#endif
+		SendWeaponAnim(ACT_VM_PRIMARYATTACK_CRIT);
+	}
+
+	if ((pOwner->m_afButtonReleased & IN_ATTACK2) && (m_flNextPrimaryAttack > gpGlobals->curtime))
+	{
+		if (m_bReady)
+		{
+			m_bReady = false;
+
+			SendWeaponAnim(ACT_VM_SWINGHARD);
+
+			if (GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0)
+				// Set next attack times.
+				m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
+		}
 	}
 
 	BaseClass::ItemPostFrame();
 }
-
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
@@ -279,6 +305,7 @@ void CTFLeadPipe::PrimaryAttack()
 	// Swing the weapon.
 	if (!(pPlayer->m_nButtons & IN_ATTACK2))
 	{
+		m_bReady = false;
 		m_flChargedDamage = GetDamage();
 		Swing(pPlayer);
 	}
@@ -286,4 +313,15 @@ void CTFLeadPipe::PrimaryAttack()
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
 #endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFLeadPipe::Holster(CBaseCombatWeapon *pSwitchingTo)
+{
+	m_bReady = false;
+	m_flChargedDamage = GetDamage();
+
+	return BaseClass::Holster(pSwitchingTo);
 }

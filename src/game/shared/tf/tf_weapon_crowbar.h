@@ -123,9 +123,19 @@ public:
 	virtual void		ItemPostFrame(void);
 	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_LEAD_PIPE; }
 	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
+	//virtual void		LeadPipeThink(void);
+
+	virtual bool		SendWeaponAnim(int iActivity);
+
+	//virtual void		SendPlayerAnimEvent(CTFPlayer *pPlayer);
 
 private:
 
 	CTFLeadPipe(const CTFLeadPipe &) {}
+
+	virtual bool Holster(CBaseCombatWeapon *pSwitchingTo);
+
+	CNetworkVar(bool, m_bReady);
+
 };
 #endif // TF_WEAPON_CROWBAR_H
