@@ -193,6 +193,7 @@ float CTFPoisonShank::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 	}
 
 	return flBaseDamage;
+
 }
 //-----------------------------------------------------------------------------
 // Purpose: Do backstab damage
@@ -204,7 +205,7 @@ float CTFLeadPipe::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 	if (m_flChargedDamage > GetDamage())
 	{
 		flBaseDamage = m_flChargedDamage;
-		m_flChargedDamage = 0;
+		m_flChargedDamage = GetDamage();
 
 	}
 
@@ -230,8 +231,8 @@ void CTFLeadPipe::ItemPostFrame(void)
 		if (flChargeAfter <= gpGlobals->curtime) 
 			{
 				m_flChargedDamage = min( (m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
-				float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
-				Msg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
+				//float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
+				//Msg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
 			}
 
 		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
@@ -246,7 +247,7 @@ void CTFLeadPipe::ItemPostFrame(void)
 
 	if ((pOwner->m_afButtonReleased & IN_ATTACK2) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
 	{
-		Msg("m_flChargedDamage is %f\n", m_flChargedDamage);
+		//Msg("m_flChargedDamage is %f\n", m_flChargedDamage);
 		Swing(pOwner);
 		pOwner->m_Shared.RemoveCond(TF_COND_AIMING);
 		pOwner->TeamFortress_SetSpeed();
@@ -278,9 +279,10 @@ void CTFLeadPipe::PrimaryAttack()
 	// Swing the weapon.
 	if (!(pPlayer->m_nButtons & IN_ATTACK2))
 	{
-		m_flChargedDamage = 0;
+		m_flChargedDamage = GetDamage();
 		Swing(pPlayer);
 	}
+
 #if !defined( CLIENT_DLL ) 
 	pPlayer->SpeakWeaponFire();
 #endif
