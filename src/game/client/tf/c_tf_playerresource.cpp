@@ -15,10 +15,10 @@ IMPLEMENT_CLIENTCLASS_DT( C_TF_PlayerResource, DT_TFPlayerResource, CTFPlayerRes
 	RecvPropArray3( RECVINFO_ARRAY( m_iMaxHealth ), RecvPropInt( RECVINFO( m_iMaxHealth[0] ) ) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_iPlayerClass ), RecvPropInt( RECVINFO( m_iPlayerClass[0] ) ) ),
 	RecvPropArray3( RECVINFO_ARRAY( m_vecColors ), RecvPropVector( RECVINFO( m_vecColors[0] ) ) ),
-	RecvPropArray3( RECVINFO_ARRAY( m_iCosmetics ), RecvPropInt( RECVINFO( m_iCosmetics[0] ) ) ),
-	RecvPropArray3( RECVINFO_ARRAY( m_iCosmetics2 ), RecvPropInt( RECVINFO( m_iCosmetics2[0] ) ) ),
-	RecvPropArray3( RECVINFO_ARRAY( m_iCosmetics3 ), RecvPropInt( RECVINFO( m_iCosmetics3[0] ) ) ),
-	RecvPropArray3( RECVINFO_ARRAY( m_iCosmetics4 ), RecvPropInt( RECVINFO( m_iCosmetics4[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_flCosmetics ), RecvPropFloat( RECVINFO( m_flCosmetics[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_flCosmetics2 ), RecvPropFloat( RECVINFO( m_flCosmetics2[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_flCosmetics3 ), RecvPropFloat( RECVINFO( m_flCosmetics3[0] ) ) ),
+	RecvPropArray3( RECVINFO_ARRAY( m_flCosmetics4 ), RecvPropFloat( RECVINFO( m_flCosmetics4[0] ) ) ),
 END_RECV_TABLE()
 
 
@@ -94,27 +94,88 @@ int C_TF_PlayerResource::GetPlayerCosmetic( int iPlayerIndex, int iIndex )
 			if ( iPlayerIndex < 16 )
 			{
 				iPos = (iPlayerIndex - 1) * 33;
-				return m_iCosmetics[iPos + iIndex];
+				return m_flCosmetics[iPos + iIndex];
 			}
 			else
 			{
 				iPos = (iPlayerIndex - 16) * 33;
-				return m_iCosmetics2[iPos + iIndex];
+				return m_flCosmetics2[iPos + iIndex];
 			}
 		}
 		else
 		{
 			iPos = (iPlayerIndex - 32) * 33;
-			return m_iCosmetics3[iPos + iIndex];
+			return m_flCosmetics3[iPos + iIndex];
 		}
 	}
 	else
 	{
 			iPos = (iPlayerIndex  - 48) * 33;
-			return m_iCosmetics4[iPos + iIndex];
+			return m_flCosmetics4[iPos + iIndex];
 	}
 
 	return -1;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Oh boy, gets the cosmetic index for a specified player
+//-----------------------------------------------------------------------------
+int C_TF_PlayerResource::GetPlayerCosmeticSkin( int iPlayerIndex, int iIndex )
+{
+	if ( !IsConnected( iPlayerIndex ) )
+	{
+		return 0;
+	}
+	
+	// Cant have more than 32 cosmetics
+	if( iIndex > 32 )
+		return 0;
+	// Quick rundown, We take the player index, and multiply it by the amount of data a single person can take up
+	// which is 32 for cosmetics, and 1 for the cosmetic count, then we skip the count and continue afterwards with the Index
+
+	iIndex++; // skip the first index since its used for cosmetic count
+	
+	int iPos = 0;
+	
+	float flCosmetic = 0;
+	
+	if ( iPlayerIndex < 48 )
+	{
+		if ( iPlayerIndex < 32 )
+		{
+			if ( iPlayerIndex < 16 )
+			{
+				iPos = (iPlayerIndex - 1) * 33;
+				flCosmetic = m_flCosmetics[iPos + iIndex];
+			}
+			else
+			{
+				iPos = (iPlayerIndex - 16) * 33;
+				flCosmetic = m_flCosmetics2[iPos + iIndex];
+			}
+		}
+		else
+		{
+			iPos = (iPlayerIndex - 32) * 33;
+			flCosmetic = m_flCosmetics3[iPos + iIndex];
+		}
+	}
+	else
+	{
+			iPos = (iPlayerIndex  - 48) * 33;
+			flCosmetic = m_flCosmetics4[iPos + iIndex];
+	}
+
+	// This is real hacky but more often than not the float is missing 1 for some reason
+	// So just add that back, it gets rounded down anyways so we dont need to worry about it
+	flCosmetic += 0.001;
+	DevMsg( "Float %f int %d\n", flCosmetic, (int)flCosmetic );
+
+	flCosmetic = flCosmetic - (int)flCosmetic;
+	
+	flCosmetic *= 100;
+
+	return flCosmetic;
 }
 
 //-----------------------------------------------------------------------------
@@ -138,24 +199,24 @@ int C_TF_PlayerResource::GetPlayerCosmeticCount( int iIndex )
 			if ( iIndex < 16 )
 			{
 				iPos = (iIndex - 1) * 33;
-				return m_iCosmetics[iPos];
+				return m_flCosmetics[iPos];
 			}
 			else
 			{
 				iPos = (iIndex - 16) * 33;
-				return m_iCosmetics2[iPos];
+				return m_flCosmetics2[iPos];
 			}
 		}
 		else
 		{
 			iPos = (iIndex - 32) * 33;
-			return m_iCosmetics3[iPos];
+			return m_flCosmetics3[iPos];
 		}
 	}
 	else
 	{
 			iPos = (iIndex - 48) * 33;
-			return m_iCosmetics4[iPos];
+			return m_flCosmetics4[iPos];
 	}	
 	
 	return -1;

@@ -301,8 +301,7 @@ public:
 	CNetworkVar( bool, m_bMinimized );
 	CNetworkVar( int, m_iMegaOverheal );
 
-	Vector				m_vecPlayerColor;	
-	CUtlVector<int> 	m_iCosmetics;
+	Vector				m_vecPlayerColor;
 	
 	void UpdatePlayerAttachedModels( void );
 	void UpdatePartyHat( void );

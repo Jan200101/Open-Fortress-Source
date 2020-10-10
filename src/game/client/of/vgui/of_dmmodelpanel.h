@@ -32,7 +32,7 @@ namespace vgui
 		void SetCosmetic(int iCosmeticID, bool bSelected);
 		void SetWeaponModel( const char *szWeapon, int iAnim );
 
-		CUtlVector<int> m_iCosmetics;
+		CUtlVector<float> m_flCosmetics;
 		bool m_bUpdateCosmetics;
 		int m_iCurrentParticle;
 

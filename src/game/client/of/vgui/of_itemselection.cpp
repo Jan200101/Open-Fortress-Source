@@ -55,9 +55,12 @@ DECLARE_BUILD_FACTORY_CUSTOM( CTFItemSelection, CTFItemSelection_Factory );
 CTFItemSelection::CTFItemSelection(Panel *parent, const char *panelName, const int iID) : CTFEditableButton(parent, panelName)
 {
 	pItemImage = new CTFImagePanel(this, "ItemImage");
-	
+	pSkin = new vgui::Button(this, "StyleButton", "+", this, "ChangeStyle");
+
 	SetItemID( iID );
 	
+	iSkin = 0;
+
 	for( int i = 1; i <= 5; i++ )
 		AddOnPressSound( VarArgs( "Mercenary.PositiveVocalization0%d", i ) );
 }
@@ -67,22 +70,22 @@ void CTFItemSelection::ApplySettings(KeyValues *inResourceData)
 	BaseClass::ApplySettings( inResourceData );
 
 	Q_strncpy(szCommand, inResourceData->GetString("command"), sizeof(szCommand));
-	
+
 	KeyValues *inItemImage = inResourceData->FindKey("ItemImage");
 	if( inItemImage )
 		pItemImage->ApplySettings(inItemImage);
 
 	if( inResourceData->GetInt("ItemID") )
 		SetItemID( inResourceData->GetInt("ItemID") );
-	
+
 	m_iSoundChance = 4;
 }
 
 void CTFItemSelection::SetItemID( int iID )
 {
 	iItemID = iID;
-	Q_strncpy(szCommand, VarArgs("loadout_equip cosmetics mercenary %d", iItemID), sizeof(szCommand));
-	
+	Q_strncpy(szCommand, VarArgs("loadout_equip cosmetics mercenary %d.%02d", iItemID, iSkin), sizeof(szCommand));
+
 	KeyValues *pCosmetic = GetCosmetic(iItemID);
 	if( !pCosmetic )
 		return;
@@ -122,7 +125,7 @@ void CTFItemSelection::SetSelected( bool bSelected )
 	BaseClass::SetSelected( bSelected );
 
 	if( !bSelected )
-		Q_strncpy(szCommand, VarArgs("loadout_equip cosmetics mercenary %d", iItemID), sizeof(szCommand));
+		Q_strncpy(szCommand, VarArgs("loadout_equip cosmetics mercenary %d.%02d", iItemID, iSkin), sizeof(szCommand));
 	else
 		Q_strncpy(szCommand, VarArgs("loadout_unequip cosmetics mercenary %d", iItemID), sizeof(szCommand));
 
@@ -142,5 +145,24 @@ void CTFItemSelection::SetSelected( bool bSelected )
 		{
 			pItemList->pSelectedItem = NULL;
 		}
+	}
+}
+
+void CTFItemSelection::OnCommand(const char *command)
+{
+	if ( FStrEq( command, "ChangeStyle" ) )
+	{
+		iSkin++;
+		if( iSkin >= iSkinCount )
+		{
+			iSkin = 0;
+		}
+		CTFScrollableItemList *pItemList = dynamic_cast<CTFScrollableItemList*>( GetParent() );
+		
+		Q_strncpy(szCommand, VarArgs("loadout_equip cosmetics mercenary %d.%02d", iItemID, iSkin), sizeof(szCommand));
+		OnReleasedUnselected();
+		
+		if( !pItemList || pItemList->pSelectedItem != this )
+			SetSelected(true);
 	}
 }

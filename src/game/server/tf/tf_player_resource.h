@@ -36,10 +36,11 @@ protected:
 	CNetworkArray( int, m_iMaxHealth, MAX_PLAYERS+1 );
 	CNetworkArray( int, m_iPlayerClass, MAX_PLAYERS+1 );
 	CNetworkArray( Vector, m_vecColors, MAX_PLAYERS + 1 );
-	CNetworkArray( int, m_iCosmetics,  16 * 33 );
-	CNetworkArray( int, m_iCosmetics2, 16 * 33 );
-	CNetworkArray( int, m_iCosmetics3, 16 * 33 );
-	CNetworkArray( int, m_iCosmetics4, 17 * 33 );	
+public:
+	CNetworkArray( float, m_flCosmetics,  16 * 33 );
+	CNetworkArray( float, m_flCosmetics2, 16 * 33 );
+	CNetworkArray( float, m_flCosmetics3, 16 * 33 );
+	CNetworkArray( float, m_flCosmetics4, 17 * 33 );	
 };
 
 inline CTFPlayerResource *GetTFPlayerResource( void )

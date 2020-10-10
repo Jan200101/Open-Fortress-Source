@@ -49,14 +49,20 @@ public:
 	virtual void OnReleasedUnselected();	
 	virtual void Paint();
 	void	SetItemID( int iID );
+	void	SetSkin( int iS ){ iSkin = iS; };
+	void	SetSkinCount( int iCount ){ iSkinCount = iCount; };
 	virtual void SetSelected( bool bSelected );
+	virtual void OnCommand(const char *command);
 
 public:
 	int		iItemID;
+	int		iSkin;
+	int		iSkinCount;
 	char	szCommand[64];
 	bool	bParsedBPImage;
 	
 	CTFImagePanel	*pItemImage;
+	vgui::Button	*pSkin;
 };
 
 

@@ -9,6 +9,7 @@
 #include <vgui_controls/ScrollBar.h>
 #include <vgui_controls/ScrollBarSlider.h>
 #include "of_scrollableitemlist.h"
+#include "of_shared_schemas.h"
 
 using namespace vgui;
 
@@ -149,6 +150,33 @@ void CTFScrollableItemList::AddItem( int iID, bool bSelected )
 	kvItemImage->SetString("scaleImage", "1" );
 	kvItemImage->SetString("proportionalToParent", "1" );
 	
+	KeyValues *pCosmetic = GetCosmetic(iID);
+	if( pCosmetic )
+	{
+		pNewItem.pItemPanel->SetSkinCount( pCosmetic->GetInt("styles", 0) );
+	}
+	
+	KeyValues *kvStyleButton = new KeyValues("StyleButton");
+	
+	kvStyleButton->SetString( "ControlName"		, "Button"      );
+	kvStyleButton->SetString( "fieldName"		, "StyleButton" );
+	kvStyleButton->SetString( "zpos"			, "15"			);
+	kvStyleButton->SetString( "wide"			, "15"          );
+	kvStyleButton->SetString( "tall"			, "15"          );
+	kvStyleButton->SetString( "autoResize"		, "0"           );
+	kvStyleButton->SetString( "pinCorner"		, "0"           );
+	if( pNewItem.pItemPanel->iSkinCount <= 0 )
+		kvStyleButton->SetString( "visible"		, "0"           );
+	kvStyleButton->SetString( "enabled"			, "1"           );
+	kvStyleButton->SetString( "labelText"		, "+"           );
+	kvStyleButton->SetString( "textAlignment"	, "center"      );
+	kvStyleButton->SetString( "wrap"			, "0"           );
+	kvStyleButton->SetString( "Command"			, "ChangeStyle" );
+	kvStyleButton->SetString( "armedFgColor_override", "66 24 123 255" );
+    kvStyleButton->SetString( "armedBgColor_override", "66 24 123 255" );
+	kvStyleButton->SetString( "keyboardFocusColor_override", "255 255 255 255" );
+
+	kvItemTemplate->AddSubKey(kvStyleButton);
 	kvItemTemplate->AddSubKey(kvButton);
 	kvItemTemplate->AddSubKey(kvItemImage);
 	
