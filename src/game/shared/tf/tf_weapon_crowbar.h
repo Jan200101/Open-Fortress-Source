@@ -18,7 +18,7 @@
 #define CTFCCrowbar C_TFCCrowbar
 #define CTFCUmbrella C_TFCUmbrella
 #define CTFPoisonShank C_TFPoisonShank
-#define CTFLeadPipe C_TFLeadPipe
+#define CTFPipeWrench C_TFPipeWrench
 #endif
 
 extern acttable_t m_acttableMeleeAllClass[];
@@ -109,19 +109,19 @@ private:
 	CTFPoisonShank(const CTFPoisonShank &) {}
 };
 
-class CTFLeadPipe : public CTFWeaponBaseMelee
+class CTFPipeWrench : public CTFWeaponBaseMelee
 {
 public:
 
-	DECLARE_CLASS(CTFLeadPipe, CTFWeaponBaseMelee);
+	DECLARE_CLASS(CTFPipeWrench, CTFWeaponBaseMelee);
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 	CNetworkVar(float, m_flChargedDamage);
 
-	CTFLeadPipe();
+	CTFPipeWrench();
 	virtual void		PrimaryAttack(void);
 	virtual void		ItemPostFrame(void);
-	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_LEAD_PIPE; }
+	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_PIPE_WRENCH; }
 	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
 	//virtual void		LeadPipeThink(void);
 
@@ -131,7 +131,7 @@ public:
 
 private:
 
-	CTFLeadPipe(const CTFLeadPipe &) {}
+	CTFPipeWrench(const CTFPipeWrench &) {}
 
 	virtual bool Holster(CBaseCombatWeapon *pSwitchingTo);
 

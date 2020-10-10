@@ -73,16 +73,16 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS(tf_weapon_poisonshank, CTFPoisonShank);
 //PRECACHE_WEAPON_REGISTER( tf_weapon_poisonshank );
 
-IMPLEMENT_NETWORKCLASS_ALIASED(TFLeadPipe, DT_TFWeaponLeadPipe)
+IMPLEMENT_NETWORKCLASS_ALIASED(TFPipeWrench, DT_TFWeaponPipeWrench)
 
-BEGIN_NETWORK_TABLE(CTFLeadPipe, DT_TFWeaponLeadPipe)
+BEGIN_NETWORK_TABLE(CTFPipeWrench, DT_TFWeaponPipeWrench)
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA(CTFLeadPipe)
+BEGIN_PREDICTION_DATA(CTFPipeWrench)
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS(tf_weapon_lead_pipe, CTFLeadPipe);
-//PRECACHE_WEAPON_REGISTER( tf_weapon_lead_pipe );
+LINK_ENTITY_TO_CLASS(tf_weapon_pipe_wrench, CTFPipeWrench);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_pipe_wrench );
 
 //=============================================================================
 //
@@ -107,7 +107,7 @@ CTFCUmbrella::CTFCUmbrella()
 CTFPoisonShank::CTFPoisonShank()
 {
 }
-CTFLeadPipe::CTFLeadPipe()
+CTFPipeWrench::CTFPipeWrench()
 {
 }
 acttable_t m_acttableMeleeAllClass[] =
@@ -198,7 +198,7 @@ float CTFPoisonShank::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 //-----------------------------------------------------------------------------
 // Purpose: Do backstab damage
 //-----------------------------------------------------------------------------
-float CTFLeadPipe::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
+float CTFPipeWrench::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 {
 	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
 
@@ -213,7 +213,7 @@ float CTFLeadPipe::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFLeadPipe::SendWeaponAnim(int iActivity)
+bool CTFPipeWrench::SendWeaponAnim(int iActivity)
 {
 	if (iActivity == ACT_VM_IDLE && m_bReady)
 	{
@@ -225,7 +225,7 @@ bool CTFLeadPipe::SendWeaponAnim(int iActivity)
 //---------------------------------------------------------------------------- -
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFLeadPipe::ItemPostFrame(void)
+void CTFPipeWrench::ItemPostFrame(void)
 {
 	CTFPlayer *pOwner = ToTFPlayer(GetPlayerOwner());
 
@@ -264,9 +264,9 @@ void CTFLeadPipe::ItemPostFrame(void)
 		{
 			m_bReady = false;
 		}
+		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 
 		Swing(pOwner);
-		SendWeaponAnim(ACT_VM_PRIMARYATTACK_CRIT);
 	}
 
 	if ((pOwner->m_afButtonReleased & IN_ATTACK2) && (m_flNextPrimaryAttack > gpGlobals->curtime))
@@ -288,7 +288,7 @@ void CTFLeadPipe::ItemPostFrame(void)
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
-void CTFLeadPipe::PrimaryAttack()
+void CTFPipeWrench::PrimaryAttack()
 {
 	// Get the current player.
 	CTFPlayer *pPlayer = GetTFPlayerOwner();
@@ -318,7 +318,7 @@ void CTFLeadPipe::PrimaryAttack()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFLeadPipe::Holster(CBaseCombatWeapon *pSwitchingTo)
+bool CTFPipeWrench::Holster(CBaseCombatWeapon *pSwitchingTo)
 {
 	m_bReady = false;
 	m_flChargedDamage = GetDamage();
