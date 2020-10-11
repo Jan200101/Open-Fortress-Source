@@ -21,6 +21,13 @@
 #define CTFPipeWrench C_TFPipeWrench
 #endif
 
+enum PipeWrenchState_t
+{
+	// Firing states.
+	AC_STATE_IDLE = 0,
+	AC_STATE_CHARGE
+};
+
 extern acttable_t m_acttableMeleeAllClass[];
 
 //=============================================================================
@@ -120,22 +127,20 @@ public:
 
 	CTFPipeWrench();
 	virtual void		PrimaryAttack(void);
-	virtual void		ItemPostFrame(void);
 	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_PIPE_WRENCH; }
 	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
-	//virtual void		LeadPipeThink(void);
+	virtual void		ItemPostFrame(void);
 
-	virtual bool		SendWeaponAnim(int iActivity);
 
-	//virtual void		SendPlayerAnimEvent(CTFPlayer *pPlayer);
 
 private:
 
 	CTFPipeWrench(const CTFPipeWrench &) {}
 
-	virtual bool Holster(CBaseCombatWeapon *pSwitchingTo);
-
+	CNetworkVar(PipeWrenchState_t, m_iWeaponState);
 	CNetworkVar(bool, m_bReady);
+
+	void WindUp(void);
 
 };
 #endif // TF_WEAPON_CROWBAR_H

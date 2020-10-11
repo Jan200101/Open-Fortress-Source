@@ -210,118 +210,108 @@ float CTFPipeWrench::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 
 	return flBaseDamage;
 }
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool CTFPipeWrench::SendWeaponAnim(int iActivity)
-{
-	if (iActivity == ACT_VM_IDLE && m_bReady)
-	{
-		return BaseClass::SendWeaponAnim(ACT_BACKSTAB_VM_IDLE);
-	}
-
-	return BaseClass::SendWeaponAnim(iActivity);
-}
-//---------------------------------------------------------------------------- -
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CTFPipeWrench::ItemPostFrame(void)
-{
-	CTFPlayer *pOwner = ToTFPlayer(GetPlayerOwner());
-
-	if (!pOwner)
-		return;
-
-	if (pOwner->m_afButtonPressed & IN_ATTACK2)
-	{
-		m_bReady = false;
-		m_flChargedDamage = GetDamage();
-	}
-
-	if (pOwner->m_nButtons & IN_ATTACK2)
-	{
-		float flChargeAfter = m_flNextPrimaryAttack;
-
-		if (flChargeAfter <= gpGlobals->curtime)
-		{
-			m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
-			float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
-			DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
-
-			if (!m_bReady)
-			{
-				m_bReady = true;
-
-				SendWeaponAnim(ACT_BACKSTAB_VM_UP);
-
-			}
-		}
-	}
-
-	if ((pOwner->m_afButtonReleased & IN_ATTACK2) && (m_flNextPrimaryAttack <= gpGlobals->curtime))
-	{
-		if (m_bReady)
-		{
-			m_bReady = false;
-		}
-		m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
-
-		Swing(pOwner);
-	}
-
-	if ((pOwner->m_afButtonReleased & IN_ATTACK2) && (m_flNextPrimaryAttack > gpGlobals->curtime))
-	{
-		if (m_bReady)
-		{
-			m_bReady = false;
-
-			SendWeaponAnim(ACT_VM_SWINGHARD);
-
-			if (GetTFWpnData().m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flBurstFireDelay == 0)
-				// Set next attack times.
-				m_flNextPrimaryAttack = gpGlobals->curtime + GetFireRate();
-		}
-	}
-
-	BaseClass::ItemPostFrame();
-}
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
 void CTFPipeWrench::PrimaryAttack()
 {
-	// Get the current player.
-	CTFPlayer *pPlayer = GetTFPlayerOwner();
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
 	if (!pPlayer)
 		return;
 
 	if (!CanAttack())
-		return;
-
-	// Set the weapon usage mode - primary, secondary.
-	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
-	m_bConnected = false;
-
-	// Swing the weapon.
-	if (!(pPlayer->m_nButtons & IN_ATTACK2))
 	{
-		m_bReady = false;
-		m_flChargedDamage = GetDamage();
-		Swing(pPlayer);
+		WeaponIdle();
+		return;
 	}
 
-#if !defined( CLIENT_DLL ) 
-	pPlayer->SpeakWeaponFire();
-#endif
-}
+	switch (m_iWeaponState)
+	{
+	default:
+	case AC_STATE_IDLE:
+		{
 
+			if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+			{
+				DevMsg("You start to charge up the Pipe Wrench\n");
+				WindUp();
+			}
+
+			break;
+		}
+	case AC_STATE_CHARGE:
+		{
+
+			if (GetActivity() == ACT_BACKSTAB_VM_UP)
+			{
+				if (IsViewModelSequenceFinished())
+
+				SendWeaponAnim(ACT_BACKSTAB_VM_IDLE);
+
+				m_bReady = true;
+			}
+
+			if (m_bReady)
+			{
+				m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
+
+				float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
+				DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
+			}
+
+			break;
+		}
+	}
+}
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFPipeWrench::Holster(CBaseCombatWeapon *pSwitchingTo)
+void CTFPipeWrench::WindUp(void)
 {
-	m_bReady = false;
-	m_flChargedDamage = GetDamage();
+	// Get the player owning the weapon.
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+	if (!pPlayer)
+		return;
 
-	return BaseClass::Holster(pSwitchingTo);
+	// Play wind-up animation and sound (SPECIAL1).
+	SendWeaponAnim(ACT_BACKSTAB_VM_UP);
+
+	// Set the appropriate firing state.
+	m_iWeaponState = AC_STATE_CHARGE;
+
+#ifdef GAME_DLL
+	pPlayer->StopRandomExpressions();
+#endif
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPipeWrench::ItemPostFrame()
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+	if (!pOwner)
+		return;
+
+	if (pOwner->m_afButtonReleased & IN_ATTACK)
+	{
+		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+		{ 
+			DevMsg("You let go of the Pipe Wrench\n");
+
+			float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
+			DevMsg("The Final m_flChargedDamage is %f\n", m_flChargedDamageMath);
+
+			Swing(pOwner);
+
+			m_bReady = false;
+
+			m_flNextPrimaryAttack = (	(gpGlobals->curtime + GetFireRate() ) + ( (m_flChargedDamage / GetDamage() ) / 2 )	);
+
+			DevMsg("The Attack Delay is %f\n", m_flNextPrimaryAttack);
+
+			m_iWeaponState = AC_STATE_IDLE;
+		}
+	}
+
+	BaseClass::ItemPostFrame();
 }
