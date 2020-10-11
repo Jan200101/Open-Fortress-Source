@@ -129,9 +129,9 @@ public:
 	virtual void		PrimaryAttack(void);
 	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_PIPE_WRENCH; }
 	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
+	virtual bool		Holster(CBaseCombatWeapon *pSwitchingTo);
 	virtual void		ItemPostFrame(void);
-
-
+	virtual bool		CalcIsAttackCriticalHelper(void);
 
 private:
 

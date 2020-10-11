@@ -298,9 +298,6 @@ void CTFPipeWrench::ItemPostFrame()
 		{ 
 			DevMsg("You let go of the Pipe Wrench\n");
 
-			float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
-			DevMsg("The Final m_flChargedDamage is %f\n", m_flChargedDamageMath);
-
 			Swing(pOwner);
 
 			m_bReady = false;
@@ -314,4 +311,34 @@ void CTFPipeWrench::ItemPostFrame()
 	}
 
 	BaseClass::ItemPostFrame();
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFPipeWrench::CalcIsAttackCriticalHelper(void)
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+
+	if (!pOwner)
+		return false;
+	
+	if (pOwner->m_Shared.InCond(TF_COND_BLASTJUMP))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFPipeWrench::Holster(CBaseCombatWeapon *pSwitchingTo)
+{
+	m_flChargedDamage = GetDamage();
+
+	m_bReady = false;
+
+	return BaseClass::Holster(pSwitchingTo);
 }
