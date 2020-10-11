@@ -315,6 +315,8 @@ bool CTFDuelAnnouncement::ShouldDraw()
 	return CHudElement::ShouldDraw();
 }
 
+extern ConVar of_tennisball;
+
 void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 {
 	const char *eventname = event->GetName();
@@ -391,13 +393,47 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 							KeyValues* pCosmetic = GetCosmetic(tf_PR->GetPlayerCosmetic( iPlayer, y ));
 							if (!pCosmetic)
 								continue;
+							
+							int iStyle = tf_PR->GetPlayerCosmeticSkin( iPlayer, y );
+							KeyValues *pInfo = new KeyValues("CosmeticInfo");
+							pCosmetic->CopySubkeys(pInfo);
 
-							if (Q_strcmp(pCosmetic->GetString("Model"), "BLANK"))
+							KeyValues *pStyles = pCosmetic->FindKey("styles");
+							if( pStyles )
 							{
-								pModelPanel->AddAttachment(pCosmetic->GetString("Model", "models/empty.mdl"));
+								KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
+								if( pStyle )
+								{
+									pStyle->CopySubkeys(pInfo);
+									pInfo->RecursiveMergeKeyValues(pCosmetic);
+								}
 							}
 
-							KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+							if (Q_strcmp(pInfo->GetString("Model"), "BLANK"))
+							{
+								int iVisibleTeam = 0;
+								int iTeamCount = 1;
+
+								if( pInfo->GetBool( "team_skins", true ) )
+								{
+									iTeamCount = 3;
+									iVisibleTeam = tf_PR->GetTeam( iPlayer ) - 2;
+								}
+
+								if( pInfo->GetBool( "uses_brightskins" ) )
+								{
+									iTeamCount++;
+									if( of_tennisball.GetBool() )
+										iVisibleTeam = iTeamCount - 1;
+								}
+								
+								int iSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+								iSkin += iTeamCount * pInfo->GetInt( "skin_offset" );
+
+								pModelPanel->AddAttachment(pInfo->GetString("Model", "models/empty.mdl"), iSkin);
+							}
+
+							KeyValues* pBodygroups = pInfo->FindKey("Bodygroups");
 							if (pBodygroups)
 							{
 								for (KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue())
@@ -405,6 +441,8 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 									pModelPanel->SetBodygroup(sub->GetName(), sub->GetInt());
 								}
 							}
+							
+							pInfo->deleteThis();
 						}
 					}
 				}

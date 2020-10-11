@@ -1391,7 +1391,6 @@ void CTFPlayer::UpdateCosmetics()
 		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 		{
 			m_flCosmetics.AddToTail(pHat->GetFloat());
-			DevMsg("FUCK %f\n", pHat->GetFloat());
 			NetworkStateChanged();
 		}
 

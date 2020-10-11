@@ -169,7 +169,6 @@ int C_TF_PlayerResource::GetPlayerCosmeticSkin( int iPlayerIndex, int iIndex )
 	// This is real hacky but more often than not the float is missing 1 for some reason
 	// So just add that back, it gets rounded down anyways so we dont need to worry about it
 	flCosmetic += 0.001;
-	DevMsg( "Float %f int %d\n", flCosmetic, (int)flCosmetic );
 
 	flCosmetic = flCosmetic - (int)flCosmetic;
 	

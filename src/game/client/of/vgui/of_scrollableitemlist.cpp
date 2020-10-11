@@ -153,7 +153,17 @@ void CTFScrollableItemList::AddItem( int iID, bool bSelected )
 	KeyValues *pCosmetic = GetCosmetic(iID);
 	if( pCosmetic )
 	{
-		pNewItem.pItemPanel->SetSkinCount( pCosmetic->GetInt("styles", 0) );
+		int iStyles = 0;
+		KeyValues *pStyles = pCosmetic->FindKey("Styles");
+		if( pStyles )
+		{
+			iStyles++; // add the base style
+			FOR_EACH_SUBKEY( pStyles, kvSubKey )
+			{
+				iStyles++;
+			}
+		}
+		pNewItem.pItemPanel->SetSkinCount( iStyles );
 	}
 	
 	KeyValues *kvStyleButton = new KeyValues("StyleButton");
