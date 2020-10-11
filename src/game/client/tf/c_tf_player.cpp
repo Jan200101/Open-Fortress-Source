@@ -383,7 +383,7 @@ const char *pszHeadLabelNames[] =
 	"effects/speech_voice_mercenary"
 };
 
-Color TennisBall (0,255,0);
+Color TennisBall (59,181,91);
 
 #define TF_PLAYER_HEAD_LABEL_RED 0
 #define TF_PLAYER_HEAD_LABEL_BLUE 1
@@ -1242,7 +1242,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 	{
 		int nModelIndex = modelinfo->GetModelIndex( pData->GetModelName() );
 
-		if (  pPlayer && pPlayer->GetPlayerClass()->UsesCustomModel() )
+		if ( pPlayer && pPlayer->GetPlayerClass()->UsesCustomModel() )
 			nModelIndex = modelinfo->GetModelIndex( pPlayer->GetPlayerClass()->GetSetCustomModel() );
 
 		SetModelIndex( nModelIndex );
@@ -1318,14 +1318,14 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 
 		m_nBody = pPlayer->GetBody();
-		
-		if( !of_disable_cosmetics.GetBool() )
+		C_TF_PlayerResource *g_TFPR = GetTFPlayerResource();
+		if( !of_disable_cosmetics.GetBool() && g_TFPR )
 		{
-			for ( int i = 0; i < pPlayer->m_iCosmetics.Count(); i++ )
+			for (int i = 0; i < g_TFPR->GetPlayerCosmeticCount( pPlayer->entindex() ); i++)
 			{
-				if ( pPlayer->m_iCosmetics[i] )
+				if ( g_TFPR->GetPlayerCosmetic( pPlayer->entindex(), i ) )
 				{
-					KeyValues *pCosmetic = GetCosmetic( pPlayer->m_iCosmetics[i] );
+					KeyValues *pCosmetic = GetCosmetic( g_TFPR->GetPlayerCosmetic(pPlayer->entindex(), i) );
 					if( !pCosmetic )
 						continue;
 
@@ -1348,8 +1348,30 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 						
 						if( handle )
 						{
-							int iVisibleTeam = m_iTeam < TF_TEAM_RED ? TF_TEAM_MERCENARY : m_iTeam;
-							handle->m_nSkin = iVisibleTeam - 2;
+					
+							int iVisibleTeam = 0;
+							int iTeamCount = 1;
+
+							if( pCosmetic->GetBool( "team_skins", true ) )
+							{
+								iTeamCount = 3;
+								iVisibleTeam = pPlayer->GetTeamNumber() - 2;
+							}
+
+							if( pCosmetic->GetBool( "uses_brightskins" ) && of_tennisball.GetBool() )
+							{
+								iTeamCount++;
+								iVisibleTeam = iTeamCount - 1;
+							}
+							
+							handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+
+							if( g_TFPR->GetPlayerCosmeticSkin( entindex(), i ) < pCosmetic->GetInt( "styles" ) )
+							{
+								int iSkin = iTeamCount * g_TFPR->GetPlayerCosmeticSkin( pPlayer->entindex(), i );
+							
+								handle->m_nSkin = handle->m_nSkin + iSkin;
+							}
 							
 							m_hCosmetic.AddToTail(handle);
 						}
@@ -2604,8 +2626,6 @@ IMPLEMENT_CLIENTCLASS_DT( C_TFPlayer, DT_TFPlayer, CTFPlayer )
 	RecvPropInt( RECVINFO( m_iAccount ) ),
 	RecvPropInt( RECVINFO( m_iMegaOverheal ) ),
 
-	RecvPropUtlVector( RECVINFO_UTLVECTOR( m_iCosmetics ), 32, RecvPropInt(NULL, 0, sizeof(int)) ),
-
 END_RECV_TABLE()
 
 
@@ -3545,23 +3565,34 @@ void C_TFPlayer::UpdateWearables( void )
 	m_hCosmetic.Purge();
 
 	if( of_disable_cosmetics.GetBool() )
+		return;	
+	
+	C_TF_PlayerResource *g_TFPR = GetTFPlayerResource();
+	if( !g_TFPR )
+	{
+		DevWarning("UpdateWearables: Unable to find player resource\n");
 		return;
-
-	if( m_iCosmetics.Count() > 32 || m_iCosmetics.Count() < 0 )
+	}
+	if( g_TFPR->GetPlayerCosmeticCount( entindex() ) > 32 || g_TFPR->GetPlayerCosmeticCount( entindex() ) < 0 )
 	{
 		DevWarning("UpdateWearables: Mismatching cosmetic count\n");
 		return;
 	}
-
-	for( int i = 0; i < m_iCosmetics.Count(); i++ )
+	
+	if( g_TFPR->GetPlayerCosmeticCount( entindex() ) == 0 )
 	{
-		KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
+		DevWarning("UpdateWearables: Player has no cosmetics\n");
+		return;
+	}
+
+	for( int i = 0; i < g_TFPR->GetPlayerCosmeticCount( entindex() ); i++ )
+	{
+		KeyValues *pCosmetic = GetCosmetic( g_TFPR->GetPlayerCosmetic( entindex(), i ) );
 		if( !pCosmetic )
 		{
-			DevWarning("UpdateWearables: Cant find cosmetic with ID %d\n", m_iCosmetics[i]);
+			DevWarning("UpdateWearables: Cant find cosmetic with ID %d\n", g_TFPR->GetPlayerCosmetic( entindex(), i ));
 			continue;
 		}
-
 		
 		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
 		if( pBodygroups )
@@ -3586,15 +3617,33 @@ void C_TFPlayer::UpdateWearables( void )
 
 			if( handle )
 			{
-				int iVisibleTeam = GetTeamNumber();
-				if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
+				int iVisibleTeam = 0;
+				int iTeamCount = 1;
+				if( pCosmetic->GetBool( "team_skins", true ) )
 				{
-					iVisibleTeam = m_Shared.GetDisguiseTeam();
+					iTeamCount = 3;
+					iVisibleTeam = GetTeamNumber();
+					if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
+					{
+						iVisibleTeam = m_Shared.GetDisguiseTeam();
+					}
+
+					iVisibleTeam = iVisibleTeam - 2;
+				}
+				if( pCosmetic->GetBool( "uses_brightskins" ) && of_tennisball.GetBool() )
+				{
+					iTeamCount++;
+					iVisibleTeam = iTeamCount - 1;
 				}
 				
-				iVisibleTeam = iVisibleTeam - 2;
 				handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
 
+				if( g_TFPR->GetPlayerCosmeticSkin( entindex(), i ) < pCosmetic->GetInt( "styles" ) )
+				{
+					int iSkin = iTeamCount * g_TFPR->GetPlayerCosmeticSkin( entindex(), i );
+				
+					handle->m_nSkin = handle->m_nSkin + iSkin;
+				}
 				m_hCosmetic.AddToTail(handle);
 			}
 		}

@@ -410,7 +410,7 @@ public:
 	CNetworkVar( bool, m_bMinimized );
 	CNetworkVar( int, m_iMegaOverheal );
 	
-	CUtlVector<int> m_iCosmetics;
+	CUtlVector<float> m_flCosmetics;
 	KeyValues *kvDesiredCosmetics;
 	CTFPlayerShared m_Shared;
 	int	    item_list;			// Used to keep track of which goalitems are 

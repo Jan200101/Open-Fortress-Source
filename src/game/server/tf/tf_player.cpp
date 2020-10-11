@@ -401,9 +401,6 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayer, DT_TFPlayer )
 	
 	SendPropInt( SENDINFO( m_iAccount ), 16, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iMegaOverheal ) ),
-
-	SendPropUtlVector( SENDINFO_UTLVECTOR( m_iCosmetics ), 32, SendPropInt( NULL, 0, sizeof(int) ) ),
-
 END_SEND_TABLE()
 
 
@@ -1335,7 +1332,7 @@ void CTFPlayer::Spawn()
 
 void CTFPlayer::UpdateCosmetics()
 {
-	m_iCosmetics.Purge();
+	m_flCosmetics.Purge();
 	NetworkStateChanged();
 	
 	CTFBot *pBot = dynamic_cast<CTFBot*>(this);
@@ -1373,13 +1370,13 @@ void CTFPlayer::UpdateCosmetics()
 		
 		for( int i = 0; i < args.ArgC(); i++ )
 		{
-			KeyValues *pCosmetic = GetCosmetic( abs( atoi(args[i]) ) );
+			KeyValues *pCosmetic = GetCosmetic( (int)( atof( args[i] ) ) );
 			if( !pCosmetic )
 				continue;
 			
 			const char *szRegion = pCosmetic->GetString( "region", "none" );
 			kvDesiredCosmetics->SetString( szRegion, args[i] );
-			
+
 			if ( !Q_stricmp( szRegion, "gloves" ) )
 				m_chzVMCosmeticGloves = pCosmetic->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/gloves/default.mdl" );
 			else if ( !Q_stricmp(szRegion, "suit") )
@@ -1393,7 +1390,8 @@ void CTFPlayer::UpdateCosmetics()
 		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
 		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 		{
-			m_iCosmetics.AddToTail(pHat->GetInt());
+			m_flCosmetics.AddToTail(pHat->GetFloat());
+			DevMsg("FUCK %f\n", pHat->GetFloat());
 			NetworkStateChanged();
 		}
 

@@ -18,10 +18,10 @@ IMPLEMENT_SERVERCLASS_ST( CTFPlayerResource, DT_TFPlayerResource )
 	SendPropArray3( SENDINFO_ARRAY3( m_iPlayerClass ), SendPropInt( SENDINFO_ARRAY( m_iPlayerClass ), 5, SPROP_UNSIGNED ) ),
 	SendPropArray3( SENDINFO_ARRAY3( m_vecColors ), SendPropVector( SENDINFO_ARRAY3( m_vecColors ), 12, SPROP_COORD ) ),
 	// THIS IS UNOPTIMIZED LIKE SHIT BUT THERE'S LITERALLY NO OTHER WAY
-	SendPropArray3( SENDINFO_ARRAY3( m_iCosmetics ), SendPropInt( SENDINFO_ARRAY( m_iCosmetics ), 9, SPROP_UNSIGNED ) ),
-	SendPropArray3( SENDINFO_ARRAY3( m_iCosmetics2 ), SendPropInt( SENDINFO_ARRAY( m_iCosmetics2 ), 9, SPROP_UNSIGNED ) ),
-	SendPropArray3( SENDINFO_ARRAY3( m_iCosmetics3 ), SendPropInt( SENDINFO_ARRAY( m_iCosmetics3 ), 9, SPROP_UNSIGNED ) ),
-	SendPropArray3( SENDINFO_ARRAY3( m_iCosmetics4 ), SendPropInt( SENDINFO_ARRAY( m_iCosmetics4 ), 9, SPROP_UNSIGNED ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_flCosmetics ), SendPropFloat( SENDINFO_ARRAY( m_flCosmetics ), 9, SPROP_UNSIGNED | SPROP_NOSCALE | SPROP_ROUNDUP ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_flCosmetics2 ), SendPropFloat( SENDINFO_ARRAY( m_flCosmetics2 ), 9, SPROP_UNSIGNED | SPROP_NOSCALE | SPROP_ROUNDUP ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_flCosmetics3 ), SendPropFloat( SENDINFO_ARRAY( m_flCosmetics3 ), 9, SPROP_UNSIGNED | SPROP_NOSCALE | SPROP_ROUNDUP ) ),
+	SendPropArray3( SENDINFO_ARRAY3( m_flCosmetics4 ), SendPropFloat( SENDINFO_ARRAY( m_flCosmetics4 ), 9, SPROP_UNSIGNED | SPROP_NOSCALE | SPROP_ROUNDUP ) ),
 END_SEND_TABLE()
 
 LINK_ENTITY_TO_CLASS( tf_player_manager, CTFPlayerResource );
@@ -71,40 +71,40 @@ void CTFPlayerResource::UpdatePlayerCosmetics( CTFPlayer *pPlayer )
 			if ( iIndex < 16 )
 			{
 				int iPos = (iIndex - 1) * 33;
-				m_iCosmetics.Set( iPos, pPlayer->m_iCosmetics.Count() );
-				int iMaxCosmetics = min(pPlayer->m_iCosmetics.Count(), 32);
+				m_flCosmetics.Set( iPos, pPlayer->m_flCosmetics.Count() );
+				int iMaxCosmetics = min(pPlayer->m_flCosmetics.Count(), 32);
 				for( int y = 0; y < iMaxCosmetics; y++ )
 				{
-					m_iCosmetics.Set( iPos + (y + 1), pPlayer->m_iCosmetics[y] );
+					m_flCosmetics.Set( iPos + (y + 1), pPlayer->m_flCosmetics[y] );
 				}
 			}
 			else
 			{
 				int iPos = (iIndex - 16) * 33;
-				m_iCosmetics2.Set( iPos, pPlayer->m_iCosmetics.Count() );
-				for( int y = 0; y < pPlayer->m_iCosmetics.Count(); y++ )
+				m_flCosmetics2.Set( iPos, pPlayer->m_flCosmetics.Count() );
+				for( int y = 0; y < pPlayer->m_flCosmetics.Count(); y++ )
 				{
-					m_iCosmetics2.Set( iPos + (y + 1), pPlayer->m_iCosmetics[y] );
+					m_flCosmetics2.Set( iPos + (y + 1), pPlayer->m_flCosmetics[y] );
 				}
 			}
 		}
 		else
 		{
 			int iPos = (iIndex - 32) * 33;
-			m_iCosmetics3.Set( iPos, pPlayer->m_iCosmetics.Count() );
-			for( int y = 0; y < pPlayer->m_iCosmetics.Count(); y++ )
+			m_flCosmetics3.Set( iPos, pPlayer->m_flCosmetics.Count() );
+			for( int y = 0; y < pPlayer->m_flCosmetics.Count(); y++ )
 			{
-				m_iCosmetics3.Set( iPos + (y + 1), pPlayer->m_iCosmetics[y] );
+				m_flCosmetics3.Set( iPos + (y + 1), pPlayer->m_flCosmetics[y] );
 			}
 		}
 	}
 	else
 	{
 			int iPos = (iIndex - 48) * 33;
-			m_iCosmetics4.Set( iPos, pPlayer->m_iCosmetics.Count() );
-			for( int y = 0; y < pPlayer->m_iCosmetics.Count(); y++ )
+			m_flCosmetics4.Set( iPos, pPlayer->m_flCosmetics.Count() );
+			for( int y = 0; y < pPlayer->m_flCosmetics.Count(); y++ )
 			{
-				m_iCosmetics4.Set( iPos + (y + 1), pPlayer->m_iCosmetics[y] );
+				m_flCosmetics4.Set( iPos + (y + 1), pPlayer->m_flCosmetics[y] );
 			}
 
 	}	
@@ -125,13 +125,13 @@ void CTFPlayerResource::Spawn( void )
 	// im going to hazbin hotel for this
 	for( i = 0; i < 528; i++ )
 	{
-		m_iCosmetics.Set( i, 0 );
-		m_iCosmetics2.Set( i, 0 );
-		m_iCosmetics3.Set( i, 0 );
-		m_iCosmetics4.Set( i, 0 );
+		m_flCosmetics.Set( i, 0 );
+		m_flCosmetics2.Set( i, 0 );
+		m_flCosmetics3.Set( i, 0 );
+		m_flCosmetics4.Set( i, 0 );
 	}
 	for( i = 528; i < 561; i++ )
-		m_iCosmetics4.Set( i, 0 );
+		m_flCosmetics4.Set( i, 0 );
 
 	BaseClass::Spawn();
 }

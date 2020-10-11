@@ -27,6 +27,7 @@ public:
 	int GetMaxHealth( int iIndex )   { return GetArrayValue( iIndex, m_iMaxHealth, TF_HEALTH_UNDEFINED ); }
 	int GetPlayerClass( int iIndex ) { return GetArrayValue( iIndex, m_iPlayerClass, TF_CLASS_UNDEFINED ); }
 	int GetPlayerCosmetic( int iPlayerIndex ,int iIndex );
+	int GetPlayerCosmeticSkin( int iPlayerIndex, int iIndex );
 	int GetPlayerCosmeticCount( int iIndex );
 	const Vector &GetPlayerColorVector( int iIndex );
 	Color GetPlayerColor( int iIndex );
@@ -40,10 +41,11 @@ protected:
 	int		m_iMaxHealth[MAX_PLAYERS+1];
 	int		m_iPlayerClass[MAX_PLAYERS+1];
 	Vector	m_vecColors[MAX_PLAYERS + 1];
-	int		m_iCosmetics[(16)*33];
-	int		m_iCosmetics2[(16)*33];
-	int		m_iCosmetics3[(16)*33];
-	int		m_iCosmetics4[(17)*33];
+public:
+	float m_flCosmetics[(16)*33];
+	float m_flCosmetics2[(16)*33];
+	float m_flCosmetics3[(16)*33];
+	float m_flCosmetics4[(17)*33];
 };
 
 inline C_TF_PlayerResource *GetTFPlayerResource( void )

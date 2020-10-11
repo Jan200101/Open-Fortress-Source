@@ -606,11 +606,11 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 
 				if (!of_disable_cosmetics.GetBool())
 				{
-					for (int i = 0; i < pPlayer->m_iCosmetics.Count(); i++)
+					for (int i = 0; i < tf_PR->GetPlayerCosmeticCount(pPlayer->entindex()); i++)
 					{
-						if (pPlayer->m_iCosmetics[i])
+						if( tf_PR->GetPlayerCosmetic(pPlayer->entindex(), i) )
 						{
-							KeyValues* pCosmetic = GetCosmetic(pPlayer->m_iCosmetics[i]);
+							KeyValues* pCosmetic = GetCosmetic( tf_PR->GetPlayerCosmetic(pPlayer->entindex(), i) );
 							if (!pCosmetic)
 								continue;
 

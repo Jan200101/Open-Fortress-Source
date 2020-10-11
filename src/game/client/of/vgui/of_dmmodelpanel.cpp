@@ -125,13 +125,39 @@ void DMModelPanel::PaintBackground()
 		}
 		// Set the animation.
 		SetMergeMDL( szWeaponModel, NULL, 2 );
-		for( int i = 0; i < m_iCosmetics.Count(); i++ )
+		for( int i = 0; i < m_flCosmetics.Count(); i++ )
 		{
-			KeyValues *pCosmetic = GetCosmetic( m_iCosmetics[i] );
+			KeyValues *pCosmetic = GetCosmetic( m_flCosmetics[i] );
 			if( pCosmetic )
 			{
+				int iVisibleTeam = 1;
+				int iTeamCount = 1;
+
+				if( pCosmetic->GetBool( "team_skins", true ) )
+				{
+					iTeamCount = 3;
+					iVisibleTeam = 2;
+				}
+				
+				if( pCosmetic->GetBool( "uses_brightskins" ) )
+				{
+					iTeamCount++;
+					iVisibleTeam = iTeamCount - 1;
+				}
+				
+				int nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+				
+				if( nSkin < pCosmetic->GetInt( "styles" ) )
+				{
+					float flCosmetic = m_flCosmetics[i];
+					flCosmetic += 0.001f;
+					flCosmetic = flCosmetic - (int)m_flCosmetics[i];
+					flCosmetic *= 100.0f;
+					DevMsg("%d\n", (int)flCosmetic);
+					nSkin += iTeamCount * (int)flCosmetic;
+				}
 				if( strcmp( pCosmetic->GetString("model"), "BLANK" ) && strcmp( pCosmetic->GetString("model"), "" ) )
-					SetMergeMDL( pCosmetic->GetString("model"), NULL, 2 );
+					SetMergeMDL( pCosmetic->GetString("model"), NULL, nSkin );
 
 				KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
 				if( pBodygroups )
@@ -159,23 +185,23 @@ void DMModelPanel::SetCosmetic(int iCosmeticID, bool bSelected)
 {
 	if (bSelected)
 	{
-		for (int i = 0; i < m_iCosmetics.Count(); i++)
+		for (int i = 0; i < m_flCosmetics.Count(); i++)
 		{
-			if (iCosmeticID == m_iCosmetics[i])
+			if (iCosmeticID == m_flCosmetics[i])
 			{
 				// Already has the cosmetic, don't add second time
 				return;
 			}
 		}
-		m_iCosmetics.AddToTail(iCosmeticID);
+		m_flCosmetics.AddToTail(iCosmeticID);
 	}
 	else
 	{
-		for (int i = 0; i < m_iCosmetics.Count(); i++)
+		for (int i = 0; i < m_flCosmetics.Count(); i++)
 		{
-			if (iCosmeticID == m_iCosmetics[i])
+			if (iCosmeticID == m_flCosmetics[i])
 			{
-				m_iCosmetics.Remove(i);
+				m_flCosmetics.Remove(i);
 				break;
 			}
 		}
@@ -188,12 +214,13 @@ void DMModelPanel::SetWeaponModel( const char *szWeapon, int iAnim )
 	Q_strncpy(szWeaponModel, szWeapon, sizeof(szWeaponModel));
 	SetModelAnim( iAnim );
 	iWeaponAnim = iAnim;
+	m_iAnimationIndex = iAnim;
 	m_bUpdateCosmetics = true;
 }
 
 void DMModelPanel::SetLoadoutCosmetics()
 {
-	m_iCosmetics.RemoveAll();
+	m_flCosmetics.RemoveAll();
 	if (GetLoadout())
 	{
 		KeyValues *kvCosmetics = GetLoadout()->FindKey("Cosmetics");
@@ -204,7 +231,7 @@ void DMModelPanel::SetLoadoutCosmetics()
 			{
 				for (KeyValues *pData = kvMerc->GetFirstSubKey(); pData != NULL; pData = pData->GetNextKey())
 				{
-					m_iCosmetics.AddToTail(pData->GetInt());
+					m_flCosmetics.AddToTail(pData->GetFloat());
 				}
 			}
 		}
