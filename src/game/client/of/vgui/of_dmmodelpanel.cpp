@@ -139,10 +139,11 @@ void DMModelPanel::PaintBackground()
 					iVisibleTeam = 2;
 				}
 				
-				if( pCosmetic->GetBool( "uses_brightskins" ) && of_tennisball.GetBool() )
+				if( pCosmetic->GetBool( "uses_brightskins" ) )
 				{
 					iTeamCount++;
-					iVisibleTeam = iTeamCount - 1;
+					if( of_tennisball.GetBool() )
+						iVisibleTeam = iTeamCount - 1;
 				}
 				
 				int nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;

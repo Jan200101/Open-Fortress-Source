@@ -1358,10 +1358,11 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 								iVisibleTeam = pPlayer->GetTeamNumber() - 2;
 							}
 
-							if( pCosmetic->GetBool( "uses_brightskins" ) && of_tennisball.GetBool() )
+							if( pCosmetic->GetBool( "uses_brightskins" ) )
 							{
 								iTeamCount++;
-								iVisibleTeam = iTeamCount - 1;
+								if( of_tennisball.GetBool() )
+									iVisibleTeam = iTeamCount - 1;
 							}
 							
 							handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
@@ -3630,10 +3631,11 @@ void C_TFPlayer::UpdateWearables( void )
 
 					iVisibleTeam = iVisibleTeam - 2;
 				}
-				if( pCosmetic->GetBool( "uses_brightskins" ) && of_tennisball.GetBool() )
+				if( pCosmetic->GetBool( "uses_brightskins" ) )
 				{
 					iTeamCount++;
-					iVisibleTeam = iTeamCount - 1;
+					if( of_tennisball.GetBool() )
+						iVisibleTeam = iTeamCount - 1;
 				}
 				
 				handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
