@@ -71,6 +71,8 @@ ConVar of_infection_allow_teleporter( "of_infection_allow_teleporter", "1", FCVA
 
 ConVar of_haste_movespeed_multplier( "of_haste_movespeed_multplier", "1.5", FCVAR_REPLICATED | FCVAR_NOTIFY, "By how much move speed should be multiplied when in Haste." );
 
+ConVar of_lunge_allow_mid_air( "of_lunge_allow_mid_air", "0", FCVAR_REPLICATED | FCVAR_NOTIFY, "Allow lunge in mid air" );
+
 #define TF_SPY_STEALTH_BLINKTIME   0.3f
 #define TF_SPY_STEALTH_BLINKSCALE  0.85f
 
@@ -2351,7 +2353,7 @@ bool CTFPlayerShared::DoLungeCheck( void )
 {
 	if ( IsZombie() || m_pOuter->GetPlayerClass()->GetClass() == TF_CLASS_JUGGERNAUT )
 	{
-		if ( m_bNoAirControl || !m_pOuter->GetGroundEntity() || InCond(TF_COND_TAUNTING) )
+		if ( m_bNoAirControl || ( !m_pOuter->GetGroundEntity() && !of_lunge_allow_mid_air.GetBool() ) || InCond(TF_COND_TAUNTING) )
 			return false;
 
 		CTFClaws *pWeapon = dynamic_cast<CTFClaws *>( m_pOuter->GetActiveWeapon() );
