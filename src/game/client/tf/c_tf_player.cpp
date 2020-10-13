@@ -72,7 +72,17 @@ ConVar of_color_r( "of_color_r", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets me
 ConVar of_color_g( "of_color_g", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's green channel value", true, -1, true, 255 );
 ConVar of_color_b( "of_color_b", "128", FCVAR_ARCHIVE | FCVAR_USERINFO, "Sets merc color's blue channel value", true, -1, true, 255 );
 
-ConVar of_tennisball( "of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF" );
+void OFTennisballCallback(IConVar *var, const char *pOldString, float flOldValue)
+{
+	for( int i = 0; i < gpGlobals->maxClients; i++ )
+	{
+		C_TFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
+		if( pPlayer )
+			pPlayer->m_bUpdateCosmetics = true;
+	}
+}
+
+ConVar of_tennisball( "of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF", OFTennisballCallback );
 ConVar of_disable_cosmetics( "of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats" );
 
 ConVar tf_hud_no_crosshair_on_scope_zoom( "tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun." );
@@ -1328,54 +1338,68 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 					KeyValues *pCosmetic = GetCosmetic( g_TFPR->GetPlayerCosmetic(pPlayer->entindex(), i) );
 					if( !pCosmetic )
 						continue;
+					
+					int iStyle = g_TFPR->GetPlayerCosmeticSkin(pPlayer->entindex(), i);
+					KeyValues *pInfo = new KeyValues("CosmeticInfo");
+					pCosmetic->CopySubkeys(pInfo);
+
+					KeyValues *pStyles = pCosmetic->FindKey("styles");
+					if( pStyles )
+					{
+						KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
+						if( pStyle )
+						{
+							pStyle->CopySubkeys(pInfo);
+							pInfo->RecursiveMergeKeyValues(pCosmetic);
+						}
+					}
 
 					// can't draw headwear regions in firstperson ragdolls
 					if ( cl_fp_ragdoll.GetBool() && pPlayer == C_TFPlayer::GetLocalTFPlayer() )
 					{
-						const char *pRegion = pCosmetic->GetString( "region" );
+						const char *pRegion = pInfo->GetString( "region" );
 						if ( pRegion && ( !Q_strcmp( pRegion, "hat" ) || 
 							 !Q_strcmp( pRegion, "face" ) || 
 							 !Q_strcmp( pRegion, "glasses" ) ) )
 						{
+							pInfo->deleteThis();
 							continue;
 						}
 					}
 
-					if ( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+					if ( Q_strcmp( pInfo->GetString( "Model" ), "BLANK" ) )
 					{
 
-						CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
+						CosmeticHandle handle = C_PlayerAttachedModel::Create( pInfo->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
 						
 						if( handle )
 						{
-					
 							int iVisibleTeam = 0;
 							int iTeamCount = 1;
 
-							if( pCosmetic->GetBool( "team_skins", true ) )
+							if( pInfo->GetBool( "team_skins", true ) )
 							{
 								iTeamCount = 3;
 								iVisibleTeam = pPlayer->GetTeamNumber() - 2;
 							}
 
-							if( pCosmetic->GetBool( "uses_brightskins" ) && of_tennisball.GetBool() )
+							if( pInfo->GetBool( "uses_brightskins" ) )
 							{
 								iTeamCount++;
-								iVisibleTeam = iTeamCount - 1;
+								if( of_tennisball.GetBool() )
+									iVisibleTeam = iTeamCount - 1;
 							}
 							
 							handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
 
-							if( g_TFPR->GetPlayerCosmeticSkin( entindex(), i ) < pCosmetic->GetInt( "styles" ) )
-							{
-								int iSkin = iTeamCount * g_TFPR->GetPlayerCosmeticSkin( pPlayer->entindex(), i );
-							
-								handle->m_nSkin = handle->m_nSkin + iSkin;
-							}
-							
+							int iSkin = iTeamCount * pInfo->GetInt( "skin_offset" );
+
+							handle->m_nSkin = handle->m_nSkin + iSkin;
+
 							m_hCosmetic.AddToTail(handle);
 						}
 					}
+					pInfo->deleteThis();
 				}
 			}
 		}
@@ -3551,6 +3575,7 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 		}
 	}
 }
+
 void C_TFPlayer::UpdateWearables( void )
 {
 	for( int i = 0; i < GetNumBodyGroups(); i++ )
@@ -3594,12 +3619,29 @@ void C_TFPlayer::UpdateWearables( void )
 			continue;
 		}
 		
-		KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+		int iStyle = g_TFPR->GetPlayerCosmeticSkin(entindex(), i);
+		KeyValues *pInfo = new KeyValues("CosmeticInfo");
+		pCosmetic->CopySubkeys(pInfo);
+
+		KeyValues *pStyles = pCosmetic->FindKey("styles");
+		if( pStyles )
+		{
+			KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
+			if( pStyle )
+			{
+				pStyle->CopySubkeys(pInfo);
+				pInfo->RecursiveMergeKeyValues(pCosmetic);
+			}
+		}
+
+		KeyValues* pBodygroups = pInfo->FindKey("Bodygroups");
 		if( pBodygroups )
 		{
 			if( m_Shared.IsZombie() )
+			{
+				pInfo->deleteThis();
 				continue;
-
+			}
 			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
 			{
 				int m_Bodygroup = FindBodygroupByName( sub->GetName() );
@@ -3611,15 +3653,15 @@ void C_TFPlayer::UpdateWearables( void )
 			}
 		}
 
-		if( Q_strcmp( pCosmetic->GetString( "Model" ), "BLANK" ) )
+		if( Q_strcmp( pInfo->GetString( "Model" ), "BLANK" ) )
 		{
-			CosmeticHandle handle = C_PlayerAttachedModel::Create( pCosmetic->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
+			CosmeticHandle handle = C_PlayerAttachedModel::Create( pInfo->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
 
 			if( handle )
 			{
 				int iVisibleTeam = 0;
 				int iTeamCount = 1;
-				if( pCosmetic->GetBool( "team_skins", true ) )
+				if( pInfo->GetBool( "team_skins", true ) )
 				{
 					iTeamCount = 3;
 					iVisibleTeam = GetTeamNumber();
@@ -3630,23 +3672,23 @@ void C_TFPlayer::UpdateWearables( void )
 
 					iVisibleTeam = iVisibleTeam - 2;
 				}
-				if( pCosmetic->GetBool( "uses_brightskins" ) && of_tennisball.GetBool() )
+				if( pInfo->GetBool( "uses_brightskins" ) )
 				{
 					iTeamCount++;
-					iVisibleTeam = iTeamCount - 1;
+					if( of_tennisball.GetBool() )
+						iVisibleTeam = iTeamCount - 1;
 				}
 				
 				handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
 
-				if( g_TFPR->GetPlayerCosmeticSkin( entindex(), i ) < pCosmetic->GetInt( "styles" ) )
-				{
-					int iSkin = iTeamCount * g_TFPR->GetPlayerCosmeticSkin( entindex(), i );
+				int iSkin = iTeamCount * pInfo->GetInt("skin_offset");
 				
-					handle->m_nSkin = handle->m_nSkin + iSkin;
-				}
+				handle->m_nSkin = handle->m_nSkin + iSkin;
+
 				m_hCosmetic.AddToTail(handle);
 			}
 		}
+		pInfo->deleteThis();
 	}
 }
 //-----------------------------------------------------------------------------

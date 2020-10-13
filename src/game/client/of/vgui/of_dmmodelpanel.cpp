@@ -111,6 +111,9 @@ void DMModelPanel::PaintBackground()
 		m_bTennisball = of_tennisball.GetBool();
 		m_BMPResData.m_nSkin = m_bTennisball ? 6 : 4;
 		Update();
+		// Since cosmetics can now have different tenisball skins, we need to update them
+		// *sigh*, team classic
+		m_bUpdateCosmetics = true;
 	}
 
 	if( m_bUpdateCosmetics )
@@ -130,36 +133,48 @@ void DMModelPanel::PaintBackground()
 			KeyValues *pCosmetic = GetCosmetic( m_flCosmetics[i] );
 			if( pCosmetic )
 			{
+				float flCosmetic = m_flCosmetics[i];
+				flCosmetic += 0.001f;
+				flCosmetic = flCosmetic - (int)m_flCosmetics[i];
+				flCosmetic *= 100.0f;
+				int iStyle = (int)flCosmetic;
+				KeyValues *pInfo = new KeyValues("CosmeticInfo");
+				pCosmetic->CopySubkeys(pInfo);
+
+				KeyValues *pStyles = pCosmetic->FindKey("styles");
+				if( pStyles )
+				{
+					KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
+					if( pStyle )
+					{
+						pStyle->CopySubkeys(pInfo);
+						pInfo->RecursiveMergeKeyValues(pCosmetic);
+					}
+				}
 				int iVisibleTeam = 1;
 				int iTeamCount = 1;
 
-				if( pCosmetic->GetBool( "team_skins", true ) )
+				if( pInfo->GetBool( "team_skins", true ) )
 				{
 					iTeamCount = 3;
 					iVisibleTeam = 2;
 				}
 				
-				if( pCosmetic->GetBool( "uses_brightskins" ) )
+				if( pInfo->GetBool( "uses_brightskins" ) )
 				{
 					iTeamCount++;
-					iVisibleTeam = iTeamCount - 1;
+					if( of_tennisball.GetBool() )
+						iVisibleTeam = iTeamCount - 1;
 				}
 				
 				int nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
 				
-				if( nSkin < pCosmetic->GetInt( "styles" ) )
-				{
-					float flCosmetic = m_flCosmetics[i];
-					flCosmetic += 0.001f;
-					flCosmetic = flCosmetic - (int)m_flCosmetics[i];
-					flCosmetic *= 100.0f;
-					DevMsg("%d\n", (int)flCosmetic);
-					nSkin += iTeamCount * (int)flCosmetic;
-				}
-				if( strcmp( pCosmetic->GetString("model"), "BLANK" ) && strcmp( pCosmetic->GetString("model"), "" ) )
-					SetMergeMDL( pCosmetic->GetString("model"), NULL, nSkin );
+				nSkin += iTeamCount * pInfo->GetInt( "skin_offset" );
 
-				KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+				if( strcmp( pInfo->GetString("model"), "BLANK" ) && strcmp( pInfo->GetString("model"), "" ) )
+					SetMergeMDL( pInfo->GetString("model"), NULL, nSkin );
+
+				KeyValues* pBodygroups = pInfo->FindKey("Bodygroups");
 				if( pBodygroups )
 				{
 					for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
@@ -171,7 +186,7 @@ void DMModelPanel::PaintBackground()
 						}
 					}
 				}
-				
+				pInfo->deleteThis();
 			}
 		}
 		Update();

@@ -475,6 +475,8 @@ void CTFWinPanelDM::FireGameEvent(IGameEvent *event)
 	C_BaseEntity::EmitSound(filter, SOUND_FROM_LOCAL_PLAYER, "Hud.DMEndRoundScored");
 }
 
+extern ConVar of_tennisball;
+
 void CTFWinPanelDM::StartPanel( KeyValues *event )
 {
 	m_flDisplayTime = -1;
@@ -614,12 +616,46 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 							if (!pCosmetic)
 								continue;
 
-							if (Q_strcmp(pCosmetic->GetString("Model"), "BLANK"))
+							int iStyle = tf_PR->GetPlayerCosmeticSkin( pPlayer->entindex(), i );
+							KeyValues *pInfo = new KeyValues("CosmeticInfo");
+							pCosmetic->CopySubkeys(pInfo);
+
+							KeyValues *pStyles = pCosmetic->FindKey("styles");
+							if( pStyles )
 							{
-								pPlayerModel->AddAttachment(pCosmetic->GetString("Model", "models/empty.mdl"));
+								KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
+								if( pStyle )
+								{
+									pStyle->CopySubkeys(pInfo);
+									pInfo->RecursiveMergeKeyValues(pCosmetic);
+								}
 							}
 
-							KeyValues* pBodygroups = pCosmetic->FindKey("Bodygroups");
+							if (Q_strcmp(pInfo->GetString("Model"), "BLANK"))
+							{
+								int iVisibleTeam = 0;
+								int iTeamCount = 1;
+
+								if( pInfo->GetBool( "team_skins", true ) )
+								{
+									iTeamCount = 3;
+									iVisibleTeam = tf_PR->GetTeam( pPlayer->entindex() ) - 2;
+								}
+
+								if( pInfo->GetBool( "uses_brightskins" ) )
+								{
+									iTeamCount++;
+									if( of_tennisball.GetBool() )
+										iVisibleTeam = iTeamCount - 1;
+								}
+								
+								int iSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+								iSkin += iTeamCount * pInfo->GetInt( "skin_offset" );
+
+								pPlayerModel->AddAttachment(pInfo->GetString("Model", "models/empty.mdl"), iSkin);
+							}
+
+							KeyValues* pBodygroups = pInfo->FindKey("Bodygroups");
 							if (pBodygroups)
 							{
 								for (KeyValues* sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue())
@@ -627,6 +663,8 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 									pPlayerModel->SetBodygroup(sub->GetName(), sub->GetInt());
 								}
 							}
+							
+							pInfo->deleteThis();
 						}
 					}
 				}

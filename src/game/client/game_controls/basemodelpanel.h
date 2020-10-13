@@ -239,7 +239,7 @@ public:
 	void	SetDefaultAnimation( const char *pszName );
 #ifdef OF_CLIENT_DLL
 	void	SetBodygroup( const char* pszName, int nBody );
-	void	AddAttachment( const char* pszAttached );
+	void	AddAttachment( const char* pszAttached, int iSkin = -1 );
 #endif
 #ifdef OF_CLIENT_DLL
 	void	SwapModel( const char *pszName, const char *pszAttached = NULL, const char *pszVCD = NULL );

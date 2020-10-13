@@ -241,7 +241,7 @@ void CModelPanel::SetBodygroup( const char* pszName, int nBody )
 	}
 }
 
-void CModelPanel::AddAttachment( const char* pszAttached )
+void CModelPanel::AddAttachment( const char* pszAttached, int iSkin )
 {
 	CModelPanelAttachedModelInfo* pAttachedModelInfo = new CModelPanelAttachedModelInfo;
 	if ( pAttachedModelInfo )
@@ -251,7 +251,7 @@ void CModelPanel::AddAttachment( const char* pszAttached )
 		Assert( pAlloced );
 		Q_strncpy( pAlloced, pszAttached, len );
 		pAttachedModelInfo->m_pszModelName = pAlloced;
-		pAttachedModelInfo->m_nSkin = -1;
+		pAttachedModelInfo->m_nSkin = iSkin;
 
 		m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
 	}

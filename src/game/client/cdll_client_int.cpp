@@ -365,12 +365,16 @@ void OFPicmipChangedCallBack(IConVar *var, const char *pOldString, float flOldVa
 ConVar of_picmip("of_picmip", "-1", FCVAR_ARCHIVE, "Overwrites the texture quality, from -10 to 10. Requires game restart when changed.", OFPicmipChangedCallBack );
 ConVar of_prop_fading( "of_prop_fading", "1", FCVAR_ARCHIVE, "Enable or disable prop fading. Requires game restart when changed. Enabling this will disable the -makedevshots functions.");
 
+ConVar *m_pMatPicmip = NULL;
+
 void OFPicmipChangedCallBack(IConVar *var, const char *pOldString, float flOldValue)
 {
-	ConVar *mat_picmip = NULL;
-	mat_picmip = g_pCVar->FindVar("mat_picmip");
+	if( m_pMatPicmip )
+	{
+		g_pCVar->RegisterConCommand(m_pMatPicmip);
+	}
 
-	if (mat_picmip)
+	if( m_pMatPicmip )
 	{
 		int iPicmip = of_picmip.GetInt();
 
@@ -382,9 +386,12 @@ void OFPicmipChangedCallBack(IConVar *var, const char *pOldString, float flOldVa
 		DevMsg("Hijacking mat_picmip with a value of %i...\n", iPicmip);
 
 		// hijack the convar's clamp values to use our own range
-		mat_picmip->SetMin(iPicmip);
-		mat_picmip->SetMax(iPicmip);
-		mat_picmip->SetValue(iPicmip);
+		m_pMatPicmip->SetMin(iPicmip);
+		m_pMatPicmip->SetMax(iPicmip);
+		m_pMatPicmip->SetValue(iPicmip);
+
+		g_pMaterialSystem->UpdateConfig( false );
+		g_pCVar->UnregisterConCommand( m_pMatPicmip );
 	}
 }
 #endif
@@ -1447,10 +1454,9 @@ void CHLClient::PostInit()
 	// The engine clamps mat_picmip to -1 - 2 every rendering frame and we don't have access to change this
 	// Therefore we set the min and max to our of_picmip value
 	// So every time the engine tries to change it, it gets clamped to the desired value
-	ConVar *mat_picmip = NULL;
-	mat_picmip = g_pCVar->FindVar( "mat_picmip" );
+	m_pMatPicmip = g_pCVar->FindVar( "mat_picmip" );
 
-	if ( mat_picmip )
+	if ( m_pMatPicmip )
 	{
 		int iPicmip = of_picmip.GetInt();
 
@@ -1462,9 +1468,13 @@ void CHLClient::PostInit()
 		DevMsg( "Hijacking mat_picmip with a value of %i...\n", iPicmip );
 
 		// hijack the convar's clamp values to use our own range
-		mat_picmip->SetMin( iPicmip );
-		mat_picmip->SetMax( iPicmip );
-		mat_picmip->SetValue( iPicmip );
+		m_pMatPicmip->SetMin( iPicmip );
+		m_pMatPicmip->SetMax( iPicmip );
+		m_pMatPicmip->SetValue( iPicmip );
+
+		g_pMaterialSystem->UpdateConfig( false );
+
+		g_pCVar->UnregisterConCommand( m_pMatPicmip );
 	}
 
 	ConVar *cl_updaterate = NULL;
