@@ -97,35 +97,4 @@ private:
 	char	szImpactSoft[64];
 	CNetworkVar( float, m_flDetTime );
 };
-
-//=============================================================================
-//
-// Flak Cannon's Ball.
-//
-//=============================================================================
-
-class CTFProjectile_FlakBall : public CTFProjectile_Rocket
-{
-public:
-
-	DECLARE_CLASS(CTFProjectile_BouncyRocket, CTFProjectile_Rocket);
-	DECLARE_NETWORKCLASS();
-
-	CTFProjectile_FlakBall();
-
-	static CTFProjectile_FlakBall *Create(CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles,
-		CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL, float creationTime = 0.f, Vector velocity = Vector(0.f, 0.f, 0.f));
-
-	virtual void Precache(void);
-	virtual void Spawn(void);
-	virtual void FlyThink(void);
-
-private:
-	QAngle	m_rotationVector;
-	float	m_flLastBounce;
-	int		m_iOldWaterLevel;
-
-	char	szImpactHard[64];
-	char	szImpactSoft[64];
-};
 #endif	//TF_PROJECTILE_ROCKET_H

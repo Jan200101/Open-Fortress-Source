@@ -992,46 +992,6 @@ CBaseEntity *CTFWeaponBaseGun::FireBouncer(CTFPlayer *pPlayer)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Fire a bouncing projectile
-//-----------------------------------------------------------------------------
-CBaseEntity *CTFWeaponBaseGun::FireFlakBall(CTFPlayer *pPlayer)
-{
-	PlayWeaponShootSound();
-
-	// Server only - create the rocket.
-#ifdef GAME_DLL
-	int iQuakeCvar = 0;
-
-	if (!pPlayer->IsFakeClient())
-		iQuakeCvar = V_atoi(engine->GetClientConVarValue(pPlayer->entindex(), "viewmodel_centered"));
-
-	Vector vecSrc;
-	QAngle angForward;
-	Vector vecOffset(24.f, 12.0f, -6.f);
-	if (iQuakeCvar)
-	{
-		vecOffset.x = 12.0f; //forward backwards
-		vecOffset.y = 0.0f; // left right
-		vecOffset.z = -8.0f; //up down
-	}
-
-	GetProjectileFireSetup(pPlayer, vecOffset, &vecSrc, &angForward, false);
-
-	CTFProjectile_FlakBall *pProjectile = CTFProjectile_FlakBall::Create(this, vecSrc, angForward, pPlayer, pPlayer);
-	if (pProjectile)
-	{
-		pProjectile->SetCritical(IsCurrentAttackACrit());
-		pProjectile->SetDamage(GetProjectileDamage());
-		pProjectile->SetLauncher(this);
-	}
-	return pProjectile;
-
-#endif
-
-	return NULL;
-}
-
-//-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFWeaponBaseGun::PlayWeaponShootSound( void )
