@@ -230,7 +230,7 @@ void CTFPipeWrench::PrimaryAttack()
 	default:
 	case AC_STATE_IDLE:
 		{
-
+			m_flChargedDamage = GetDamage();
 			if (m_flNextPrimaryAttack <= gpGlobals->curtime)
 			{
 				DevMsg("You start to charge up the Pipe Wrench\n");
