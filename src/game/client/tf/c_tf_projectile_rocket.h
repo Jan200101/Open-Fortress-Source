@@ -56,3 +56,4 @@ private:
 	CNewParticleEffect		*m_hTimerParticle;
 	CNetworkVar( float, m_flDetTime );
 };
+#endif // C_TF_PROJECTILE_ROCKET_H
