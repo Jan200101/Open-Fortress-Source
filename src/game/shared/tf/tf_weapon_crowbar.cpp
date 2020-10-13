@@ -73,16 +73,16 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS(tf_weapon_poisonshank, CTFPoisonShank);
 //PRECACHE_WEAPON_REGISTER( tf_weapon_poisonshank );
 
-IMPLEMENT_NETWORKCLASS_ALIASED(TFPipeWrench, DT_TFWeaponPipeWrench)
+IMPLEMENT_NETWORKCLASS_ALIASED(TFLeadPipe, DT_TFWeaponLeadPipe)
 
-BEGIN_NETWORK_TABLE(CTFPipeWrench, DT_TFWeaponPipeWrench)
+BEGIN_NETWORK_TABLE(CTFLeadPipe, DT_TFWeaponLeadPipe)
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA(CTFPipeWrench)
+BEGIN_PREDICTION_DATA(CTFLeadPipe)
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS(tf_weapon_pipe_wrench, CTFPipeWrench);
-//PRECACHE_WEAPON_REGISTER( tf_weapon_pipe_wrench );
+LINK_ENTITY_TO_CLASS(tf_weapon_lead_pipe, CTFLeadPipe);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_lead_pipe );
 
 //=============================================================================
 //
@@ -107,7 +107,7 @@ CTFCUmbrella::CTFCUmbrella()
 CTFPoisonShank::CTFPoisonShank()
 {
 }
-CTFPipeWrench::CTFPipeWrench()
+CTFLeadPipe::CTFLeadPipe()
 {
 }
 acttable_t m_acttableMeleeAllClass[] =
@@ -198,7 +198,7 @@ float CTFPoisonShank::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 //-----------------------------------------------------------------------------
 // Purpose: Do backstab damage
 //-----------------------------------------------------------------------------
-float CTFPipeWrench::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
+float CTFLeadPipe::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 {
 	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
 
@@ -213,7 +213,7 @@ float CTFPipeWrench::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 // -----------------------------------------------------------------------------
 // Purpose:
 // -----------------------------------------------------------------------------
-void CTFPipeWrench::PrimaryAttack()
+void CTFLeadPipe::PrimaryAttack()
 {
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
 	if (!pPlayer)
@@ -266,7 +266,7 @@ void CTFPipeWrench::PrimaryAttack()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CTFPipeWrench::WindUp(void)
+void CTFLeadPipe::WindUp(void)
 {
 	// Get the player owning the weapon.
 	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
@@ -286,7 +286,7 @@ void CTFPipeWrench::WindUp(void)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFPipeWrench::ItemPostFrame()
+void CTFLeadPipe::ItemPostFrame()
 {
 	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
 	if (!pOwner)
@@ -315,7 +315,7 @@ void CTFPipeWrench::ItemPostFrame()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFPipeWrench::CalcIsAttackCriticalHelper(void)
+bool CTFLeadPipe::CalcIsAttackCriticalHelper(void)
 {
 	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
 
@@ -334,7 +334,7 @@ bool CTFPipeWrench::CalcIsAttackCriticalHelper(void)
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CTFPipeWrench::Holster(CBaseCombatWeapon *pSwitchingTo)
+bool CTFLeadPipe::Holster(CBaseCombatWeapon *pSwitchingTo)
 {
 	m_flChargedDamage = GetDamage();
 

@@ -18,10 +18,10 @@
 #define CTFCCrowbar C_TFCCrowbar
 #define CTFCUmbrella C_TFCUmbrella
 #define CTFPoisonShank C_TFPoisonShank
-#define CTFPipeWrench C_TFPipeWrench
+#define CTFLeadPipe C_TFLeadPipe
 #endif
 
-enum PipeWrenchState_t
+enum LeadPipeState_t
 {
 	// Firing states.
 	AC_STATE_IDLE = 0,
@@ -116,18 +116,18 @@ private:
 	CTFPoisonShank(const CTFPoisonShank &) {}
 };
 
-class CTFPipeWrench : public CTFWeaponBaseMelee
+class CTFLeadPipe : public CTFWeaponBaseMelee
 {
 public:
 
-	DECLARE_CLASS(CTFPipeWrench, CTFWeaponBaseMelee);
+	DECLARE_CLASS(CTFLeadPipe, CTFWeaponBaseMelee);
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 	CNetworkVar(float, m_flChargedDamage);
 
-	CTFPipeWrench();
+	CTFLeadPipe();
 	virtual void		PrimaryAttack(void);
-	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_PIPE_WRENCH; }
+	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_LEAD_PIPE; }
 	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
 	virtual bool		Holster(CBaseCombatWeapon *pSwitchingTo);
 	virtual void		ItemPostFrame(void);
@@ -135,9 +135,9 @@ public:
 
 private:
 
-	CTFPipeWrench(const CTFPipeWrench &) {}
+	CTFLeadPipe(const CTFLeadPipe &) {}
 
-	CNetworkVar(PipeWrenchState_t, m_iWeaponState);
+	CNetworkVar(LeadPipeState_t, m_iWeaponState);
 	CNetworkVar(bool, m_bReady);
 
 	void WindUp(void);
