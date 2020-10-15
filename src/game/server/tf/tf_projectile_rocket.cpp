@@ -136,12 +136,17 @@ END_NETWORK_TABLE()
 #define BOUNCYROCKET_SPEED 750.f
 #define BOUNCYROCKET_MODEL "models/weapons/w_models/w_grenade_bouncer.mdl"
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CTFProjectile_BouncyRocket::CTFProjectile_BouncyRocket()
 {
 	szImpactHard[0] = '\0';
 	szImpactSoft[0] = '\0';
 }
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 CTFProjectile_BouncyRocket *CTFProjectile_BouncyRocket::Create(CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner, CBaseEntity *pScorer, float creationTime, Vector velocity)
 {
 	CTFProjectile_BouncyRocket *pRocket = static_cast<CTFProjectile_BouncyRocket*>(CTFBaseRocket::Create(pWeapon, "tf_projectile_bouncyrocket", vecOrigin, vecAngles, pOwner));
@@ -175,7 +180,9 @@ CTFProjectile_BouncyRocket *CTFProjectile_BouncyRocket::Create(CTFWeaponBase *pW
 
 	return pRocket;
 }
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CTFProjectile_BouncyRocket::Precache(void)
 {
 	PrecacheModel(BOUNCYROCKET_MODEL);
@@ -186,7 +193,9 @@ void CTFProjectile_BouncyRocket::Precache(void)
 	PrecacheScriptSound("BouncerGrenade.ImpactSoft");
 	CTFBaseRocket::Precache();
 }
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CTFProjectile_BouncyRocket::Spawn(void)
 {
 	SetModel(BOUNCYROCKET_MODEL);
@@ -195,7 +204,9 @@ void CTFProjectile_BouncyRocket::Spawn(void)
 	m_rotationVector = QAngle(angle.x, angle.y, angle.z) * 20.f;
 	CTFBaseRocket::Spawn();
 }
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CTFProjectile_BouncyRocket::SetModel( const char *szModelName )
 {
 	BaseClass::SetModel( szModelName );
@@ -207,7 +218,9 @@ void CTFProjectile_BouncyRocket::SetModel( const char *szModelName )
 		Q_strncpy(szImpactSoft, physprops->GetString(psurf->sounds.impactSoft), sizeof(szImpactSoft));
 	}	
 }
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CTFProjectile_BouncyRocket::FlyThink(void)
 {
 	if (creationTime)
@@ -245,7 +258,9 @@ void CTFProjectile_BouncyRocket::FlyThink(void)
 	m_iOldWaterLevel = waterLevel;
 	SetNextThink(gpGlobals->curtime + 0.05f);
 }
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CTFProjectile_BouncyRocket::BounceSound(const short data)
 {
 	if( szImpactHard[0] == '\0' || szImpactSoft[0] == '\0' )
@@ -256,7 +271,9 @@ void CTFProjectile_BouncyRocket::BounceSound(const short data)
 	else
 		EmitSound(szImpactHard);
 }
-
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 void CTFProjectile_BouncyRocket::RocketTouch(CBaseEntity *pOther)
 {
 	if (pOther && pOther->IsSolidFlagSet(FSOLID_TRIGGER | FSOLID_VOLUME_CONTENTS))

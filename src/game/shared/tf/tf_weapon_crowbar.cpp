@@ -6,6 +6,7 @@
 
 #include "cbase.h"
 #include "tf_weapon_crowbar.h"
+#include "in_buttons.h"
 
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
@@ -61,6 +62,28 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tfc_weapon_umbrella, CTFCUmbrella );
 //PRECACHE_WEAPON_REGISTER( tfc_weapon_umbrella );
 
+IMPLEMENT_NETWORKCLASS_ALIASED( TFPoisonShank, DT_TFWeaponPoisonShank)
+
+BEGIN_NETWORK_TABLE(CTFPoisonShank, DT_TFWeaponPoisonShank)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFPoisonShank)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_poisonshank, CTFPoisonShank);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_poisonshank );
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFLeadPipe, DT_TFWeaponLeadPipe)
+
+BEGIN_NETWORK_TABLE(CTFLeadPipe, DT_TFWeaponLeadPipe)
+END_NETWORK_TABLE()
+
+BEGIN_PREDICTION_DATA(CTFLeadPipe)
+END_PREDICTION_DATA()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_lead_pipe, CTFLeadPipe);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_lead_pipe );
+
 //=============================================================================
 //
 // Weapon Crowbar functions.
@@ -81,7 +104,12 @@ CTFCCrowbar::CTFCCrowbar()
 CTFCUmbrella::CTFCUmbrella()
 {
 }
-
+CTFPoisonShank::CTFPoisonShank()
+{
+}
+CTFLeadPipe::CTFLeadPipe()
+{
+}
 acttable_t m_acttableMeleeAllClass[] =
 {
 	{ ACT_MP_STAND_IDLE,						ACT_MP_STAND_MELEE_ALLCLASS,			        false },		
@@ -132,4 +160,185 @@ acttable_t *CTFCrowbar::ActivityList( int &iActivityCount )
 		return m_acttableMeleeAllClass;
 	}
 	return BaseClass::ActivityList( iActivityCount );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Do backstab damage
+//-----------------------------------------------------------------------------
+float CTFPoisonShank::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
+{
+	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
+
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+
+	#ifdef GAME_DLL
+	CTFPlayer *pTFPlayer = ToTFPlayer(pTarget);
+	#endif 
+
+	if ( pTarget->IsPlayer() )
+	{
+		if (GetEnemyTeam(pTarget) == pPlayer->GetTeamNumber())
+		{
+		#ifdef GAME_DLL
+			CTakeDamageInfo info;
+
+			info.SetAttacker(GetOwnerEntity());		// the player who operated the thing that emitted nails
+			info.SetInflictor(pPlayer);				// the weapon that emitted this projectile
+
+			pTFPlayer->m_Shared.Poison(pPlayer, GetTFWpnData().m_flEffectDuration);
+
+			iCustomDamage = TF_DMG_CUSTOM_POISON;
+		#endif
+		}
+	}
+
+	return flBaseDamage;
+
+}
+//-----------------------------------------------------------------------------
+// Purpose: Do backstab damage
+//-----------------------------------------------------------------------------
+float CTFLeadPipe::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
+{
+	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
+
+	if (m_flChargedDamage > GetDamage())
+	{
+		flBaseDamage = m_flChargedDamage;
+		m_flChargedDamage = GetDamage();
+	}
+
+	return flBaseDamage;
+}
+// -----------------------------------------------------------------------------
+// Purpose:
+// -----------------------------------------------------------------------------
+void CTFLeadPipe::PrimaryAttack()
+{
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+	if (!pPlayer)
+		return;
+
+	if (!CanAttack())
+	{
+		WeaponIdle();
+		return;
+	}
+
+	switch (m_iWeaponState)
+	{
+	default:
+	case AC_STATE_IDLE:
+		{
+			m_flChargedDamage = GetDamage();
+			if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+			{
+				DevMsg("You start to charge up the Pipe Wrench\n");
+				WindUp();
+			}
+
+			break;
+		}
+	case AC_STATE_CHARGE:
+		{
+
+			if (GetActivity() == ACT_BACKSTAB_VM_UP)
+			{
+				if (IsViewModelSequenceFinished())
+
+				SendWeaponAnim(ACT_BACKSTAB_VM_IDLE);
+
+				m_bReady = true;
+			}
+
+			if (m_bReady)
+			{
+				m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
+
+				float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
+				DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
+			}
+
+			break;
+		}
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CTFLeadPipe::WindUp(void)
+{
+	// Get the player owning the weapon.
+	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
+	if (!pPlayer)
+		return;
+
+	// Play wind-up animation and sound (SPECIAL1).
+	SendWeaponAnim(ACT_BACKSTAB_VM_UP);
+
+	// Set the appropriate firing state.
+	m_iWeaponState = AC_STATE_CHARGE;
+
+#ifdef GAME_DLL
+	pPlayer->StopRandomExpressions();
+#endif
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFLeadPipe::ItemPostFrame()
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+	if (!pOwner)
+		return;
+
+	if (pOwner->m_afButtonReleased & IN_ATTACK)
+	{
+		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
+		{ 
+			DevMsg("You let go of the Pipe Wrench\n");
+
+			Swing(pOwner);
+
+			m_bReady = false;
+
+			m_flNextPrimaryAttack = (	(gpGlobals->curtime + GetFireRate() ) + ( (m_flChargedDamage / GetDamage() ) / 2 )	);
+
+			DevMsg("The Attack Delay is %f\n", m_flNextPrimaryAttack);
+
+			m_iWeaponState = AC_STATE_IDLE;
+		}
+	}
+
+	BaseClass::ItemPostFrame();
+}
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+bool CTFLeadPipe::CalcIsAttackCriticalHelper(void)
+{
+	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
+
+	if (!pOwner)
+		return false;
+	
+	if (pOwner->m_Shared.InCond(TF_COND_BLASTJUMP))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+bool CTFLeadPipe::Holster(CBaseCombatWeapon *pSwitchingTo)
+{
+	m_flChargedDamage = GetDamage();
+
+	m_bReady = false;
+
+	return BaseClass::Holster(pSwitchingTo);
 }

@@ -409,6 +409,7 @@ CBaseEntity *CTFWeaponBaseGun::FireProjectile( CTFPlayer *pPlayer )
 		pProjectile = FireBouncer(pPlayer);
 		pPlayer->DoAnimationEvent(PLAYERANIMEVENT_ATTACK_PRIMARY);
 		break;
+
 	case TF_PROJECTILE_NONE:
 	default:
 		// do nothing!
@@ -721,7 +722,7 @@ CBaseEntity *CTFWeaponBaseGun::FireNail( CTFPlayer *pPlayer, int iSpecificNail )
 		
     case TF_PROJECTILE_NAIL:
 		pProjectile = CTFProjectile_Nail::Create(vecSrc, angForward, pPlayer, pPlayer, IsCurrentAttackACrit());
-		break;	
+		break;
 
 	default:
 		Assert(0);

@@ -110,6 +110,8 @@ void AirBlastProjectile( CBaseEntity *pEntity, CBaseEntity *pOwnerEnt, CTFWeapon
 	Vector vec = vec_in;
 
 	pEntity->Deflected( pEntity, vec );
+
+	pEntity->SetOwnerEntity(pOwner);
 #endif
 }
 
@@ -1502,9 +1504,27 @@ bool CTFWeaponBase::ReloadSingly(void)
 			// If we have ammo, remove ammo and add it to clip
 			if (ReserveAmmo() > 0 && !m_bReloadedThroughAnimEvent)
 			{
-				m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
-				if (of_infiniteammo.GetBool() != 1)
-					m_iReserveAmmo -= 1;
+				if (GetWpnData().iAmmoPerReload > 1)
+				{
+					for (int AmmoPerReloadIn = 0; AmmoPerReloadIn < (GetWpnData().iAmmoPerReload); AmmoPerReloadIn++)
+					{
+						if (m_iReserveAmmo > 0)
+						{
+							//Msg("Can place more shells in. AmmoPerReloadIn is %i\n", AmmoPerReloadIn);
+							//int MaxAmmoPerReload = (GetWpnData().iAmmoPerReload);
+							//Msg("Max Shell reloadable is %i\n", MaxAmmoPerReload);
+							m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
+							if (of_infiniteammo.GetBool() != 1)
+								m_iReserveAmmo -= 1;
+						}
+					}
+				}
+				else
+				{
+					m_iClip1 = min((m_iClip1 + 1), GetMaxClip1());
+					if (of_infiniteammo.GetBool() != 1)
+						m_iReserveAmmo -= 1;
+				}
 			}
 
 			if (Clip1() == GetMaxClip1() || ReserveAmmo() <= 0)

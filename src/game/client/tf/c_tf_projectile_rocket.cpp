@@ -154,6 +154,9 @@ void C_TFProjectile_Rocket::CreateLightEffects(void)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Bonucy Rocket
+//-----------------------------------------------------------------------------
 IMPLEMENT_NETWORKCLASS_ALIASED( TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )
 
 BEGIN_NETWORK_TABLE( C_TFProjectile_BouncyRocket, DT_TFProjectile_BouncyRocket )

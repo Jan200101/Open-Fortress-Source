@@ -18,6 +18,7 @@
 //
 // Generic rocket.
 //
+//=============================================================================
 class CTFProjectile_Rocket : public CTFBaseRocket, public IScorer
 {
 public:
@@ -46,6 +47,11 @@ private:
 	CNetworkVar( int, m_bCritical );
 };
 
+//=============================================================================
+//
+// TFC Pyro's Rocket.
+//
+//=============================================================================
 class CTFCProjectile_IncendRocket : public CTFProjectile_Rocket
 {
 public:
@@ -55,6 +61,11 @@ public:
 	static CTFCProjectile_IncendRocket *Create( CTFWeaponBase *pWeapon, const Vector &vecOrigin, const QAngle &vecAngles, CBaseEntity *pOwner = NULL, CBaseEntity *pScorer = NULL );	
 };
 
+//=============================================================================
+//
+// Bouncer Rocket.
+//
+//=============================================================================
 class CTFProjectile_BouncyRocket : public CTFProjectile_Rocket
 {
 public:
@@ -86,5 +97,4 @@ private:
 	char	szImpactSoft[64];
 	CNetworkVar( float, m_flDetTime );
 };
-
 #endif	//TF_PROJECTILE_ROCKET_H

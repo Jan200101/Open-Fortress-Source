@@ -26,6 +26,7 @@
 #define CTFShotgun_Merc C_TFShotgun_Merc
 #define CTFCShotgunSB C_TFCShotgunSB
 #define CTFCShotgunDB C_TFCShotgunDB
+#define CTFLeverAction C_TFLeverAction
 #endif
 
 // Reload Modes
@@ -41,6 +42,7 @@ enum
 //
 // Shotgun class.
 //
+//=============================================================================
 class CTFShotgun : public CTFWeaponBaseGun
 {
 public:
@@ -112,7 +114,15 @@ public:
 
 	virtual int		GetWeaponID( void ) const			{ return TFC_WEAPON_SHOTGUN_DB; }
 };
+class CTFLeverAction : public CTFShotgun
+{
+public:
+	DECLARE_CLASS(CTFLeverAction, CTFShotgun);
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
 
+	virtual int		GetWeaponID(void) const			{ return TF_WEAPON_LEVER_ACTION; }
+};
 //***************************************************************************
 //
 // ETERNAL GAMEMODE STUFF

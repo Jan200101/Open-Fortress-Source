@@ -687,6 +687,10 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 		OnAddFuckedUpLegs();
 		break;
 
+	case TF_COND_BLASTJUMP:
+		OnAddPoison();
+		break;
+
 	default:
 		break;
 	}
@@ -787,6 +791,10 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 
 	case TF_COND_FUCKEDUP_LEGS:
 		OnRemoveFuckedUpLegs();
+		break;
+
+	case TF_COND_BLASTJUMP:
+		OnRemovePoison();
 		break;
 
 	default:
@@ -1138,6 +1146,14 @@ void CTFPlayerShared::ConditionThink( void )
 #else
 	bIsLocalPlayer = true;
 #endif
+
+	if ((bIsLocalPlayer) && (m_pOuter->GetGroundEntity()))
+	{
+		if (InCond(TF_COND_BLASTJUMP))
+		{
+			RemoveCond(TF_COND_BLASTJUMP);
+		}
+	}
 
 	if ( m_pOuter->IsPlayerClass( TF_CLASS_SPY ) && bIsLocalPlayer )
 	{

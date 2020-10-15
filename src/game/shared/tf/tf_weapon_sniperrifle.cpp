@@ -796,7 +796,6 @@ void CTFCSniperRifle::ItemPostFrame(void)
 				CreateSniperDot(); 
 				pPlayer->ClearExpression();
 			#endif
-
 		}
 	}
 
