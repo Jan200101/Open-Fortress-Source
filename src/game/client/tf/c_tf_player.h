@@ -328,6 +328,7 @@ private:
 	int					m_iOldSpawnCounter;
 	int					m_iOldWeaponCount;
 	bool				m_bWasAlive;
+	bool				m_bHadFlag;
 
 	CNetworkHandle( CBaseCombatWeapon, m_hOldActiveWeapon );
 

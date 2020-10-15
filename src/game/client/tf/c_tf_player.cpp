@@ -2931,6 +2931,7 @@ void C_TFPlayer::OnPreDataChanged( DataUpdateType_t updateType )
 	m_iOldDisguiseClass = m_Shared.GetDisguiseClass();
 	m_iOldWeaponCount = WeaponCount();
 	m_bWasAlive = IsAlive();
+	m_bHadFlag = HasTheFlag();
 	
 	m_hOldActiveWeapon = GetActiveWeapon();
 
@@ -2975,8 +2976,16 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 	UpdateVisibility();
 	
 	if( !IsAlive() && m_bWasAlive )
+	{
 		m_bUpdatePlayerAttachments = true;
-	
+		m_bWasAlive = IsAlive();
+	}
+
+	if (m_bHadFlag != HasTheFlag())
+	{
+		m_bUpdatePlayerAttachments = true;
+		m_bHadFlag = HasTheFlag();
+	}
 	// Check for full health and remove decals.
 	if ( ( m_iHealth > m_iOldHealth && m_iHealth >= GetMaxHealth() ) || m_Shared.InCondUber() )
 	{
@@ -3616,10 +3625,11 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 						this,
 						LookupAttachment("flag"),
 						vec3_origin, PAM_PERMANENT, 0, 0, false);
-
+		
 					if( handle )
 					{
-						handle->SetAttachmentOffset(m_hSuperWeapons.Count() * Vector( -10, -10, 10 ));
+						Vector vecOffset( 0, 0, HasTheFlag() ? 10 : 0 );
+						handle->SetAttachmentOffset( vecOffset + (m_hSuperWeapons.Count() * Vector(-10, -10, 10)) );
 						handle->SetLocalAngles(QAngle(180, -70, 0));
 						handle->m_nSkin = pWeapon->GetSkin();
 						m_hSuperWeapons.AddToTail(handle);
