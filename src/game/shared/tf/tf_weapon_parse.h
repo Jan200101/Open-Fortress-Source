@@ -148,6 +148,7 @@ public:
 	bool 	m_bCanSoftZoom;
 	bool	m_bExplosionOnHit;
 	bool	m_bAirblastOnSwing;
+	bool	m_bAppearOnBack;
 	
 	float	m_flDespawnTime;
 	

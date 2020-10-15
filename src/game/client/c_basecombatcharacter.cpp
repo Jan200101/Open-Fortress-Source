@@ -194,6 +194,7 @@ BEGIN_RECV_TABLE( C_BaseCombatCharacter, DT_BaseCombatCharacter )
 RecvPropDataTable( "bcc_localdata", 0, 0, &REFERENCE_RECV_TABLE( DT_BCCLocalPlayerExclusive ) ),
 RecvPropEHandle( RECVINFO( m_hActiveWeapon ) ),
 RecvPropArray3( RECVINFO_ARRAY( m_hMyWeapons ), RecvPropEHandle( RECVINFO( m_hMyWeapons[0] ) ) ),
+RecvPropInt( RECVINFO( m_iWeaponCount ) ),
 #ifndef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
 RecvPropBool( RECVINFO( m_bGlowEnabled ) ),
@@ -213,5 +214,5 @@ DEFINE_PRED_ARRAY( m_iAmmo, FIELD_INTEGER, MAX_AMMO_TYPES, FTYPEDESC_INSENDTABLE
 DEFINE_PRED_FIELD( m_flNextAttack, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_FIELD( m_hActiveWeapon, FIELD_EHANDLE, FTYPEDESC_INSENDTABLE ),
 DEFINE_PRED_ARRAY( m_hMyWeapons, FIELD_EHANDLE, MAX_WEAPONS, FTYPEDESC_INSENDTABLE ),
-
+DEFINE_PRED_FIELD( m_iWeaponCount, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()

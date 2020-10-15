@@ -379,11 +379,13 @@ void CTFWeaponBase::Spawn()
 void CTFWeaponBase::Equip(CBaseCombatCharacter *pOwner)
 {
 	BaseClass::Equip(pOwner);
-#ifdef GAME_DLL
-	if (dynamic_cast<CTFWeaponBuilder*>(this)) // Builders crash the game, and those are handled seperatley anyways
-		return;
+
 	CTFPlayer *pTFOwner = ToTFPlayer(pOwner);
 	if (!pTFOwner)
+		return;
+
+#ifdef GAME_DLL
+	if (dynamic_cast<CTFWeaponBuilder*>(this)) // Builders crash the game, and those are handled seperatley anyways
 		return;
 	WeaponHandle hHandle;
 	hHandle = this;
@@ -1028,7 +1030,9 @@ bool CTFWeaponBase::Holster(CBaseCombatWeapon *pSwitchingTo)
 		pOwner->GetViewModel(m_nViewModelIndex)->ParticleProp()->StopEmission();
 
 	if (pOwner)
+	{
 		pOwner->m_Shared.UpdateCritParticle();
+	}
 #endif
 
 	// Negates the effects of long reloads not letting you fire after you've re-drawn your weapon

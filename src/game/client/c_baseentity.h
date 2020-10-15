@@ -880,6 +880,9 @@ public:
 	// Returns the attachment point index on our parent that our transform is relative to.
 	// 0 if we're relative to the parent's absorigin and absangles.
 	unsigned char			GetParentAttachment() const;
+	void					SetAttachmentOffset( Vector vecOffset ){ m_vecAttachmentOffset.SetX( vecOffset.x );
+														 m_vecAttachmentOffset.SetY( vecOffset.y );
+														 m_vecAttachmentOffset.SetZ( vecOffset.z );};
 
 	// Externalized data objects ( see sharreddefs.h for DataObjectType_t )
 	bool					HasDataObjectType( int type ) const;
@@ -1647,6 +1650,7 @@ private:
 	CNetworkVar( bool, m_bSimulatedEveryTick );
 	CNetworkVar( bool, m_bAnimatedEveryTick );
 	CNetworkVar( bool, m_bAlternateSorting );
+	CNetworkVector( m_vecAttachmentOffset );
 
 	//Adrian
 	unsigned char					m_iTextureFrameIndex;

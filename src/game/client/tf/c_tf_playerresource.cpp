@@ -5,6 +5,7 @@
 // $NoKeywords: $
 //=============================================================================//
 #include "cbase.h"
+#include "c_tf_player.h"
 #include "c_tf_playerresource.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -21,6 +22,8 @@ IMPLEMENT_CLIENTCLASS_DT( C_TF_PlayerResource, DT_TFPlayerResource, CTFPlayerRes
 	RecvPropArray3( RECVINFO_ARRAY( m_flCosmetics4 ), RecvPropFloat( RECVINFO( m_flCosmetics4[0] ) ) ),
 END_RECV_TABLE()
 
+extern ConVar of_tennisball;
+extern ConVar of_force_cosmetics;
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -42,6 +45,13 @@ C_TF_PlayerResource::~C_TF_PlayerResource()
 }
 const Vector &C_TF_PlayerResource::GetPlayerColorVector( int iIndex )
 {
+	if( of_tennisball.GetInt() > 1 )
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if( pPlayer )
+			iIndex = pPlayer->entindex();
+	}
+	
 	if ( !IsConnected( iIndex ) )
 	{
 		static Vector White( 1, 1, 1 );
@@ -66,12 +76,18 @@ int C_TF_PlayerResource::GetArrayValue( int iIndex, int *pArray, int iDefaultVal
 	}
 	return pArray[iIndex];
 }
-
 //-----------------------------------------------------------------------------
 // Purpose: Oh boy, gets the cosmetic index for a specified player
 //-----------------------------------------------------------------------------
 int C_TF_PlayerResource::GetPlayerCosmetic( int iPlayerIndex, int iIndex )
 {
+	if( of_force_cosmetics.GetBool() )
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if( pPlayer )
+			iPlayerIndex = pPlayer->entindex();
+	}
+
 	if ( !IsConnected( iPlayerIndex ) )
 	{
 		return -1;
@@ -122,6 +138,13 @@ int C_TF_PlayerResource::GetPlayerCosmetic( int iPlayerIndex, int iIndex )
 //-----------------------------------------------------------------------------
 int C_TF_PlayerResource::GetPlayerCosmeticSkin( int iPlayerIndex, int iIndex )
 {
+	if( of_force_cosmetics.GetBool() )
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if( pPlayer )
+			iPlayerIndex = pPlayer->entindex();
+	}
+	
 	if ( !IsConnected( iPlayerIndex ) )
 	{
 		return 0;
@@ -182,6 +205,13 @@ int C_TF_PlayerResource::GetPlayerCosmeticSkin( int iPlayerIndex, int iIndex )
 //-----------------------------------------------------------------------------
 int C_TF_PlayerResource::GetPlayerCosmeticCount( int iIndex )
 {
+	if( of_force_cosmetics.GetBool() )
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if( pPlayer )
+			iIndex = pPlayer->entindex();
+	}
+	
 	if ( !IsConnected( iIndex ) )
 	{
 		return -1;

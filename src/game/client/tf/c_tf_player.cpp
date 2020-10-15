@@ -83,6 +83,7 @@ void OFTennisballCallback(IConVar *var, const char *pOldString, float flOldValue
 }
 
 ConVar of_tennisball( "of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF", OFTennisballCallback );
+ConVar of_force_cosmetics( "of_force_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Force players to wear the same cosmetics as you.", OFTennisballCallback );
 ConVar of_disable_cosmetics( "of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats" );
 
 ConVar tf_hud_no_crosshair_on_scope_zoom( "tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun." );
@@ -1269,7 +1270,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 		else if ( iVisibleTeam == TF_TEAM_MERCENARY ) //mercenary
 		{
-			if ( of_tennisball.GetBool() && m_iClass == TF_CLASS_MERCENARY )
+			if ( of_tennisball.GetInt() == 1 && m_iClass == TF_CLASS_MERCENARY )
 				m_nSkin = 6;
 			else
 				m_nSkin = 4;
@@ -1386,7 +1387,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 							if( pInfo->GetBool( "uses_brightskins" ) )
 							{
 								iTeamCount++;
-								if( of_tennisball.GetBool() )
+								if( of_tennisball.GetInt() == 1 )
 									iVisibleTeam = iTeamCount - 1;
 							}
 							
@@ -2200,14 +2201,14 @@ public:
 	{
 		Assert( m_pResult );
 
-		if ( of_tennisball.GetBool() )
+		if( of_tennisball.GetInt() == 1 )
 		{	
 			float r = floorf( TennisBall[0] ) / 255.0f;
 			float g = floorf( TennisBall[1] ) / 255.0f;
 			float b = floorf( TennisBall[2] ) / 255.0f;	
 			m_pResult->SetVecValue( r, g, b );
 			return;
-		}		
+		}
 		
 		if ( !pC_BaseEntity )
 		{
@@ -2270,7 +2271,7 @@ public:
 	{
 		Assert( m_pResult );
 
-		if ( of_tennisball.GetBool() )
+		if ( of_tennisball.GetInt() == 1 )
 		{	
 			float r = floorf( TennisBall[0] ) / 255.0f;
 			float g = floorf( TennisBall[1] ) / 255.0f;
@@ -2928,6 +2929,10 @@ void C_TFPlayer::OnPreDataChanged( DataUpdateType_t updateType )
 	m_bDisguised = m_Shared.InCond( TF_COND_DISGUISED );
 	m_iOldDisguiseTeam = m_Shared.GetDisguiseTeam();
 	m_iOldDisguiseClass = m_Shared.GetDisguiseClass();
+	m_iOldWeaponCount = WeaponCount();
+	m_bWasAlive = IsAlive();
+	
+	m_hOldActiveWeapon = GetActiveWeapon();
 
 	m_Shared.OnPreDataChanged();
 }
@@ -2959,7 +2964,18 @@ void C_TFPlayer::OnDataChanged( DataUpdateType_t updateType )
 		}
 	}
 
+	CTFWeaponBase *pTFWeapon = (CTFWeaponBase*)GetActiveWeapon();
+	CTFWeaponBase *pTFLastWeapon = (CTFWeaponBase*)m_hOldActiveWeapon.Get();
+
+	if ( (pTFWeapon && pTFWeapon->GetTFWpnData().m_bAppearOnBack) 
+	|| ( pTFLastWeapon && pTFLastWeapon->GetTFWpnData().m_bAppearOnBack) 
+	|| m_iOldWeaponCount != WeaponCount() )
+		m_bUpdatePlayerAttachments = true;
+
 	UpdateVisibility();
+	
+	if( !IsAlive() && m_bWasAlive )
+		m_bUpdatePlayerAttachments = true;
 	
 	// Check for full health and remove decals.
 	if ( ( m_iHealth > m_iOldHealth && m_iHealth >= GetMaxHealth() ) || m_Shared.InCondUber() )
@@ -3478,7 +3494,7 @@ CStudioHdr *C_TFPlayer::OnNewModel( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdatePlayerAttachedModels( void )
 {
-	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) ) //If we spawned in, continue
+	if ( GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) ) //If we spawned in, continue
 	{
 		UpdatePartyHat();
 		UpdateGameplayAttachments();
@@ -3496,8 +3512,13 @@ void C_TFPlayer::UpdatePartyHat( void )
 		{
 			m_hPartyHat->Release(); //Remove the hat so if its not valid anymore we don't wear it
 		}
+		
+		if( !IsAlive() )
+			return;
+		
 		if ( IsLocalPlayer() &&  !::input->CAM_IsThirdPerson() ) // If we're the local player and not in third person, bail
 			return;
+
 		m_hPartyHat = C_PlayerAttachedModel::Create( BDAY_HAT_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, 0, false );
 												  // Model name, object it gets attached to, attachment name,
 		// C_PlayerAttachedModel::Create can return NULL!
@@ -3556,10 +3577,18 @@ void C_TFPlayer::UpdateSpyMask( void )
 //-----------------------------------------------------------------------------
 void C_TFPlayer::UpdateGameplayAttachments( void )
 {
+	if ( m_hShieldEffect )
+		m_hShieldEffect->Release();
+	
+	for( int i = 0; i < m_hSuperWeapons.Count(); i++ )
+	{
+		m_hSuperWeapons[i]->Release();
+	}
+	m_hSuperWeapons.Purge();
+
 	if ( IsAlive() && GetTeamNumber() >= FIRST_GAME_TEAM && !IsPlayerClass(TF_CLASS_UNDEFINED) )
 	{
-		if ( m_hShieldEffect )
-			m_hShieldEffect->Release();
+
 		if ( m_Shared.InCond( TF_COND_SHIELD ) && ( !IsLocalPlayer() || ( IsLocalPlayer() &&  ::input->CAM_IsThirdPerson() ) ) )
 		{
 			m_hShieldEffect = C_PlayerAttachedModel::Create( DM_SHIELD_MODEL, this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE , false );
@@ -3571,6 +3600,31 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 					iVisibleTeam = m_Shared.GetDisguiseTeam();
 				}
 				m_hShieldEffect->m_nSkin = iVisibleTeam - 2;
+			}
+		}
+
+		if( !IsLocalPlayer() || ( ::input->CAM_IsThirdPerson() ) )
+		{
+			CTFWeaponBase *pWeapon = (CTFWeaponBase *)GetWeapon( 0 );
+			for ( int i = 0; i < WeaponCount(); ++i )
+			{
+				pWeapon = dynamic_cast<CTFWeaponBase *>(GetWeapon(i));
+				if( pWeapon && pWeapon->GetTFWpnData().m_bAppearOnBack && pWeapon != GetActiveTFWeapon() )
+				{
+					CHandle<C_PlayerAttachedModel> handle = C_PlayerAttachedModel::Create(
+						pWeapon->GetTFWpnData().szWorldModel,
+						this,
+						LookupAttachment("flag"),
+						vec3_origin, PAM_PERMANENT, 0, 0, false);
+
+					if( handle )
+					{
+						handle->SetAttachmentOffset(m_hSuperWeapons.Count() * Vector( -10, -10, 10 ));
+						handle->SetLocalAngles(QAngle(180, -70, 0));
+						handle->m_nSkin = pWeapon->GetSkin();
+						m_hSuperWeapons.AddToTail(handle);
+					}
+				}
 			}
 		}
 	}
@@ -3675,7 +3729,7 @@ void C_TFPlayer::UpdateWearables( void )
 				if( pInfo->GetBool( "uses_brightskins" ) )
 				{
 					iTeamCount++;
-					if( of_tennisball.GetBool() )
+					if( of_tennisball.GetInt() == 1 )
 						iVisibleTeam = iTeamCount - 1;
 				}
 				
@@ -5054,7 +5108,7 @@ int C_TFPlayer::GetSkin()
 		nSkin = 1;
 		break;
 	case TF_TEAM_MERCENARY:
-		if ( of_tennisball.GetBool() && IsPlayerClass( TF_CLASS_MERCENARY ) )
+		if ( of_tennisball.GetInt() == 1 && IsPlayerClass( TF_CLASS_MERCENARY ) )
 			nSkin = 6;
 		else
 			nSkin = 4;
@@ -5077,7 +5131,7 @@ int C_TFPlayer::GetSkin()
 				nSkin = 3;
 				break;
 			case TF_TEAM_MERCENARY:
-				if ( of_tennisball.GetBool() )
+				if ( of_tennisball.GetInt() == 1 )
 					nSkin = 7;
 				else
 					nSkin = 5;
@@ -5841,6 +5895,11 @@ void SetupHeadLabelMaterials( void )
 			g_pHeadLabelMaterial[i]->IncrementReferenceCount();
 		}
 	}
+}
+Vector C_TFPlayer::GetItemTintColor( void )
+{ 
+	C_TF_PlayerResource *tf_PR = dynamic_cast<C_TF_PlayerResource *>( g_PR );
+	return tf_PR ? tf_PR->GetPlayerColorVector(entindex()) : m_vecPlayerColor; 
 }
 
 void C_TFPlayer::ComputeFxBlend( void )

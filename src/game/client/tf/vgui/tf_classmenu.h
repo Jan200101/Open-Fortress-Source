@@ -89,7 +89,7 @@ public:
 					default:
 					case TF_TEAM_MERCENARY:
 					// this is really hacky, if the name is merc, do brightskins
-					if ( of_tennisball.GetBool() && Q_stricmp(GetName(),"mercenary") )
+					if ( of_tennisball.GetInt() == 1 && Q_stricmp(GetName(),"mercenary") )
 						pModelPanel->SetSkin( 6 );
 					else
 						pModelPanel->SetSkin( 4 );

@@ -526,6 +526,7 @@ protected:
 
 	// Usable character items 
 	CNetworkArray( CBaseCombatWeaponHandle, m_hMyWeapons, MAX_WEAPONS );
+	CNetworkVar( unsigned int, m_iWeaponCount );
 
 	CNetworkHandle( CBaseCombatWeapon, m_hActiveWeapon );
 
@@ -561,7 +562,7 @@ inline float CBaseCombatCharacter::GetAliveDuration( void ) const
 //-----------------------------------------------------------------------------
 inline int	CBaseCombatCharacter::WeaponCount() const
 {
-	return MAX_WEAPONS;
+	return m_iWeaponCount;
 }
 
 //-----------------------------------------------------------------------------

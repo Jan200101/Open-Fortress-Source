@@ -133,6 +133,7 @@ private:
 
 	CHandle<C_BaseCombatWeapon>		m_hMyWeapons[MAX_WEAPONS];
 	CHandle< C_BaseCombatWeapon > m_hActiveWeapon;
+	CNetworkVar( unsigned int, m_iWeaponCount );
 	
 #ifndef OF_CLIENT_DLL
 #ifdef GLOWS_ENABLE
@@ -192,7 +193,7 @@ inline C_BaseCombatCharacter *ToBaseCombatCharacter( C_BaseEntity *pEntity )
 //-----------------------------------------------------------------------------
 inline int	C_BaseCombatCharacter::WeaponCount() const
 {
-	return MAX_WEAPONS;
+	return m_iWeaponCount;
 }
 
 //-----------------------------------------------------------------------------

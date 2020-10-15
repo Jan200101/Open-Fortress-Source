@@ -37,7 +37,7 @@ namespace vgui
 		int m_iCurrentParticle;
 
 	private:
-		bool m_bTennisball;
+		int m_iTennisball;
 		char szWeaponModel[128];
 		int iWeaponAnim;
 	};

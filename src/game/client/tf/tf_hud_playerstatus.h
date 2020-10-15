@@ -66,6 +66,7 @@ private:
 	int					m_nDisguiseTeam;
 	int					m_nDisguiseClass;
 	int					m_nCloakLevel;
+	int					m_nTennisball;
 };
 
 //-----------------------------------------------------------------------------

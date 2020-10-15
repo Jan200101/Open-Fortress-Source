@@ -76,6 +76,7 @@ BEGIN_NETWORK_TABLE_NOBASE( TFPlayerClassData_t, DT_PlayerClassData )
 	RecvPropString( RECVINFO( m_szClassImageBlue ) ),
 	RecvPropString( RECVINFO( m_szClassImageMercenary ) ),		
 	RecvPropString( RECVINFO( m_szClassImageColorless ) ),
+	RecvPropString( RECVINFO( m_szClassImageTennis ) ),
 
 	RecvPropString( RECVINFO( m_szClassIcon ) ),
 
@@ -114,6 +115,7 @@ BEGIN_NETWORK_TABLE_NOBASE( TFPlayerClassData_t, DT_PlayerClassData )
 	SendPropString( SENDINFO( m_szClassImageBlue ) ),
 	SendPropString( SENDINFO( m_szClassImageMercenary ) ),		
 	SendPropString( SENDINFO( m_szClassImageColorless ) ),	
+	SendPropString( SENDINFO( m_szClassImageTennis ) ),	
 	
 	SendPropString( SENDINFO( m_szClassIcon ) ),	
 
@@ -156,6 +158,7 @@ BEGIN_SIMPLE_DATADESC( TFPlayerClassData_t )
 	DEFINE_FIELD( m_szClassImageBlue, FIELD_STRING ),
 	DEFINE_FIELD( m_szClassImageMercenary, FIELD_STRING ),
 	DEFINE_FIELD( m_szClassImageColorless, FIELD_STRING ),
+	DEFINE_FIELD( m_szClassImageTennis, FIELD_STRING ),
 	
 	DEFINE_FIELD( m_szClassIcon, FIELD_STRING ),
 	
@@ -347,6 +350,7 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	Q_strncpy( m_szClassImageBlue.GetForModify(), 		pKeyValuesData->GetString( "ClassImageBlue" ), 		TF_NAME_LENGTH );
 	Q_strncpy( m_szClassImageMercenary.GetForModify(), pKeyValuesData->GetString( "ClassImageMercenary" ), TF_NAME_LENGTH );
 	Q_strncpy( m_szClassImageColorless.GetForModify(), pKeyValuesData->GetString( "ClassImageColorless" ), TF_NAME_LENGTH );
+	Q_strncpy( m_szClassImageTennis.GetForModify(), pKeyValuesData->GetString( "ClassImageTennis" ), TF_NAME_LENGTH );
 	
 	Q_strncpy( m_szClassIcon.GetForModify(), pKeyValuesData->GetString( "ClassIcon", "../hud/leaderboard_class_tank" ), 	TF_NAME_LENGTH );
 	

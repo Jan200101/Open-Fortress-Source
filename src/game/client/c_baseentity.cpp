@@ -461,6 +461,7 @@ BEGIN_RECV_TABLE_NOBASE(C_BaseEntity, DT_BaseEntity)
 	RecvPropEHandle( RECVINFO(m_hEffectEntity) ),
 	RecvPropInt( RECVINFO_NAME(m_hNetworkMoveParent, moveparent), 0, RecvProxy_IntToMoveParent ),
 	RecvPropInt( RECVINFO( m_iParentAttachment ) ),
+	RecvPropVector( RECVINFO( m_vecAttachmentOffset ) ),
 
 	RecvPropInt( "movetype", 0, SIZEOF_IGNORE, 0, RecvProxy_MoveType ),
 	RecvPropInt( "movecollide", 0, SIZEOF_IGNORE, 0, RecvProxy_MoveCollide ),
@@ -4316,7 +4317,17 @@ matrix3x4_t& C_BaseEntity::GetParentToWorldTransform( matrix3x4_t &tempMatrix )
 		QAngle vAngles;
 		if ( pMoveParent->GetAttachment( m_iParentAttachment, vOrigin, vAngles ) )
 		{
-			AngleMatrix( vAngles, vOrigin, tempMatrix );
+			Vector vForward, vRight, vUp, vResult;
+			AngleVectors(vAngles, &vForward, &vRight, &vUp);
+			VectorNormalize(vForward);
+			VectorNormalize(vRight);
+			VectorNormalize(vUp);
+			vForward *= m_vecAttachmentOffset.GetX();
+			vRight	 *= m_vecAttachmentOffset.GetY();
+			vUp		 *= m_vecAttachmentOffset.GetZ();
+
+			vResult = vForward + vRight + vUp;
+			AngleMatrix( vAngles , vOrigin + vResult, tempMatrix );
 			return tempMatrix;
 		}
 	}

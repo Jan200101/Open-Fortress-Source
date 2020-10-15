@@ -72,8 +72,9 @@ struct TFPlayerClassData_t
 	
 	CNetworkString( m_szClassImageRed, TF_NAME_LENGTH );
 	CNetworkString( m_szClassImageBlue, TF_NAME_LENGTH );
-	CNetworkString( m_szClassImageMercenary, TF_NAME_LENGTH );		
-	CNetworkString( m_szClassImageColorless, TF_NAME_LENGTH );	
+	CNetworkString( m_szClassImageMercenary, TF_NAME_LENGTH );
+	CNetworkString( m_szClassImageColorless, TF_NAME_LENGTH );
+	CNetworkString( m_szClassImageTennis, TF_NAME_LENGTH );
 	
 	CNetworkString( m_szClassIcon, TF_NAME_LENGTH );
 
@@ -101,6 +102,7 @@ struct TFPlayerClassData_t
 	const char *GetClassImageBlue() const { return m_szClassImageBlue; }
 	const char *GetClassImageMercenary() const { return m_szClassImageMercenary; }
 	const char *GetClassImageColorless() const { return m_szClassImageColorless; }
+	const char *GetClassImageTennis() const { return m_szClassImageTennis; }
 	
 	const char *GetClassIcon() const { return m_szClassIcon; }
 	

@@ -106,10 +106,10 @@ void DMModelPanel::PaintBackground()
 		
 	}
 
-	if( of_tennisball.GetBool() != m_bTennisball )
+	if( of_tennisball.GetInt() != m_iTennisball )
 	{
-		m_bTennisball = of_tennisball.GetBool();
-		m_BMPResData.m_nSkin = m_bTennisball ? 6 : 4;
+		m_iTennisball = of_tennisball.GetInt();
+		m_BMPResData.m_nSkin = m_iTennisball == 1 ? 6 : 4;
 		Update();
 		// Since cosmetics can now have different tenisball skins, we need to update them
 		// *sigh*, team classic
@@ -163,7 +163,7 @@ void DMModelPanel::PaintBackground()
 				if( pInfo->GetBool( "uses_brightskins" ) )
 				{
 					iTeamCount++;
-					if( of_tennisball.GetBool() )
+					if( of_tennisball.GetInt() == 1 )
 						iVisibleTeam = iTeamCount - 1;
 				}
 				

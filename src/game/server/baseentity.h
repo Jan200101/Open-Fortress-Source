@@ -586,6 +586,9 @@ public:
 	virtual void	SetParent( CBaseEntity* pNewParent, int iAttachment = -1 );
 	CBaseEntity* GetParent();
 	int			GetParentAttachment();
+	void		SetAttachmentOffset( Vector vecOffset ){ m_vecAttachmentOffset.SetX( vecOffset.x );
+														 m_vecAttachmentOffset.SetY( vecOffset.y );
+														 m_vecAttachmentOffset.SetZ( vecOffset.z );};
 
 	string_t	GetEntityName();
 
@@ -1704,6 +1707,7 @@ private:
 	CNetworkVar( bool, m_bSimulatedEveryTick );
 	CNetworkVar( bool, m_bAnimatedEveryTick );
 	CNetworkVar( bool, m_bAlternateSorting );
+	CNetworkVector( m_vecAttachmentOffset );
 
 	// User outputs. Fired when the "FireInputX" input is triggered.
 	COutputEvent m_OnUser1;

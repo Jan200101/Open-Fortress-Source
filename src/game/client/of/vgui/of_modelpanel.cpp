@@ -187,9 +187,9 @@ void CTFModelPanel::SetParticleName(const char* name)
 	Vector vecParticleOffset( 0, 0, m_flParticleZOffset );
 	
 	m_pData->UpdateControlPoints( GetModelPtr(), &m_RootMDL.m_MDLToWorld, vecAttachments, 0, vecParticleOffset);
-	int iRed = of_tennisball.GetBool() ? 0 : of_color_r.GetInt();
-	int iGreen = of_tennisball.GetBool() ? 255 : of_color_g.GetInt();
-	int iBlue = of_tennisball.GetBool() ? 0 : of_color_b.GetInt();
+	int iRed =  of_tennisball.GetInt() == 1 ? 0 : of_color_r.GetInt();
+	int iGreen = of_tennisball.GetInt() == 1 ? 255 : of_color_g.GetInt();
+	int iBlue =  of_tennisball.GetInt() == 1 ? 0 : of_color_b.GetInt();
 	
 	m_pData->SetParticleColor( GetModelPtr(), &m_RootMDL.m_MDLToWorld, iRed, iGreen, iBlue );
 

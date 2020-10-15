@@ -423,7 +423,7 @@ void CTFDuelAnnouncement::FireGameEvent( IGameEvent *event )
 								if( pInfo->GetBool( "uses_brightskins" ) )
 								{
 									iTeamCount++;
-									if( of_tennisball.GetBool() )
+									if( of_tennisball.GetInt() == 1 )
 										iVisibleTeam = iTeamCount - 1;
 								}
 								

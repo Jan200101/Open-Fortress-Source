@@ -147,7 +147,7 @@ void CHudDemomanChargeMeter::OnTick( void )
 
 					// C_BaseEntity::StopSound( GetOwner()->entindex(), shootsound );
 					if ( pWpn->GetWeaponID() != TF_WEAPON_DYNAMITE_BUNDLE )
-					C_BaseEntity::EmitSound( filter, pPlayer->entindex(), "Weapon_StickyBombLauncher.ChargeUp" );
+						C_BaseEntity::EmitSound( filter, pPlayer->entindex(), "Weapon_StickyBombLauncher.ChargeUp" );
 
 					mbCharging = true;
 				}

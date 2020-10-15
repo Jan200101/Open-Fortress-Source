@@ -102,6 +102,7 @@ BEGIN_DATADESC( CBaseCombatCharacter )
 
 	DEFINE_AUTO_ARRAY( m_iAmmo, FIELD_INTEGER ),
 	DEFINE_AUTO_ARRAY( m_hMyWeapons, FIELD_EHANDLE ),
+	DEFINE_FIELD( m_iWeaponCount, FIELD_INTEGER ),
 	DEFINE_FIELD( m_hActiveWeapon, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_bForceServerRagdoll, FIELD_BOOLEAN ),
 	DEFINE_FIELD( m_bPreventWeaponPickup, FIELD_BOOLEAN ),
@@ -200,7 +201,7 @@ IMPLEMENT_SERVERCLASS_ST(CBaseCombatCharacter, DT_BaseCombatCharacter)
 
 	SendPropEHandle( SENDINFO( m_hActiveWeapon ) ),
 	SendPropArray3( SENDINFO_ARRAY3(m_hMyWeapons), SendPropEHandle( SENDINFO_ARRAY(m_hMyWeapons) ) ),
-
+	SendPropInt( SENDINFO(m_iWeaponCount), 32, SPROP_UNSIGNED ), 
 #ifdef INVASION_DLL
 	SendPropInt( SENDINFO(m_iPowerups), MAX_POWERUPS, SPROP_UNSIGNED ), 
 #endif
@@ -740,6 +741,7 @@ CBaseCombatCharacter::CBaseCombatCharacter( void )
 	{
 		m_hMyWeapons.Set( i, NULL );
 	}
+	m_iWeaponCount = 0;
 
 	// Default so that spawned entities have this set
 	m_impactEnergyScale = 1.0f;
@@ -844,6 +846,7 @@ void CBaseCombatCharacter::UpdateOnRemove( void )
 		if (m_hMyWeapons[i]) 
 		{
 			UTIL_Remove( m_hMyWeapons[i] );
+			m_iWeaponCount--;
 		}
 	}
 
@@ -1718,6 +1721,7 @@ bool CBaseCombatCharacter::Weapon_Detach( CBaseCombatWeapon *pWeapon )
 				pWeapon->Holster();
 			}
 			m_hMyWeapons.Set( i, NULL );
+			m_iWeaponCount--;
 			pWeapon->SetOwner( NULL );
 
 			if ( pWeapon == m_hActiveWeapon )
@@ -2086,6 +2090,7 @@ void CBaseCombatCharacter::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 		if (!m_hMyWeapons[i]) 
 		{
 			m_hMyWeapons.Set( i, pWeapon );
+			m_iWeaponCount++;
 			break;
 		}
 	}
@@ -2355,6 +2360,7 @@ void CBaseCombatCharacter::RemoveAllWeapons()
 		{
 			m_hMyWeapons[i]->Delete( );
 			m_hMyWeapons.Set( i, NULL );
+			m_iWeaponCount--;
 		}
 	}
 }

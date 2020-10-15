@@ -15,6 +15,7 @@ using namespace vgui;
 
 
 extern ConVar tf_max_health_boost;
+extern ConVar of_tennisball;
 
 static char *g_szEmpty[] = 
 { 
@@ -89,6 +90,12 @@ void CTFHudPlayerClass::OnThink()
 				bTeamChange = true;
 				m_nTeam = pPlayer->GetTeamNumber();
 			}
+			
+			if( of_tennisball.GetInt() != m_nTennisball )
+			{
+				m_nTennisball = of_tennisball.GetInt();
+				bTeamChange = true;
+			}
 			int nCloakLevel = 0;
 			bool bCloakChange = false;
 			float flInvis = pPlayer->GetPercentInvisible();
@@ -110,9 +117,9 @@ void CTFHudPlayerClass::OnThink()
 
 			// set our class image
 			if ( m_nClass != pPlayer->GetPlayerClass()->GetClassIndex() || bTeamChange || bCloakChange 
-				|| m_nModifiers != pPlayer->GetPlayerClass()->GetModifiers() ||
-				( m_nClass == TF_CLASS_SPY && m_nDisguiseClass != pPlayer->m_Shared.GetDisguiseClass() ) ||
-				( m_nClass == TF_CLASS_SPY && m_nDisguiseTeam != pPlayer->m_Shared.GetDisguiseTeam() ) )
+				|| m_nModifiers != pPlayer->GetPlayerClass()->GetModifiers() 
+				|| ( m_nClass == TF_CLASS_SPY && m_nDisguiseClass != pPlayer->m_Shared.GetDisguiseClass() ) 
+				|| ( m_nClass == TF_CLASS_SPY && m_nDisguiseTeam != pPlayer->m_Shared.GetDisguiseTeam() ) )
 			{
 				m_nClass = pPlayer->GetPlayerClass()->GetClassIndex();
 				m_nModifiers = pPlayer->GetPlayerClass()->GetModifiers();
@@ -466,6 +473,9 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 				{
 					m_pHealthBonusImage->SetVisible( true );
 					g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudHealthDyingPulse" );
+					CLocalPlayerFilter filter;
+					C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
+					C_BaseEntity::EmitSound( filter, pPlayer->entindex(), "TFPlayer.LowHealth" );
 				}
 
 				m_pHealthBonusImage->SetFgColor( m_clrHealthDeathWarningColor );
@@ -701,7 +711,9 @@ void CTFClassImage::SetClass( int iTeam, TFPlayerClassData_t *iClassData, int iC
 	}
 	else if ( iTeam == TF_TEAM_MERCENARY )
 	{
-		if ( iClassData->GetClassImageMercenary() )
+		if( of_tennisball.GetInt() == 1 && iClassData->GetClassImageTennis()[0] != '\0' )
+			Q_strncpy( szImage, iClassData->GetClassImageTennis(), sizeof(szImage) );
+		else if ( iClassData->GetClassImageMercenary() )
 			Q_strncpy( szImage, iClassData->GetClassImageMercenary(), sizeof(szImage) );
 	}
 	else
@@ -736,7 +748,7 @@ void CTFClassImage::SetClassColorless( int iTeam, TFPlayerClassData_t *iClassDat
 	char szImageColorless[128];
 	szImageColorless[0] = '\0';
 
-	if ( iTeam == TF_TEAM_MERCENARY )
+	if ( iTeam == TF_TEAM_MERCENARY && !( of_tennisball.GetInt() == 1 && iClassData->GetClassImageTennis()[0] != '\0' ) )
 	{
 		Q_strncpy( szImageColorless, iClassData->GetClassImageColorless(), sizeof(szImageColorless) );
 		switch( iCloakstate )

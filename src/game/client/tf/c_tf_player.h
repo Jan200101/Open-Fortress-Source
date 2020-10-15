@@ -273,7 +273,7 @@ public:
 
 	virtual	IMaterial *GetHeadLabelMaterial( void );
 	
-	virtual Vector GetItemTintColor( void ) { return m_vecPlayerColor; }
+	virtual Vector GetItemTintColor( void );
 
 protected:
 
@@ -326,6 +326,10 @@ private:
 	int					bInitialSpawn;
 	int					m_iOldState;
 	int					m_iOldSpawnCounter;
+	int					m_iOldWeaponCount;
+	bool				m_bWasAlive;
+
+	CNetworkHandle( CBaseCombatWeapon, m_hOldActiveWeapon );
 
 	int					m_bResupplied;
 	int					m_bOldResupplied;
@@ -438,6 +442,7 @@ public:
 	CHandle<C_PlayerAttachedModel>	m_hPartyHat;
 	CHandle<C_PlayerAttachedModel>	m_hSpyMask;
 	CHandle<C_PlayerAttachedModel>	m_hShieldEffect;
+	CUtlVector<CHandle<C_PlayerAttachedModel>>	m_hSuperWeapons;
 	CUtlVector<CosmeticHandle>		m_hCosmetic;
 	int								iCosmeticCount;
 	
