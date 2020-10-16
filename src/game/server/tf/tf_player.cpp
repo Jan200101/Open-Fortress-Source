@@ -8923,6 +8923,10 @@ void CTFPlayer::Taunt( void )
 		{
 			SetTauntEffect( TF_TAUNT_POW, 1.8f );
 		}
+		else if ( V_stricmp( szResponse, "scenes/player/mercenary/low/taunt06_v1.vcd" ) == 0 )
+		{
+			SetTauntEffect( TF_TAUNT_POW, 1.6f );
+		}		
 		else if ( V_stricmp( szResponse, "scenes/player/spy/low/taunt03_v1.vcd" ) == 0 || V_stricmp( szResponse, "scenes/player/spy/low/taunt03_v2.vcd" ) == 0 )
 		{
 			SetTauntEffect( TF_TAUNT_FENCING, 1.8f );
