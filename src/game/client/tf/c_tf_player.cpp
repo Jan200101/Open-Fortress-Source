@@ -3591,7 +3591,8 @@ void C_TFPlayer::UpdateGameplayAttachments( void )
 	
 	for( int i = 0; i < m_hSuperWeapons.Count(); i++ )
 	{
-		m_hSuperWeapons[i]->Release();
+		if( m_hSuperWeapons[i] )
+			m_hSuperWeapons[i].Get()->Release();
 	}
 	m_hSuperWeapons.Purge();
 
