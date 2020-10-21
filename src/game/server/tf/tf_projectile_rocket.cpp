@@ -85,7 +85,7 @@ int	CTFProjectile_Rocket::GetDamageType()
 		iDmgType |= DMG_CRITICAL;
 	}
 
-	return iDmgType;
+	return iDmgType &~ DMG_USEDISTANCEMOD;
 }
 
 //-----------------------------------------------------------------------------
@@ -203,6 +203,7 @@ void CTFProjectile_BouncyRocket::Spawn(void)
 	VectorNormalize(angle);
 	m_rotationVector = QAngle(angle.x, angle.y, angle.z) * 20.f;
 	CTFBaseRocket::Spawn();
+	
 }
 //-----------------------------------------------------------------------------
 // Purpose:
