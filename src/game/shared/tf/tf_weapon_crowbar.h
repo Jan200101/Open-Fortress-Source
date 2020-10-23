@@ -124,6 +124,7 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 	CNetworkVar(float, m_flChargedDamage);
+	CNetworkVar(float, m_flChargedTime);
 
 	CTFLeadPipe();
 	virtual void		PrimaryAttack(void);

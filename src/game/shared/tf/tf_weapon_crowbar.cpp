@@ -302,9 +302,10 @@ void CTFLeadPipe::ItemPostFrame()
 
 			m_bReady = false;
 
-			m_flNextPrimaryAttack = (	(gpGlobals->curtime + GetFireRate() ) + ( (m_flChargedDamage / GetDamage() ) / 2 )	);
+			m_flNextPrimaryAttack = (gpGlobals->curtime + ( (GetFireRate()) + ((m_flChargedDamage / GetDamage())/10) ));
 
-			DevMsg("The Attack Delay is %f\n", m_flNextPrimaryAttack);
+			float m_flNextPrimaryAttackMath = (((GetFireRate()) + ((m_flChargedDamage / GetDamage()) / 10)));
+			DevMsg("The Attack Delay is %f\n", m_flNextPrimaryAttackMath);
 
 			m_iWeaponState = AC_STATE_IDLE;
 		}
