@@ -952,6 +952,104 @@ void CLessOrEqualProxy::OnBind( void *pC_BaseEntity )
 EXPOSE_INTERFACE( CLessOrEqualProxy, IMaterialProxy, "LessOrEqual" IMATERIAL_PROXY_INTERFACE_VERSION );
 
 //-----------------------------------------------------------------------------
+// Comparison proxy
+//-----------------------------------------------------------------------------
+class CIfEqualProxy : public CFunctionProxy
+{
+public:
+	bool Init( IMaterial *pMaterial, KeyValues *pKeyValues );
+	void OnBind( void *pC_BaseEntity );
+
+private:
+	IMaterialVar *m_pDiffVar;
+	IMaterialVar *m_pEqualVar;
+};
+
+bool CIfEqualProxy::Init( IMaterial *pMaterial, KeyValues *pKeyValues )
+{
+	char const* pDiffVar = pKeyValues->GetString( "DiffVar" );
+	if( !pDiffVar )
+		return false;
+
+	bool foundVar;
+	m_pDiffVar = pMaterial->FindVar( pDiffVar, &foundVar, true );
+	if( !foundVar )
+		return false;
+
+	char const* pEqualVar = pKeyValues->GetString( "EqualVar" );
+	if( !pEqualVar )
+		return false;
+
+	foundVar;
+	m_pEqualVar = pMaterial->FindVar( pEqualVar, &foundVar, true );
+	if( !foundVar )
+		return false;
+
+	// Compare 2 args..
+	bool ok = CFunctionProxy::Init( pMaterial, pKeyValues );
+	ok = ok && m_pSrc2;
+	return ok;
+}
+
+void CIfEqualProxy::OnBind( void *pC_BaseEntity )
+{
+	Assert( m_pSrc1 && m_pSrc2 && m_pDiffVar && m_pEqualVar && m_pResult );
+
+	IMaterialVar *pSourceVar;
+	if( m_pSrc1->GetFloatValue() != m_pSrc2->GetFloatValue() )
+	{
+		pSourceVar = m_pDiffVar;
+	}
+	else
+	{
+		pSourceVar = m_pEqualVar;
+	}
+
+	int vecSize = 0;
+	MaterialVarType_t resultType = m_pResult->GetType();
+	if (resultType == MATERIAL_VAR_TYPE_VECTOR)
+	{
+		if (m_ResultVecComp >= 0)
+			resultType = MATERIAL_VAR_TYPE_FLOAT;
+		vecSize = m_pResult->VectorSize();
+	}
+	else if (resultType == MATERIAL_VAR_TYPE_UNDEFINED)
+	{
+		resultType = pSourceVar->GetType();
+		if (resultType == MATERIAL_VAR_TYPE_VECTOR)
+		{
+			vecSize = pSourceVar->VectorSize();
+		}
+	}
+
+	switch( resultType )
+	{
+	case MATERIAL_VAR_TYPE_VECTOR:
+		{
+			Vector src;
+			pSourceVar->GetVecValue( src.Base(), vecSize ); 
+			m_pResult->SetVecValue( src.Base(), vecSize );
+		}
+		break;
+
+	case MATERIAL_VAR_TYPE_FLOAT:
+		SetFloatResult( pSourceVar->GetFloatValue() );
+		break;
+
+	case MATERIAL_VAR_TYPE_INT:
+		m_pResult->SetFloatValue( pSourceVar->GetIntValue() );
+		break;
+	}
+
+	if ( ToolsEnabled() )
+	{
+		ToolFramework_RecordMaterialParams( GetMaterial() );
+	}
+}
+
+EXPOSE_INTERFACE( CIfEqualProxy, IMaterialProxy, "IfEqual" IMATERIAL_PROXY_INTERFACE_VERSION );
+
+//-----------------------------------------------------------------------------
 // WrapMinMax proxy
 //-----------------------------------------------------------------------------
 class CWrapMinMaxProxy : public CFunctionProxy

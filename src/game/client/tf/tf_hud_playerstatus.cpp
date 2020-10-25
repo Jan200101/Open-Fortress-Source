@@ -473,9 +473,6 @@ void CTFHudPlayerHealth::SetHealth( int iNewHealth, int iMaxHealth, int	iMaxBuff
 				{
 					m_pHealthBonusImage->SetVisible( true );
 					g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( this, "HudHealthDyingPulse" );
-					CLocalPlayerFilter filter;
-					C_TFPlayer *pPlayer = ToTFPlayer( C_BasePlayer::GetLocalPlayer() );
-					C_BaseEntity::EmitSound( filter, pPlayer->entindex(), "TFPlayer.LowHealth" );
 				}
 
 				m_pHealthBonusImage->SetFgColor( m_clrHealthDeathWarningColor );
@@ -638,7 +635,15 @@ void CTFHudPlayerHealth::OnThink()
 //				flMegaHeal = 0.0f;
 //			else if( pPlayer->GetHealth() - flMegaHeal < pPlayer->GetPlayerClass()->GetMaxHealth() )
 //				flMegaHeal -= pPlayer->GetPlayerClass()->GetMaxHealth() - ( pPlayer->GetHealth() - flMegaHeal );
-			
+
+			if ( pPlayer->GetHealth() < pPlayer->m_Shared.GetDefaultHealth() * m_flHealthDeathWarning
+			&& m_pHealthBonusImage 
+			&& !m_pHealthBonusImage->IsVisible() )
+			{
+				CLocalPlayerFilter filter;
+				C_BaseEntity::EmitSound( filter, pPlayer->entindex(), "TFPlayer.LowHealth" );
+			}
+
 			SetHealth( pPlayer->GetHealth(), pPlayer->m_Shared.GetDefaultHealth(), pPlayer->m_Shared.GetMaxBuffedHealthDM() );
 //			SetMegaHealth( pPlayer->m_Shared.m_flMegaOverheal, pPlayer->GetPlayerClass()->GetMaxHealth(), pPlayer->m_Shared.GetMaxBuffedHealthDM()/ 2 );
 		}

@@ -2183,7 +2183,7 @@ public:
 					critColor *= of_critglow_saturation.GetFloat();
 					vecColor = critColor;
 				}
-					break;
+				break;
 
 				}
 			}
