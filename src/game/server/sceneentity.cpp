@@ -4914,9 +4914,9 @@ void CInstancedSceneEntity::DoThink( float frametime )
 	if ( m_flPreDelay > 0 )
 	{
 #ifdef OF_DLL	
-		m_flPreDelay = MAX( 0.1f, m_flPreDelay - frametime );
+		m_flPreDelay = MAX( 0.0f, m_flPreDelay - frametime );
 #else
-		m_flPreDelay = MAX( 0.1, m_flPreDelay - frametime );
+		m_flPreDelay = MAX( 0.0, m_flPreDelay - frametime );
 #endif
 		StartPlayback();
 		if ( !m_bIsPlayingBack )

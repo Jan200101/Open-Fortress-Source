@@ -85,6 +85,7 @@ public:
 	void BounceSound(const short data);
 	void SetFuseTime( float flTime ) { m_flDetTime = flTime; }
 
+	virtual int		GetDamageType();
 	virtual void 	SetModel( const char *szModelName );
 	float creationTime;
 

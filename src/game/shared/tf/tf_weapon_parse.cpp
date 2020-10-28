@@ -138,12 +138,12 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	BaseClass::Parse( pKeyValuesData, szWeaponName );
 
 	int i;
+	// Start Depricated, remove if we dont end up fixing it
 	m_bDropsMag = pKeyValuesData->GetBool("DropsMag");
 	Q_strncpy(m_szMagModel, pKeyValuesData->GetString("MagModel"), sizeof(m_szMagModel));
 	m_iMagBodygroup = pKeyValuesData->GetInt("magazine");
-	
-	
-	Q_strncpy( m_nProjectileModel, pKeyValuesData->GetString( "ProjectileModel" ), MAX_WEAPON_STRING );
+	// End Depricated
+
 	// Primary fire mode.
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nDamage				= pKeyValuesData->GetInt( "Damage", 0 );
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_nConsecutiveDamage	= pKeyValuesData->GetInt( "ConsecutiveDamage", 
@@ -177,7 +177,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 			m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_iProjectile = i;
 			break;
 		}
-	}	 
+	}
+	Q_strncpy( m_nProjectileModel, pKeyValuesData->GetString( "ProjectileModel" ), MAX_WEAPON_STRING );
 
 	m_WeaponData[TF_WEAPON_PRIMARY_MODE].m_flProjectileSpeed	= pKeyValuesData->GetFloat( "ProjectileSpeed", 0.0f );
 
@@ -320,6 +321,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flImpactBeforeTime	= pKeyValuesData->GetFloat( "ImpactBeforeTime", 0.0f );
 	m_bAlwaysEnableTouch	= ( pKeyValuesData->GetInt( "AlwaysEnableTouch", 0 ) != 0 );
 	
+	m_bDropBomblets					= ( pKeyValuesData->GetInt( "DropBomblets", 0 ) != 0 );
 	m_iBombletAmount				= pKeyValuesData->GetInt( "BombletAmount", 0.0f );
 	m_flBombletTimer				= pKeyValuesData->GetFloat( "BombletTimer", 0.0f );
 	m_flBombletDamage				= pKeyValuesData->GetFloat( "BombletDamage", 0.0f );
@@ -331,6 +333,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	Q_strncpy( m_szBombletTrailParticle, pKeyValuesData->GetString( "BombletParticleTrail" ), MAX_WEAPON_STRING );
 	
 	m_iCost		= pKeyValuesData->GetInt( "Cost", -1 );
+	m_bBuyable	= ( pKeyValuesData->GetInt( "Buyable", 0 ) != 0 );
 	
 	m_bLowerWeapon			= ( pKeyValuesData->GetInt( "LowerMainWeapon", 0 ) != 0 );
 	m_bHasTeamSkins_Viewmodel	= ( pKeyValuesData->GetInt( "HasTeamSkins_Viewmodel", 0 ) != 0 );
@@ -342,13 +345,11 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bGibOnHeadshot	= ( pKeyValuesData->GetInt( "GibOnHeadshot", 0 ) != 0 );
 	m_bDisableSecondaryAttack	= ( pKeyValuesData->GetInt( "DisableSecondaryAttack", 0 ) != 0 );
 	m_bAllowDrop	= ( pKeyValuesData->GetInt( "AllowDrop", 0 ) != 0 );
-	m_bDropBomblets	= ( pKeyValuesData->GetInt( "DropBomblets", 0 ) != 0 );
 	m_flPickupMultiplier		= pKeyValuesData->GetFloat( "PickupMultiplier", 1.0f );
 	m_bDropOnNoAmmo	= ( pKeyValuesData->GetInt( "DropOnNoAmmo", 0 ) != 0 );
-	m_bBuyable	= ( pKeyValuesData->GetInt( "Buyable", 0 ) != 0 );
+	m_bAlwaysDrop = ( pKeyValuesData->GetInt( "AlwaysDrop", 0 ) != 0 );
 	m_bLoadsManualy	= ( pKeyValuesData->GetInt( "LoadsManualy", 0 ) != 0 );
 	m_bNoSniperCharge = ( pKeyValuesData->GetInt( "NoSniperCharge", 0 ) != 0 );
-	m_bAlwaysDrop = ( pKeyValuesData->GetInt( "AlwaysDrop", 0 ) != 0 );
 	m_bCanSoftZoom = ( pKeyValuesData->GetInt( "CanSoftZoom", 1 ) != 0 );
 	m_bExplosionOnHit = ( pKeyValuesData->GetInt( "ExplosionOnHit", 0 ) != 0 );
 	m_bAirblastOnSwing = ( pKeyValuesData->GetInt( "AirblastOnSwing", 0 ) != 0 );

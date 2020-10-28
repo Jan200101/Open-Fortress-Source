@@ -85,7 +85,7 @@ int	CTFProjectile_Rocket::GetDamageType()
 		iDmgType |= DMG_CRITICAL;
 	}
 
-	return iDmgType &~ DMG_USEDISTANCEMOD;
+	return iDmgType;
 }
 
 //-----------------------------------------------------------------------------
@@ -144,6 +144,15 @@ CTFProjectile_BouncyRocket::CTFProjectile_BouncyRocket()
 	szImpactHard[0] = '\0';
 	szImpactSoft[0] = '\0';
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+int	CTFProjectile_BouncyRocket::GetDamageType() 
+{ 
+	return BaseClass::GetDamageType()  &~ DMG_USEDISTANCEMOD;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
