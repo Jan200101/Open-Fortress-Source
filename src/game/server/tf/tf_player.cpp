@@ -2657,9 +2657,10 @@ bool CTFPlayer::SelectSpawnSpot( const char *pEntClassName, CBaseEntity* &pSpot 
 // Really expensive function that gets if one spawnpoint is farther away from any all players than the other
 int DistanceToPlayerSort(CBaseEntity* const *p1, CBaseEntity* const *p2)
 {
-	// Look, i know this is hacky and that we should rather set these on the first loop but cmon man i dont got all day - Kay
-	float flClosestDistance1 = 99999999999999999.0f;
-	float flClosestDistance2 = 99999999999999999.0f;
+	long double flClosestDistance1 = -1.0;
+	long double flClosestDistance2 = -1.0;
+	
+	bool bFirst = true;
 
 	for (int i = 1; i <= gpGlobals->maxClients; i++)
 	{
@@ -2670,11 +2671,18 @@ int DistanceToPlayerSort(CBaseEntity* const *p1, CBaseEntity* const *p2)
 
 		if ( !pPlayer->IsAlive() )
 			continue;
-
-		if( pPlayer->GetTeamNumber() < TF_TEAM_RED )
+		
+		if ( !pPlayer->IsReadyToPlay() )
 			continue;
+		
+		if( bFirst )
+		{
+			bFirst = false;
+			flClosestDistance1 = pPlayer->GetAbsOrigin().DistToSqr((*p1)->GetAbsOrigin());
+			flClosestDistance2 = pPlayer->GetAbsOrigin().DistToSqr((*p2)->GetAbsOrigin());
+		}
 
-		float flTemp = pPlayer->GetAbsOrigin().DistToSqr((*p1)->GetAbsOrigin());
+		long double flTemp = pPlayer->GetAbsOrigin().DistToSqr((*p1)->GetAbsOrigin());
 		if( flClosestDistance1 > flTemp )
 			flClosestDistance1 = flTemp;
 
@@ -2713,7 +2721,7 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 	// Check the distance from all other players
 
 	// Are players in the map?
-	bool bPlayers = !!UTIL_PlayerByIndex(1);
+	bool bPlayers = TFGameRules() && TFGameRules()->CountActivePlayers() > 1;
 
 	do
 	{
