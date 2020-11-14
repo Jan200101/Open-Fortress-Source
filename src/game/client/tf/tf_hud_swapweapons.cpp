@@ -110,10 +110,10 @@ void CHudSwapWeapons::FireGameEvent( IGameEvent * event )
 
 		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( event->GetString("current_wep") );
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-		if( pWeaponInfo && pWeaponInfo->iconActive )
+		if( pWeaponInfo && pWeaponInfo->iconCustom )
 		{
 			char temp[128];
-			Q_snprintf( temp, sizeof(temp), "../%s",pWeaponInfo->iconActive->szTextureFile );
+			Q_snprintf( temp, sizeof(temp), "../%s",pWeaponInfo->iconCustom->szTextureFile );
 			m_pCurrentWepImg->SetImage( temp );
 		}
 		
@@ -127,10 +127,10 @@ void CHudSwapWeapons::FireGameEvent( IGameEvent * event )
 		hWpnInfo = LookupWeaponInfoSlot( event->GetString("swap_wep") );
 		pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
 
-		if( pWeaponInfo && pWeaponInfo->iconActive )
+		if( pWeaponInfo && pWeaponInfo->iconCustom )
 		{
 			char temp[128];
-			Q_snprintf( temp, sizeof(temp), "../%s", pWeaponInfo->iconActive->szTextureFile );
+			Q_snprintf( temp, sizeof(temp), "../%s", pWeaponInfo->iconCustom->szTextureFile );
 			m_pSwapWepImg->SetImage( temp );
 		}
 		

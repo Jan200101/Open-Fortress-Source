@@ -505,12 +505,16 @@ void CHudWeaponSelection::PostChildPaint()
 					{
 						DrawPlusStyleBox( x, y, boxWide, boxTall, bSelectedWeapon, m_flAlphaOverride, i+1, !pWeapon->CanBeSelected() );
 
-						const CHudTexture *pTexture = pWeapon->GetSpriteInactive(); // red team
+						const CHudTexture *pTexture = pWeapon->GetSpriteIconRed(); // red team
 						if ( pPlayer )
 						{
-							if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE || pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
+							if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
 							{
-								pTexture = pWeapon->GetSpriteActive();
+								pTexture = pWeapon->GetSpriteIconBlue();
+							}
+							else if (pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY)
+							{
+								pTexture = pWeapon->GetSpriteIconCustom();
 							}
 						}
 
@@ -579,12 +583,16 @@ void CHudWeaponSelection::PostChildPaint()
 							continue;
 
 						// draw icon
-						const CHudTexture *pTexture = pWeapon->GetSpriteInactive(); // red team
+						const CHudTexture *pTexture = pWeapon->GetSpriteIconRed(); // red team
 						if ( pPlayer )
 						{
-							if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE || pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
+							if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE)
 							{
-								pTexture = pWeapon->GetSpriteActive();
+								pTexture = pWeapon->GetSpriteIconBlue();
+							}
+							else if (pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY)
+							{
+								pTexture = pWeapon->GetSpriteIconCustom();
 							}
 						}
 						
@@ -673,12 +681,16 @@ void CHudWeaponSelection::PostChildPaint()
 						if ( !pWeapon )
 							continue;
 
-						const CHudTexture *pTexture = pWeapon->GetSpriteInactive(); // red team
+						const CHudTexture *pTexture = pWeapon->GetSpriteIconRed(); // red team
 						if ( pPlayer )
 						{
-							if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE || pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY )
+							if ( pPlayer->GetTeamNumber() == TF_TEAM_BLUE)
 							{
-								pTexture = pWeapon->GetSpriteActive();
+								pTexture = pWeapon->GetSpriteIconBlue();
+							}
+							else if (pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY)
+							{
+								pTexture = pWeapon->GetSpriteIconCustom();
 							}
 						}
 

@@ -95,8 +95,8 @@ void CObjectTeleporter::TeleporterSend( CTFPlayer *pPlayer )
 		TE_TFParticleEffect( filter, 0.0, "player_sparkles_blue", origin, vec3_angle, pPlayer, PATTACH_POINT );
 		break;
 	case TF_TEAM_MERCENARY:
-		TE_TFParticleEffect( filter, 0.0, "teleported_mercenary", origin, vec3_angle );
-		TE_TFParticleEffect( filter, 0.0, "player_sparkles_mercenary", origin, vec3_angle, pPlayer, PATTACH_POINT );
+		TE_TFParticleEffect( filter, 0.0, "teleported_dm", origin, vec3_angle );
+		TE_TFParticleEffect( filter, 0.0, "player_sparkles_dm", origin, vec3_angle, pPlayer, PATTACH_POINT );
 		break;
 	default:
 		break;
@@ -132,7 +132,7 @@ void CObjectTeleporter::TeleporterReceive( CTFPlayer *pPlayer, float flDelay )
 		TE_TFParticleEffect( filter, 0.0, "teleportedin_blue", origin, vec3_angle );
 		break;
 	case TF_TEAM_MERCENARY:
-		TE_TFParticleEffect( filter, 0.0, "teleportedin_mercenary", origin, vec3_angle );
+		TE_TFParticleEffect( filter, 0.0, "teleportedin_dm", origin, vec3_angle );
 		break;
 	default:
 		break;
@@ -318,14 +318,14 @@ void CObjectTeleporter::Precache()
 	PrecacheParticleSystem( "tpdamage_4" );
 	PrecacheParticleSystem( "teleported_red" );
 	PrecacheParticleSystem( "player_sparkles_red" );
-	PrecacheParticleSystem( "teleported_mercenary" );
-	PrecacheParticleSystem( "player_sparkles_mercenary" );
+	PrecacheParticleSystem( "teleported_dm" );
+	PrecacheParticleSystem( "player_sparkles_dm" );
 	PrecacheParticleSystem( "teleported_blue" );
 	PrecacheParticleSystem( "player_sparkles_blue" );
-	PrecacheParticleSystem( "player_sparkles_mercenary" );
+	PrecacheParticleSystem( "player_sparkles_dm" );
 	PrecacheParticleSystem( "teleportedin_red" );
 	PrecacheParticleSystem( "teleportedin_blue" );
-	PrecacheParticleSystem( "teleportedin_mercenary" );
+	PrecacheParticleSystem( "teleportedin_dm" );
 }
 
 //-----------------------------------------------------------------------------

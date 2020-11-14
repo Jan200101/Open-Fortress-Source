@@ -624,19 +624,25 @@ const char *CBaseCombatWeapon::GetName( void ) const
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CHudTexture const *CBaseCombatWeapon::GetSpriteActive( void ) const
+CHudTexture const *CBaseCombatWeapon::GetSpriteIconBlue( void ) const
 {
-	return GetWpnData().iconActive;
+	return GetWpnData().iconBlue;
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CHudTexture const *CBaseCombatWeapon::GetSpriteInactive( void ) const
+CHudTexture const *CBaseCombatWeapon::GetSpriteIconRed( void ) const
 {
-	return GetWpnData().iconInactive;
+	return GetWpnData().iconRed;
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+CHudTexture const *CBaseCombatWeapon::GetSpriteIconCustom(void) const
+{
+	return GetWpnData().iconCustom;
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------

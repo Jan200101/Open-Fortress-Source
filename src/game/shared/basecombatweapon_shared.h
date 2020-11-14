@@ -439,8 +439,9 @@ public:
 	int GetSecondaryAmmoCount() { return m_iSecondaryAmmoCount; }
 	void SetSecondaryAmmoCount( int count ) { m_iSecondaryAmmoCount = count; }
 
-	virtual CHudTexture const	*GetSpriteActive( void ) const;
-	virtual CHudTexture const	*GetSpriteInactive( void ) const;
+	virtual CHudTexture const	*GetSpriteIconBlue( void ) const;
+	virtual CHudTexture const	*GetSpriteIconRed( void ) const;
+	virtual CHudTexture const	*GetSpriteIconCustom(void) const;
 	virtual CHudTexture const	*GetSpriteAmmo( void ) const;
 	virtual CHudTexture const	*GetSpriteAmmo2( void ) const;
 	virtual CHudTexture const	*GetSpriteCrosshair( void ) const;
