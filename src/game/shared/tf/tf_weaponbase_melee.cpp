@@ -460,7 +460,7 @@ bool CTFWeaponBaseMelee::DoSwingTrace( trace_t &trace )
 				}
 
 				// This is the point on the actual surface (the hull could have hit space)
-				vecSwingEnd = trace.endpos;	
+				// vecSwingEnd = trace.endpos;	
 			}
 		}
 		

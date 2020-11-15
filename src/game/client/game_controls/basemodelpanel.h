@@ -17,6 +17,7 @@
 #include <vgui_controls/ModelPanel.h>
 #include "GameEventListener.h"
 #include "KeyValues.h"
+#include "tf_shareddefs.h"
 
 class C_SceneEntity;
 
@@ -198,7 +199,8 @@ public:
 	Vector2D	m_vecViewportOffset;
 	Vector		m_vecFramedOriginOffset;
 	bool		m_bUseSpotlight;
-
+	
+	CUtlVector<LightDesc_t>						m_Lights;
 	CUtlVector<CModelPanelModelAnimation*>		m_Animations;
 	CUtlVector<CModelPanelAttachedModelInfo*>	m_AttachedModelsInfo;
 #ifdef OF_CLIENT_DLL
@@ -226,7 +228,10 @@ public:
 	virtual void DeleteVCDData( void );
 	virtual void DeleteModelData( void );
 	void PurgeAttachedModels( void );
-
+	
+#ifdef OF_CLIENT_DLL
+	void PurgeAttachedModelsInfo( void );
+#endif
 	virtual void SetFOV( int nFOV ){ m_nFOV = nFOV; }
 	virtual void SetPanelDirty( void ){ m_bPanelDirty = true; }
 	virtual bool SetSequence( const char *pszSequence );
@@ -239,7 +244,9 @@ public:
 	void	SetDefaultAnimation( const char *pszName );
 #ifdef OF_CLIENT_DLL
 	void	SetBodygroup( const char* pszName, int nBody );
-	void	AddAttachment( const char* pszAttached, int iSkin = -1 );
+	int		AddAttachment( const char* pszAttached, int iSkin = -1 );
+	int		QuickAddAttachment( const char* pszAttached, int iSkin = -1 );
+	void	RemoveAttachment( int iIndex );
 #endif
 #ifdef OF_CLIENT_DLL
 	void	SwapModel( const char *pszName, const char *pszAttached = NULL, const char *pszVCD = NULL );
@@ -254,7 +261,7 @@ public:
 	virtual void SetHUDModelAng( float x, float y, float z );	
 	virtual void ResetAnim();
 #endif
-	virtual void ParseModelInfo( KeyValues *inResourceData );
+	virtual void ParseModelInfo( KeyValues *inResourceData, bool bUpdate = false );
 
 	void		ClearAttachedModelInfos( void );
 #ifdef OF_CLIENT_DLL
@@ -295,9 +302,15 @@ public:
 
 private:
 	bool	m_bPanelDirty;
+	bool	m_bUpdateOnClasses;
+	bool	m_bUpdateOnPortrait;
+	int		m_nClassIndex;
 	int		m_iDefaultAnimation;
 
 	bool	m_bAllowOffscreen;
+	
+	KeyValues *inClassPos[TF_CLASS_COUNT_ALL];
+	KeyValues *inClassPortraitPos[TF_CLASS_COUNT_ALL];
 
 	CTextureReference m_DefaultEnvCubemap;
 	CTextureReference m_DefaultHDREnvCubemap;

@@ -10,6 +10,9 @@
 #include <vgui/ISurface.h>
 #include <vgui_controls/AnimationController.h>
 #include "tf_hud_playerstatus.h"
+#include "c_tf_playerresource.h"
+#include "basemodelpanel.h"
+#include "filesystem.h"
 
 using namespace vgui;
 
@@ -17,11 +20,21 @@ using namespace vgui;
 extern ConVar tf_max_health_boost;
 extern ConVar of_tennisball;
 
+static KeyValues *inRenderModels = new KeyValues("Models");
+
 static char *g_szEmpty[] = 
 { 
 	"../hud/empty"
 };
 
+void HUDPlayerModelCallback(IConVar *var, const char *pOldString, float flOldValue)
+{
+	IGameEvent *event = gameeventmanager->CreateEvent("refresh_hud_model");
+	if( event )
+		gameeventmanager->FireEventClientSide(event);
+}
+
+ConVar cl_hud_playerclass_use_playermodel("cl_hud_playerclass_use_playermodel", "0", FCVAR_USERINFO | FCVAR_ARCHIVE ,"Use player model in player class HUD.", HUDPlayerModelCallback );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -39,8 +52,16 @@ CTFHudPlayerClass::CTFHudPlayerClass( Panel *parent, const char *name ) : Editab
 	m_nDisguiseTeam = TEAM_UNASSIGNED;
 	m_nDisguiseClass = TF_CLASS_UNDEFINED;
 	m_flNextThink = 0.0f;
+	m_nWeaponAttachment = -1;
+	m_nHudRef = -1;
 
 	ListenForGameEvent( "localplayer_changedisguise" );
+	ListenForGameEvent( "weapon_switched" );
+	//ListenForGameEvent( "refresh_hud_model" );
+	//ListenForGameEvent( "localplayer_changeclass" );
+	ListenForGameEvent( "localplayer_changecosmetics" );
+	
+	inRenderModels->LoadFromFile(filesystem, "resource/ui/winpaneldm_objects.txt");
 }
 
 //-----------------------------------------------------------------------------
@@ -67,9 +88,18 @@ void CTFHudPlayerClass::ApplySchemeSettings( IScheme *pScheme )
 	m_nDisguiseClass = TF_CLASS_UNDEFINED;
 	m_flNextThink = 0.0f;
 	m_nCloakLevel = 0;
+	
+	CModelPanel *pModel = dynamic_cast<CModelPanel*>(FindChildByName("classmodelpanel"));
+	if( pModel && m_nWeaponAttachment != -1 )
+		pModel->RemoveAttachment(m_nWeaponAttachment);
+	
+	m_nWeaponAttachment = -1;
+	m_nHudRef = -1;
 
 	BaseClass::ApplySchemeSettings( pScheme );
 }
+
+extern void ApplyCosmeticsToModelPanel(CModelPanel *pModel, int iPlayerIndex, int iTeamOverride = -1 );
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -84,6 +114,37 @@ void CTFHudPlayerClass::OnThink()
 
 		if ( pPlayer )
 		{
+			// Look, i know that this is unoptimized as hell, but it works for now, and I'm really not in the mood
+			CModelPanel *pModel = dynamic_cast<CModelPanel*>(FindChildByName("classmodelpanel"));
+			if( pModel )
+			{
+				pModel->SetVisible(cl_hud_playerclass_use_playermodel.GetBool());
+				m_pClassImage->SetVisible(!cl_hud_playerclass_use_playermodel.GetBool());
+				m_pClassImageColorless->SetVisible(!cl_hud_playerclass_use_playermodel.GetBool());
+				if( pModel->IsVisible() && pModel->m_hModel.Get() )
+				{
+					// We update these in real time because of inputs like SetCustomModel
+					// Since all of these are just setting numbers it shouldn't be too hard on processing power
+					C_TF_PlayerResource *g_TFPR = GetTFPlayerResource();
+					if( g_TFPR )
+					{
+						pModel->m_hModel.Get()->SetModelColor(g_TFPR->GetPlayerColorVector(pPlayer->entindex()));
+					}
+					pModel->m_hModel.Get()->m_nSkin = pPlayer->GetSkin();
+					pModel->m_hModel.Get()->SetModelIndex(pPlayer->GetModelIndex());
+					pModel->m_hModel.Get()->m_nBody = pPlayer->GetBody();
+					if( cl_hud_playerclass_use_playermodel.GetInt() == 3 )
+					{
+						pModel->m_hModel.Get()->SetSequence(pPlayer->GetSequence());
+
+						int iPoseParams = min(pPlayer->GetModelPtr()->GetNumPoseParameters(), pModel->m_hModel.Get()->GetModelPtr()->GetNumPoseParameters());
+						for (int i = 0; i < iPoseParams; i++)
+						{
+							pModel->m_hModel.Get()->SetPoseParameter(i, pPlayer->GetPoseParameter(i));
+						}
+					}
+				}
+			}
 			// set our background colors
 			if ( m_nTeam != pPlayer->GetTeamNumber() )
 			{
@@ -124,6 +185,8 @@ void CTFHudPlayerClass::OnThink()
 				m_nClass = pPlayer->GetPlayerClass()->GetClassIndex();
 				m_nModifiers = pPlayer->GetPlayerClass()->GetModifiers();
 				TFPlayerClassData_t *pClassData = pPlayer->GetPlayerClass()->GetData();
+
+				SetupClassModel();
 
 				if ( m_nClass == TF_CLASS_SPY && pPlayer->m_Shared.InCond( TF_COND_DISGUISED ) )
 				{
@@ -171,12 +234,74 @@ void CTFHudPlayerClass::OnThink()
 	}
 }
 
+void CTFHudPlayerClass::SetupClassModel(void)
+{
+	if( !cl_hud_playerclass_use_playermodel.GetBool() )
+		return;
+
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	CModelPanel *pModel = dynamic_cast<CModelPanel*>(FindChildByName("classmodelpanel"));
+	if( !(pPlayer && pModel) )
+		return;
+
+	if( !pModel->m_hModel.Get() )
+	{
+		pModel->SetPanelDirty();
+		pModel->UpdateModel();
+	}
+
+	if( !pModel->m_hModel.Get() )
+		return;
+
+	if( m_nWeaponAttachment != -1 )
+	{
+		pModel->RemoveAttachment(m_nWeaponAttachment);
+		m_nWeaponAttachment = -1;
+	}
+	pModel->PurgeAttachedModels();
+	pModel->PurgeAttachedModelsInfo();
+	ApplyCosmeticsToModelPanel(pModel, pPlayer->entindex(), pPlayer->GetTeamNumber());
+	pModel->SetPanelDirty();
+	pModel->UpdateModel();
+	
+	// Set this early here so we get the proper HudRef sequence
+	pModel->m_hModel.Get()->SetModelIndex(pPlayer->GetModelIndex());
+	pModel->m_hModel.Get()->m_nBody = pPlayer->GetBody();
+
+	m_nHudRef = pPlayer->LookupSequence("hud_ref");
+
+	int iModelMode = cl_hud_playerclass_use_playermodel.GetInt();
+	if( m_nHudRef == -1 )
+		iModelMode = 1;
+
+	switch( iModelMode )
+	{
+		default:
+		case 1:
+			if( pPlayer->GetActiveWeapon() )
+			{
+				int iTemp;
+				m_nWeaponAttachment = pModel->QuickAddAttachment(pPlayer->GetActiveWeapon()->GetWpnData().szWorldModel, pPlayer->GetActiveWeapon()->GetSkin());
+				pModel->m_hModel.Get()->SetSequence(pPlayer->SelectWeightedSequence(pPlayer->GetActiveWeapon()->ActivityList(iTemp)[0].weaponAct));
+			}
+			break;
+		case 2:
+			const char *szWeaponModel = NULL;
+			szWeaponModel = inRenderModels->GetString(VarArgs("%s_render_weapon",g_aPlayerClassNames_NonLocalized[pPlayer->GetPlayerClass()->GetClassIndex()]), 0 );
+			if( Q_strlen(szWeaponModel) > 4 )
+				m_nWeaponAttachment = pModel->QuickAddAttachment(szWeaponModel, pPlayer->GetTeamNumber() - 2);
+			pModel->m_hModel.Get()->SetSequence(m_nHudRef);
+			
+			break;
+	}
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
 void CTFHudPlayerClass::FireGameEvent( IGameEvent * event )
 {
-	if ( FStrEq( "localplayer_changedisguise", event->GetName() ) )
+	if( FStrEq( "localplayer_changedisguise", event->GetName() ) )
 	{
 		if ( m_pSpyImage && m_pSpyOutlineImage )
 		{
@@ -198,6 +323,35 @@ void CTFHudPlayerClass::FireGameEvent( IGameEvent * event )
 
 			g_pClientMode->GetViewportAnimationController()->StartAnimationSequence( bFadeIn ? "HudSpyDisguiseFadeIn" : "HudSpyDisguiseFadeOut" );
 		}
+	}
+	else if( FStrEq("weapon_switched", event->GetName()) )
+	{
+		if( cl_hud_playerclass_use_playermodel.GetInt() != 1 && cl_hud_playerclass_use_playermodel.GetInt() != 3 && m_nHudRef != -1 )
+			return;
+
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		CModelPanel *pModel = dynamic_cast<CModelPanel*>(FindChildByName("classmodelpanel"));
+
+		if( pPlayer && pModel && pModel->m_hModel.Get() )
+		{
+			if( pPlayer->GetActiveWeapon() )
+			{
+				if( m_nWeaponAttachment != -1 )
+					pModel->RemoveAttachment(m_nWeaponAttachment);
+
+				int iTemp;
+				m_nWeaponAttachment = pModel->QuickAddAttachment(pPlayer->GetActiveWeapon()->GetWpnData().szWorldModel, pPlayer->GetActiveWeapon()->GetSkin());
+				pModel->m_hModel.Get()->SetSequence(pPlayer->SelectWeightedSequence(pPlayer->GetActiveWeapon()->ActivityList(iTemp)[0].weaponAct));
+			}
+		}
+	}
+	else if( FStrEq("refresh_hud_model", event->GetName()) || FStrEq("localplayer_changeclass", event->GetName()) )
+	{
+		SetupClassModel();
+	}
+	else if( FStrEq("localplayer_changecosmetics", event->GetName()) )
+	{
+		SetupClassModel();
 	}
 }
 

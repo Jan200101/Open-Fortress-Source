@@ -117,8 +117,9 @@ public:
 	virtual bool	StartSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, C_BaseEntity *pTarget );
 	virtual void	CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, float &zFar, float &fov );
 	bool			StartGestureSceneEvent( CSceneEventInfo *info, CChoreoScene *scene, CChoreoEvent *event, CChoreoActor *actor, CBaseEntity *pTarget );
-	void			TurnOnTauntCam( void );
-	void			TurnOffTauntCam( void );
+	void			TurnOnThirdPersonCam( void );
+	void			TurnOffThirdPersonCam( void );
+	bool			UseThirdPersonCam( void );
 
 	virtual void	InitPhonemeMappings();
 	
@@ -496,7 +497,6 @@ public:
 	IRagdoll* GetIRagdoll() const;
 
 	void ImpactTrace( trace_t *pTrace, int iDamageType, const char *pCustomImpactName );
-
 	void ClientThink( void );
 	void StartFadeOut( float fDelay );
 	void EndFadeOut();

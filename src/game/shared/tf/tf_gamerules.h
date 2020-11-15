@@ -469,6 +469,7 @@ public:
 #ifdef GAME_DLL
 	CUtlVector<CHandle<CTFLogicLoadout> > m_hLogicLoadout;
 #endif
+	virtual bool AllowThirdPersonCamera( void );
 	
 #ifdef CLIENT_DLL
 

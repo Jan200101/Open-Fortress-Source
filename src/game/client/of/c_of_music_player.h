@@ -20,6 +20,7 @@ public:
 	void HandleVolume(void);
 	virtual void Spawn(void);
 	virtual void OnDataChanged(DataUpdateType_t updateType);
+	int iSoundIndex;
 private:
 
 	int m_iPhase;
@@ -36,26 +37,8 @@ private:
 	float m_flVolume;
 
 	char szLoopingSong[MAX_PATH];
-	
-	struct songdata_t
-	{
-		songdata_t()
-		{
-			name[0] = 0;
-			artist[0] = 0;
-			path[0] = 0;
-			duration = 0;
-		}
 
-		char name[ 512 ];
-		char artist[ 256 ];
-		char path[ 256 ];
-		float duration;
-		float volume;
-	};	
-	CUtlVector<songdata_t>	m_Songdata;
-	
-	ChannelGroup *pChannel;
+	SoundData_t *pSound;
 };
 
 class C_TFDMMusicManager : public C_BaseEntity

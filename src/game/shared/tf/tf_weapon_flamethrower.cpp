@@ -484,6 +484,9 @@ void CTFFlameThrower::PrimaryAttack()
 //-----------------------------------------------------------------------------
 void CTFFlameThrower::SecondaryAttack()
 {
+	if( !CanSecondaryAttack() )
+		return;
+
 	m_iWeaponMode = TF_WEAPON_SECONDARY_MODE;
 
 	// Are we capable of firing again?

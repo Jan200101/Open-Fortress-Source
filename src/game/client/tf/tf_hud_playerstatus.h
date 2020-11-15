@@ -50,6 +50,7 @@ public: // IGameEventListener Interface
 protected:
 
 	virtual void OnThink();
+	void SetupClassModel(void);
 
 private:
 
@@ -67,6 +68,8 @@ private:
 	int					m_nDisguiseClass;
 	int					m_nCloakLevel;
 	int					m_nTennisball;
+	int					m_nWeaponAttachment;
+	int					m_nHudRef;
 };
 
 //-----------------------------------------------------------------------------

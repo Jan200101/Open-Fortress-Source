@@ -1893,12 +1893,6 @@ void CHLClient::View_Render( vrect_t *rect )
 		return;
 
 	view->Render( rect );
-	
-#ifdef OF_CLIENT_DLL	
-	// S:O - Think about fading ambient sounds if necessary
-	FMODManager()->FadeThink();
-	FMODManager()->Think();
-#endif
 
 	UpdatePerfStats();
 }

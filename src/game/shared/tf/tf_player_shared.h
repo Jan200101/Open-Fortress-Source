@@ -270,7 +270,7 @@ private:
 
 	void OnAddStealthed( void );
 	void OnAddInvulnerable( void );
-	void OnAddCritBoosted( void );
+	void OnAddCritBoosted( int iCond );
 	void OnAddTeleported( void );
 	void OnAddBurning( void );
 	void OnAddDisguising( void );
@@ -290,7 +290,7 @@ private:
 	void OnRemoveDisguised( void );
 	void OnRemoveDisguising( void );
 	void OnRemoveInvulnerable( void );
-	void OnRemoveCritBoosted( void );
+	void OnRemoveCritBoosted( int iCond );
 	void OnRemoveTaunting( void );
 	void OnRemoveTeleported( void );
 	void OnRemoveBerserk( void );

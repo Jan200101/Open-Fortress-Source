@@ -17,6 +17,7 @@
 #include "tf_weapon_grapple.h"
 #include "tf_weapon_shotgun.h"
 #include "of_weapon_physcannon.h"
+#include "tf_weapon_minigun.h"
 
 #ifdef CLIENT_DLL
 	#include "c_tf_player.h"
@@ -536,6 +537,14 @@ bool CTFGameMovement::CheckJumpButton()
 	//conds preventing jump
 	if (m_pTFPlayer->m_Shared.InCond(TF_COND_HOOKED) || m_pTFPlayer->m_Shared.InCond(TF_COND_TAUNTING))
 		return false;
+	
+	// It may be expensive but its only being checked when we're aiming
+	// This is to prevent cheaters from jumping while revved up
+	if( m_pTFPlayer->m_Shared.InCond(TF_COND_AIMING) && dynamic_cast<CTFMinigun*>(m_pTFPlayer->GetActiveTFWeapon()) )
+	{
+		return false;
+	}
+	
 
 	//You can air jump with the meat hook, not the regular one
 	CBaseEntity *pHook = m_pTFPlayer->m_Shared.GetHook();

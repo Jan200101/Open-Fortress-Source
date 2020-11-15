@@ -649,7 +649,7 @@ void CTFPlayerShared::OnConditionAdded( int nCond )
 	case TF_COND_CRITBOOSTED:
 	case TF_COND_CRIT_POWERUP:
 	case TF_COND_CRITBOOSTED_DEMO_CHARGE:
-		OnAddCritBoosted();
+		OnAddCritBoosted( nCond );
 		break;
 
 	case TF_COND_HALLOWEEN_QUICK_HEAL:
@@ -755,7 +755,7 @@ void CTFPlayerShared::OnConditionRemoved( int nCond )
 	case TF_COND_CRITBOOSTED:
 	case TF_COND_CRIT_POWERUP:
 	case TF_COND_CRITBOOSTED_DEMO_CHARGE:
-		OnRemoveCritBoosted();
+		OnRemoveCritBoosted( nCond );
 		break;
 
 	case TF_COND_HALLOWEEN_QUICK_HEAL:
@@ -1357,27 +1357,59 @@ void CTFPlayerShared::UpdateCritParticle()
 }
 #endif
 
-void CTFPlayerShared::OnAddCritBoosted( void )
+void CTFPlayerShared::OnAddCritBoosted( int iCond )
 {
+	switch( iCond )
+	{
+		case TF_COND_CRIT_POWERUP:
 #ifdef GAME_DLL
-	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
-	if ( pTFPlayer )
-		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_POSITIVE );
+		CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
+		if ( pTFPlayer )
+			pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_POSITIVE );
 #else
+		switch( m_pOuter->GetTeamNumber() )
+		{
+			case TF_TEAM_BLUE:
+				m_pOuter->ParticleProp()->Create("electrocutedplayer_blue", PATTACH_ABSORIGIN_FOLLOW);
+				break;
+			case TF_TEAM_RED:
+				m_pOuter->ParticleProp()->Create("electrocutedplayer_red", PATTACH_ABSORIGIN_FOLLOW);
+				break;
+			default:
+			case TF_TEAM_MERCENARY:
+				UpdateParticleColor(m_pOuter->ParticleProp()->Create("electrocutedplayer_dm", PATTACH_ABSORIGIN_FOLLOW));
+				break;
+		}
+#endif
+		break;
+	}
+	
+#ifdef CLIENT_DLL
 	UpdateCritParticle();
 #endif
 }
 
-void CTFPlayerShared::OnRemoveCritBoosted( void )
+void CTFPlayerShared::OnRemoveCritBoosted( int iCond )
 {
-#ifdef GAME_DLL
-	CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
-	if ( pTFPlayer && pTFPlayer->IsAlive() )
+	switch( iCond )
 	{
-		CFmtStrN<128> modifiers( "inpowerup:yes" );
-		pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );
-	}
+		case TF_COND_CRIT_POWERUP:
+#ifdef GAME_DLL
+		CTFPlayer *pTFPlayer = ToTFPlayer( m_pOuter );
+		if ( pTFPlayer && pTFPlayer->IsAlive() )
+		{
+			CFmtStrN<128> modifiers( "inpowerup:yes" );
+			pTFPlayer->SpeakConceptIfAllowed( MP_CONCEPT_PLAYER_NEGATIVE, modifiers );
+		}
 #else
+		m_pOuter->ParticleProp()->StopParticlesNamed("electrocutedplayer_red");
+		m_pOuter->ParticleProp()->StopParticlesNamed("electrocutedplayer_blue");
+		m_pOuter->ParticleProp()->StopParticlesNamed("electrocutedplayer_dm");
+#endif
+		break;
+	}
+	
+#ifdef CLIENT_DLL
 	UpdateCritParticle();
 #endif
 }
@@ -3495,6 +3527,16 @@ int CTFPlayer::GetNumObjects( int iObjectType, int iAltMode )
 //-----------------------------------------------------------------------------
 void CTFPlayer::ItemPostFrame()
 {
+	if( m_Shared.IsLoser() )
+	{
+		if( GetActiveTFWeapon() && !GetActiveTFWeapon()->IsLowered() )
+			GetActiveTFWeapon()->Lower();
+		
+		if( m_hOffHandWeapon.Get() && !m_hOffHandWeapon.Get()->IsLowered()  )
+			m_hOffHandWeapon.Get()->Lower();
+
+		return;
+	}
 	if ( m_hOffHandWeapon.Get() && m_hOffHandWeapon->IsWeaponVisible() )
 	{
 		if ( gpGlobals->curtime < m_flNextAttack )

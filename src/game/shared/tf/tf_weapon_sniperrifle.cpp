@@ -294,13 +294,13 @@ void CTFSniperRifle::HandleZooms( void )
 //-----------------------------------------------------------------------------
 void CTFSniperRifle::ItemPostFrame( void )
 {
-	// If we're lowered, we're not allowed to fire
-	if ( m_bLowered )
-		return;
-
 	// Get the owning player.
 	CTFPlayer *pPlayer = ToTFPlayer( GetOwner() );
 	if ( !pPlayer )
+		return;
+	
+	// If we're lowered, we're not allowed to fire
+	if (m_bLowered)
 		return;
 
 	if (UsesClipsForAmmo1())
@@ -531,7 +531,7 @@ void CTFSniperRifle::ZoomOut( void )
 void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 {
 	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
-	if ( ReserveAmmo() <= 0 || ( Clip1() <= 0 && UsesClipsForAmmo1() ) )
+	if ( ReserveAmmo() <= 0 && Clip1() <= 0 )
 	{
 		HandleFireOnEmpty();
 		return;
@@ -748,11 +748,13 @@ bool CTFSniperRifle::CanFireCriticalShot( bool bIsHeadshot )
 //-----------------------------------------------------------------------------
 void CTFCSniperRifle::ItemPostFrame(void)
 {
-	if (m_bLowered)
-		return;
 
 	CTFPlayer *pPlayer = ToTFPlayer(GetOwner());
 	if( !pPlayer )
+		return;
+	
+	// If we're lowered, we're not allowed to fire
+	if (m_bLowered)
 		return;
 
 	if( !CanAttack() )

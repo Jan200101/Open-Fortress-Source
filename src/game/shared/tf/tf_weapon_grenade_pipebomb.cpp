@@ -274,15 +274,15 @@ void CTFGrenadePipebombProjectile::Simulate( void )
 		{
 			if ( GetTeamNumber() == TF_TEAM_RED )
 			{
-				ParticleProp()->Create( "stickybomb_pulse_red", PATTACH_ABSORIGIN );
+				ParticleProp()->Create( "stickybomb_pulse_red", PATTACH_ABSORIGIN_FOLLOW );
 			}
 			else if ( GetTeamNumber() == TF_TEAM_BLUE )
 			{
-				ParticleProp()->Create( "stickybomb_pulse_blue", PATTACH_ABSORIGIN );
+				ParticleProp()->Create( "stickybomb_pulse_blue", PATTACH_ABSORIGIN_FOLLOW );
 			}
 			else 
 			{
-				ParticleProp()->Create( "stickybomb_pulse_dm", PATTACH_ABSORIGIN );
+				ParticleProp()->Create( "stickybomb_pulse_dm", PATTACH_ABSORIGIN_FOLLOW );
 			}
 			m_bPulsed = true;
 		}

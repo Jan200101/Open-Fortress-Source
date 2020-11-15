@@ -363,8 +363,6 @@ DECLARE_HUDELEMENT_DEPTH(CTFWinPanelDM, 70);
 CTFWinPanelDM::CTFWinPanelDM(const char *pElementName) : EditablePanel(NULL, "WinPanelDM"), CHudElement(pElementName)
 {
 	SetParent(g_pClientMode->GetViewport());
-	SetMouseInputEnabled(false);
-	MakePopup();
 	SetScheme("ClientScheme");
 
 	// listen for events
@@ -396,8 +394,6 @@ void CTFWinPanelDM::SetVisible(bool state)
 {
 	if (state == IsVisible())
 		return;
-
-	SetMouseInputEnabled(state);
 
 	BaseClass::SetVisible(state);
 }
@@ -456,15 +452,11 @@ void CTFWinPanelDM::FireGameEvent(IGameEvent *event)
 	m_pRoundEndEvent->SetString( "cappers", event->GetString("cappers") );
 	
 	
-	DevMsg("%d %d\n", event->GetInt("winreason"), event->GetInt("winning_team"));
 	for( int i = 0; i < 3; i++ )
 	{
 		char szPlayerIndexVal[64]="", szPlayerScoreVal[64]="";
 		Q_snprintf( szPlayerIndexVal, ARRAYSIZE( szPlayerIndexVal ), "player_%d", i+ 1 );
 		Q_snprintf( szPlayerScoreVal, ARRAYSIZE( szPlayerScoreVal ), "player_%d_points", i+ 1 );
-
-		DevMsg("%s %d\n", szPlayerIndexVal, event->GetInt( szPlayerIndexVal ) );
-		DevMsg("%s %d\n", szPlayerScoreVal, event->GetInt( szPlayerScoreVal ) );
 		
 		m_pRoundEndEvent->SetInt( szPlayerIndexVal, event->GetInt( szPlayerIndexVal ) );
 		m_pRoundEndEvent->SetInt( szPlayerScoreVal, event->GetInt( szPlayerScoreVal ) );
@@ -508,26 +500,18 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 	CModelPanel *pPlayerModel;
 	KeyValues *pModelAttachement = new KeyValues("Models");
 	pModelAttachement->LoadFromFile(filesystem, "resource/ui/winpaneldm_objects.txt");
-
-	char szWinTheme[32] = { "Game.DMWin" };
-	char szLooseTheme[32] = { "Game.DMLoose" };
-	
-	if( DMMusicManager() )
-	{
-		KeyValues *pMusic = GetSoundscript( DMMusicManager()->szRoundMusic );
-		if( pMusic )
-		{
-			Q_strncpy( szWinTheme, pMusic->GetString("win", "Game.DMWin"), sizeof(szWinTheme) );
-			Q_strncpy( szLooseTheme, pMusic->GetString("loose", "Game.DMLoose"), sizeof(szLooseTheme) );
-		}
-	}
-	
-	DevMsg( "%s\n", szWinTheme );
-	DevMsg( "%s\n", szLooseTheme );
 	
 	int iPlayerAmount = 0;
 	
 	bool bLost = true;
+
+	bool bPlayDefaultTheme = true;
+	if( DMMusicManager() )
+	{
+		KeyValues *pScript = GetSoundscript(DMMusicManager()->szRoundMusic);
+		if( pScript && pScript->GetString( "outro", NULL ) )
+			bPlayDefaultTheme = false;
+	}
 	
 	for (int i = 1; i <= 3; i++)
 	{
@@ -541,7 +525,10 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 		if( iPlayerIndex == C_BasePlayer::GetLocalPlayer()->entindex() && TeamplayRoundBasedRules() )
 		{
 			bLost = false;
-			TeamplayRoundBasedRules()->BroadcastSoundFFA( iPlayerIndex, szWinTheme, "", false );
+			
+			if (bPlayDefaultTheme)
+				TeamplayRoundBasedRules()->BroadcastSoundFFA( iPlayerIndex, "Game.DMWin", "", false );
+			
 			switch( i )
 			{
 				case 1:
@@ -677,10 +664,9 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 		iPlayerAmount++;
 	}
 	
-	if( bLost && TeamplayRoundBasedRules() )
+	if( bLost && bPlayDefaultTheme && TeamplayRoundBasedRules() )
 	{
 		TeamplayRoundBasedRules()->BroadcastSoundFFA( C_BasePlayer::GetLocalPlayer()->entindex(), "LastPlace", "" );
-		TeamplayRoundBasedRules()->BroadcastSoundFFA( C_BasePlayer::GetLocalPlayer()->entindex(), szLooseTheme, "", false );
 	}
 	
 	switch( iPlayerAmount )
@@ -698,7 +684,6 @@ void CTFWinPanelDM::StartPanel( KeyValues *event )
 
 	pModelAttachement->deleteThis();
 	SetVisible(true);
-	MoveToFront();
 }
 
 void CTFWinPanelDM::OnTick( void )

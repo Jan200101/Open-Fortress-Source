@@ -82,6 +82,7 @@ void C_BaseCombatCharacter::OnPreDataChanged( DataUpdateType_t updateType )
 #ifdef GLOWS_ENABLE
 	m_bOldGlowEnabled = m_bGlowEnabled;
 #endif // GLOWS_ENABLE
+	m_hOldActiveWeapon = m_hActiveWeapon;
 #endif
 }
 
@@ -99,6 +100,21 @@ void C_BaseCombatCharacter::OnDataChanged( DataUpdateType_t updateType )
 		UpdateGlowEffect();
 	}
 #endif // GLOWS_ENABLE
+#endif
+
+#ifdef OF_CLIENT_DLL
+	if (m_hActiveWeapon != m_hOldActiveWeapon)
+	{
+		if( GetLocalPlayerIndex() == entindex() )
+		{
+			IGameEvent *event = gameeventmanager->CreateEvent("weapon_switched");
+			if (event)
+			{
+				event->SetInt("weapon", m_hActiveWeapon->entindex());
+				gameeventmanager->FireEventClientSide(event);
+			}
+		}
+	}
 #endif
 }
 

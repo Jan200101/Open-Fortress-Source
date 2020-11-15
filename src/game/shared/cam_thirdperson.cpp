@@ -44,9 +44,9 @@ void ThirdPersonChange( IConVar *pConVar, const char *pOldValue, float flOldValu
 }
 
 #if defined ( OF_CLIENT_DLL )
-ConVar cl_thirdperson( "cl_thirdperson", "0", FCVAR_USERINFO | FCVAR_ARCHIVE, "Enables/Disables third person", ThirdPersonChange  );
+ConVar cl_thirdperson( "cl_thirdperson", "0", FCVAR_USERINFO | FCVAR_ARCHIVE, "Enables/Disables third person" );
 #else
-ConVar cl_thirdperson( "cl_thirdperson", "0", FCVAR_NOT_CONNECTED | FCVAR_USERINFO | FCVAR_ARCHIVE, "Enables/Disables third person", ThirdPersonChange  );	
+ConVar cl_thirdperson( "cl_thirdperson", "0", FCVAR_NOT_CONNECTED | FCVAR_USERINFO | FCVAR_ARCHIVE, "Enables/Disables third person", ThirdPersonChange );	
 #endif
 
 #endif
@@ -92,12 +92,9 @@ void CThirdPersonManager::Update( void )
 		return;
 	}
 
-	if ( IsOverridingThirdPerson() == false )
+	if ( (bool)input->CAM_IsThirdPerson() != ( cl_thirdperson.GetBool() || m_bForced ) && GameRules() && GameRules()->AllowThirdPersonCamera() == true )
 	{
-		if ( (bool)input->CAM_IsThirdPerson() != ( cl_thirdperson.GetBool() || m_bForced ) && GameRules() && GameRules()->AllowThirdPersonCamera() == true )
-		{
-			ToggleThirdPerson( m_bForced || cl_thirdperson.GetBool() );
-		}
+		ToggleThirdPerson( m_bForced || cl_thirdperson.GetBool() );
 	}
 #endif
 
@@ -213,7 +210,7 @@ void CThirdPersonManager::PositionCamera( CBasePlayer *pPlayer, const QAngle& an
 
 bool CThirdPersonManager::WantToUseGameThirdPerson( void )
 {
-	return cl_thirdperson.GetBool() && GameRules() && GameRules()->AllowThirdPersonCamera() && IsOverridingThirdPerson() == false;
+	return cl_thirdperson.GetBool() && GameRules() && GameRules()->AllowThirdPersonCamera();
 }
 
 

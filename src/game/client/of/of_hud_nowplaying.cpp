@@ -67,7 +67,7 @@ bool CTFHudNowPlaying::ShouldDraw( void )
 		g_pClientMode->GetViewportAnimationController()->StartAnimationSequence(this, "NowPlaying");
 	
 	if( TeamplayRoundBasedRules() && !TeamplayRoundBasedRules()->IsInWaitingForPlayers()
-		&& flDrawTime > gpGlobals->curtime && TeamplayRoundBasedRules()->InRoundRestart() )
+		&& flDrawTime > gpGlobals->curtime )
 		return CHudElement::ShouldDraw();
 	else
 		return false;
@@ -171,8 +171,6 @@ void CTFHudNowPlaying::FireGameEvent(IGameEvent * event)
 		m_pArtistContainer->SetVisible( true );
 		m_pArtistContainer->SetDialogVariable( "ArtistName", szArtistName );
 		
-		DevMsg( "%s\n", szArtistName );
-		
 		textLen = 0;
 		
 		wchar_t wszArtistName[128];
@@ -186,8 +184,8 @@ void CTFHudNowPlaying::FireGameEvent(IGameEvent * event)
 		textLen += XRES(14); // Padding
 
 		m_pArtistLabel->GetSize( w,h );
-
 		m_pArtistLabel->SetText(szUnicode);
+		m_pArtistLabel->SetSize( textLen, h );
 
 		m_pArtistBG->GetSize( w,h );
 		m_pArtistBG->SetSize( textLen, h );

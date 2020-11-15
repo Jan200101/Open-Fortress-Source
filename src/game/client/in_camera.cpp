@@ -57,7 +57,6 @@ static kbutton_t cam_in, cam_out; // -- "cam_move" is unused
 
 extern ConVar cl_thirdperson;
 
-
 // API Wrappers
 
 /*
@@ -68,11 +67,8 @@ CAM_ToThirdPerson
 */
 void CAM_ToThirdPerson(void)
 {
-	if ( cl_thirdperson.GetBool() == false )
-	{
-		g_ThirdPersonManager.SetDesiredCameraOffset( Vector( cam_idealdist.GetFloat(), cam_idealdistright.GetFloat(), cam_idealdistup.GetFloat() ) );
-		g_ThirdPersonManager.SetOverridingThirdPerson( true );
-	}
+	g_ThirdPersonManager.SetDesiredCameraOffset( Vector( cam_idealdist.GetFloat(), cam_idealdistright.GetFloat(), cam_idealdistup.GetFloat() ) );
+	g_ThirdPersonManager.SetOverridingThirdPerson( true );
 
 	input->CAM_ToThirdPerson();
 
@@ -113,10 +109,7 @@ void CAM_ToFirstPerson(void)
 	if ( localPlayer && !localPlayer->CanUseFirstPersonCommand() )
 		return;
 
-	if ( cl_thirdperson.GetBool() == false )
-	{
-		g_ThirdPersonManager.SetOverridingThirdPerson( false );
-	}
+	g_ThirdPersonManager.SetOverridingThirdPerson( false );
 
 	input->CAM_ToFirstPerson();
 
@@ -933,18 +926,33 @@ static ConCommand startcamout( "+camout", CAM_OutDown );
 static ConCommand camout( "-camout", CAM_OutUp );
 static ConCommand thirdperson_mayamode( "thirdperson_mayamode", ::CAM_ToThirdPerson_MayaMode, "Switch to thirdperson Maya-like camera controls.", FCVAR_CHEAT );
 
+#ifdef OF_CLIENT_DLL
+void SetThirdPersonCommand()
+{
+	cl_thirdperson.SetValue( true );
+}
+
+void SetFirstPersonCommand()
+{
+	cl_thirdperson.SetValue( false );
+}
+#endif
 // TF allows servers to push people into first/thirdperson, for mods
 #if defined( TF_CLIENT_DLL ) || defined ( OF_CLIENT_DLL )
+
 #ifdef OF_CLIENT_DLL
-static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to thirdperson camera.", FCVAR_SERVER_CAN_EXECUTE );
+	static ConCommand thirdperson( "thirdperson", ::SetThirdPersonCommand, "Switch to thirdperson camera.", FCVAR_SERVER_CAN_EXECUTE );
+	static ConCommand firstperson( "firstperson", ::SetFirstPersonCommand, "Switch to firstperson camera.", FCVAR_SERVER_CAN_EXECUTE );
 #else
-static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to thirdperson camera.", FCVAR_CHEAT | FCVAR_SERVER_CAN_EXECUTE );
+	static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to thirdperson camera.", FCVAR_CHEAT | FCVAR_SERVER_CAN_EXECUTE );
+	static ConCommand firstperson( "firstperson", ::CAM_ToFirstPerson, "Switch to firstperson camera.", FCVAR_SERVER_CAN_EXECUTE );
 #endif
-static ConCommand firstperson( "firstperson", ::CAM_ToFirstPerson, "Switch to firstperson camera.", FCVAR_SERVER_CAN_EXECUTE );
+
 #else
 static ConCommand thirdperson( "thirdperson", ::CAM_ToThirdPerson, "Switch to thirdperson camera.", FCVAR_CHEAT );
 static ConCommand firstperson( "firstperson", ::CAM_ToFirstPerson, "Switch to firstperson camera." );
 #endif
+
 static ConCommand camortho( "camortho", ::CAM_ToOrthographic, "Switch to orthographic camera.", FCVAR_CHEAT );
 static ConCommand startcammousemove( "+cammousemove",::CAM_StartMouseMove);
 static ConCommand endcammousemove( "-cammousemove",::CAM_EndMouseMove);

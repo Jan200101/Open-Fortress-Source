@@ -35,6 +35,8 @@
 #include "dt_utlvector_recv.h"
 #include "filesystem.h"
 #include "gamevars_shared.h"
+#include "basemodelpanel.h"
+#include "takedamageinfo.h"
 
 // for spy material proxy
 #include "proxyentity.h"
@@ -377,6 +379,201 @@ void LoadoutUnEquip( const CCommand& args )
 	}
 }
 static ConCommand loadout_unequip("loadout_unequip", LoadoutUnEquip );
+
+void ApplyCosmeticsToModel( C_BaseAnimating *pModel, int iPlayerIndex, CUtlVector<CosmeticHandle> *m_hCosmetic = NULL, int iTeamOverride = -1 )
+{
+	if( of_disable_cosmetics.GetBool() )
+		return;	
+	
+	C_TF_PlayerResource *g_TFPR = GetTFPlayerResource();
+	if( !g_TFPR )
+	{
+		DevWarning("UpdateWearables: Unable to find player resource\n");
+		return;
+	}
+	if( g_TFPR->GetPlayerCosmeticCount( iPlayerIndex ) > 32 || g_TFPR->GetPlayerCosmeticCount( iPlayerIndex ) < 0 )
+	{
+		DevWarning("UpdateWearables: Mismatching cosmetic count\n");
+		return;
+	}
+	
+	if( g_TFPR->GetPlayerCosmeticCount( iPlayerIndex ) == 0 )
+	{
+		DevWarning("UpdateWearables: Player has no cosmetics\n");
+		return;
+	}
+
+	for( int i = 0; i < g_TFPR->GetPlayerCosmeticCount( iPlayerIndex ); i++ )
+	{
+		KeyValues *pCosmetic = GetCosmetic( g_TFPR->GetPlayerCosmetic( iPlayerIndex, i ) );
+		if( !pCosmetic )
+		{
+			DevWarning("UpdateWearables: Cant find cosmetic with ID %d\n", g_TFPR->GetPlayerCosmetic( iPlayerIndex, i ));
+			continue;
+		}
+		
+		int iStyle = g_TFPR->GetPlayerCosmeticSkin(iPlayerIndex, i);
+		KeyValues *pInfo = new KeyValues("CosmeticInfo");
+		pCosmetic->CopySubkeys(pInfo);
+
+		KeyValues *pStyles = pCosmetic->FindKey("styles");
+		if( pStyles )
+		{
+			KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
+			if( pStyle )
+			{
+				pStyle->CopySubkeys(pInfo);
+				pInfo->RecursiveMergeKeyValues(pCosmetic);
+			}
+		}
+
+		KeyValues* pBodygroups = pInfo->FindKey("Bodygroups");
+		if( pBodygroups )
+		{
+			C_TFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex( iPlayerIndex ));
+			if( pPlayer && pPlayer->m_Shared.IsZombie() )
+			{
+				pInfo->deleteThis();
+				continue;
+			}
+			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
+			{
+				int m_Bodygroup = pModel->FindBodygroupByName( sub->GetName() );
+
+				if ( m_Bodygroup >= 0 )
+				{
+					pModel->SetBodygroup( m_Bodygroup, sub->GetInt() );
+				}
+			}
+		}
+
+		if( Q_strcmp( pInfo->GetString( "Model" ), "BLANK" ) )
+		{
+			CosmeticHandle handle = C_PlayerAttachedModel::Create( pInfo->GetString( "Model" , "models/empty.mdl" ), pModel, pModel->LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
+
+			if( handle )
+			{
+				int iVisibleTeam = 0;
+				int iTeamCount = 1;
+				if( pInfo->GetBool( "team_skins", true ) )
+				{
+					iTeamCount = 3;
+					iVisibleTeam = iTeamOverride != -1 ? iTeamOverride : g_TFPR->GetTeam(iPlayerIndex);
+					
+
+					iVisibleTeam = iVisibleTeam - 2;
+				}
+				if( pInfo->GetBool( "uses_brightskins" ) )
+				{
+					iTeamCount++;
+					if( of_tennisball.GetInt() == 1 )
+						iVisibleTeam = iTeamCount - 1;
+				}
+				
+				handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+
+				int iSkin = iTeamCount * pInfo->GetInt("skin_offset");
+				
+				handle->m_nSkin = handle->m_nSkin + iSkin;
+				
+				if( m_hCosmetic )
+					m_hCosmetic->AddToTail(handle);
+			}
+		}
+		pInfo->deleteThis();
+	}	
+}
+
+void ApplyCosmeticsToModelPanel( CModelPanel *pModel, int iPlayerIndex, int iTeamOverride = -1 )
+{
+	if( of_disable_cosmetics.GetBool() )
+		return;	
+
+	C_TF_PlayerResource *g_TFPR = GetTFPlayerResource();
+	if( !g_TFPR )
+	{
+		DevWarning("UpdateWearables: Unable to find player resource\n");
+		return;
+	}
+	if( g_TFPR->GetPlayerCosmeticCount( iPlayerIndex ) > 32 || g_TFPR->GetPlayerCosmeticCount( iPlayerIndex ) < 0 )
+	{
+		DevWarning("UpdateWearables: Mismatching cosmetic count\n");
+		return;
+	}
+	
+	if( g_TFPR->GetPlayerCosmeticCount( iPlayerIndex ) == 0 )
+	{
+		DevWarning("UpdateWearables: Player has no cosmetics\n");
+		return;
+	}
+
+	for( int i = 0; i < g_TFPR->GetPlayerCosmeticCount( iPlayerIndex ); i++ )
+	{
+		KeyValues *pCosmetic = GetCosmetic( g_TFPR->GetPlayerCosmetic( iPlayerIndex, i ) );
+		if( !pCosmetic )
+		{
+			DevWarning("UpdateWearables: Cant find cosmetic with ID %d\n", g_TFPR->GetPlayerCosmetic( iPlayerIndex, i ));
+			continue;
+		}
+		
+		int iStyle = g_TFPR->GetPlayerCosmeticSkin(iPlayerIndex, i);
+		KeyValues *pInfo = new KeyValues("CosmeticInfo");
+		pCosmetic->CopySubkeys(pInfo);
+
+		KeyValues *pStyles = pCosmetic->FindKey("styles");
+		if( pStyles )
+		{
+			KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
+			if( pStyle )
+			{
+				pStyle->CopySubkeys(pInfo);
+				pInfo->RecursiveMergeKeyValues(pCosmetic);
+			}
+		}
+
+		KeyValues* pBodygroups = pInfo->FindKey("Bodygroups");
+		if( pBodygroups )
+		{
+			C_TFPlayer *pPlayer = ToTFPlayer(UTIL_PlayerByIndex( iPlayerIndex ));
+			if( pPlayer && pPlayer->m_Shared.IsZombie() )
+			{
+				pInfo->deleteThis();
+				continue;
+			}
+			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
+			{
+					pModel->SetBodygroup( sub->GetName(), sub->GetInt() );
+			}
+		}
+
+		if( Q_strcmp( pInfo->GetString( "Model" ), "BLANK" ) )
+		{
+			int iVisibleTeam = 0;
+			int iTeamCount = 1;
+			if( pInfo->GetBool( "team_skins", true ) )
+			{
+				iTeamCount = 3;
+				iVisibleTeam = iTeamOverride != -1 ? iTeamOverride : g_TFPR->GetTeam(iPlayerIndex);
+				
+
+				iVisibleTeam = iVisibleTeam - 2;
+			}
+			if( pInfo->GetBool( "uses_brightskins" ) )
+			{
+				iTeamCount++;
+				if( of_tennisball.GetInt() == 1 )
+					iVisibleTeam = iTeamCount - 1;
+			}
+			
+			int m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+
+			m_nSkin = m_nSkin + (iTeamCount * pInfo->GetInt("skin_offset"));
+			
+			pModel->AddAttachment( pInfo->GetString( "Model" , "models/empty.mdl" ), m_nSkin );
+		}
+		pInfo->deleteThis();
+	}	
+}
 
 #define BDAY_HAT_MODEL		"models/effects/bday_hat.mdl"
 #define DM_SHIELD_MODEL 	"models/player/attachments/mercenary_shield.mdl"
@@ -1066,14 +1263,6 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 
 	VectorSubtract( pTrace->endpos, pTrace->startpos, vecDir );
 
-	// m_iGore<limb> has a level, from 0 to 3
-	// 1 is unused (reserved for normal TF bodygroups like pyro's head)
-	// 2 means the lower limb is marked for removal, 3 means the upper limb is marked for removal, the head is an exception as it only has level 2
-	// if our current level is at level 3, that means we can't dismember this limb anymore
-	// if our current level is at level 2, that means we can dismember this limb once more up to level 3
-	// if our current level is at level 0/1, that means we can dismember this limb up to level 2
-	// Dismember<limb> function accepts true or false, true means this limb will be dismembered to level 3, false means dismembered to level 2
-
 	if ( m_bGoreEnabled )
 	{
 		switch ( pTrace->hitgroup )
@@ -1157,6 +1346,14 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 			}
 	}
 
+	// m_iGore<limb> has a level, from 0 to 3
+	// 1 is unused (reserved for normal TF bodygroups like pyro's head)
+	// 2 means the lower limb is marked for removal, 3 means the upper limb is marked for removal, the head is an exception as it only has level 2
+	// if our current level is at level 3, that means we can't dismember this limb anymore
+	// if our current level is at level 2, that means we can dismember this limb once more up to level 3
+	// if our current level is at level 0/1, that means we can dismember this limb up to level 2
+	// Dismember<limb> function accepts true or false, true means this limb will be dismembered to level 3, false means dismembered to level 2
+
 	if ( iDamageType == DMG_BLAST )
 	{
 		// don't affect gibs
@@ -1180,7 +1377,7 @@ void C_TFRagdoll::ImpactTrace(trace_t *pTrace, int iDamageType, const char *pCus
 		VectorNormalize( vecDir );
 
 		// Adjust the impact strength and apply the force at the impact point..
-		if (  m_pRagdoll )
+		if ( m_pRagdoll )
 		{
 			if ( iDamageType & DMG_CRITICAL )
 				vecDir *= 20000;
@@ -1329,81 +1526,7 @@ void C_TFRagdoll::CreateTFRagdoll( void )
 		}
 
 		m_nBody = pPlayer->GetBody();
-		C_TF_PlayerResource *g_TFPR = GetTFPlayerResource();
-		if( !of_disable_cosmetics.GetBool() && g_TFPR )
-		{
-			for (int i = 0; i < g_TFPR->GetPlayerCosmeticCount( pPlayer->entindex() ); i++)
-			{
-				if ( g_TFPR->GetPlayerCosmetic( pPlayer->entindex(), i ) )
-				{
-					KeyValues *pCosmetic = GetCosmetic( g_TFPR->GetPlayerCosmetic(pPlayer->entindex(), i) );
-					if( !pCosmetic )
-						continue;
-					
-					int iStyle = g_TFPR->GetPlayerCosmeticSkin(pPlayer->entindex(), i);
-					KeyValues *pInfo = new KeyValues("CosmeticInfo");
-					pCosmetic->CopySubkeys(pInfo);
-
-					KeyValues *pStyles = pCosmetic->FindKey("styles");
-					if( pStyles )
-					{
-						KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
-						if( pStyle )
-						{
-							pStyle->CopySubkeys(pInfo);
-							pInfo->RecursiveMergeKeyValues(pCosmetic);
-						}
-					}
-
-					// can't draw headwear regions in firstperson ragdolls
-					if ( cl_fp_ragdoll.GetBool() && pPlayer == C_TFPlayer::GetLocalTFPlayer() )
-					{
-						const char *pRegion = pInfo->GetString( "region" );
-						if ( pRegion && ( !Q_strcmp( pRegion, "hat" ) || 
-							 !Q_strcmp( pRegion, "face" ) || 
-							 !Q_strcmp( pRegion, "glasses" ) ) )
-						{
-							pInfo->deleteThis();
-							continue;
-						}
-					}
-
-					if ( Q_strcmp( pInfo->GetString( "Model" ), "BLANK" ) )
-					{
-
-						CosmeticHandle handle = C_PlayerAttachedModel::Create( pInfo->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
-						
-						if( handle )
-						{
-							int iVisibleTeam = 0;
-							int iTeamCount = 1;
-
-							if( pInfo->GetBool( "team_skins", true ) )
-							{
-								iTeamCount = 3;
-								iVisibleTeam = pPlayer->GetTeamNumber() - 2;
-							}
-
-							if( pInfo->GetBool( "uses_brightskins" ) )
-							{
-								iTeamCount++;
-								if( of_tennisball.GetInt() == 1 )
-									iVisibleTeam = iTeamCount - 1;
-							}
-							
-							handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
-
-							int iSkin = iTeamCount * pInfo->GetInt( "skin_offset" );
-
-							handle->m_nSkin = handle->m_nSkin + iSkin;
-
-							m_hCosmetic.AddToTail(handle);
-						}
-					}
-					pInfo->deleteThis();
-				}
-			}
-		}
+		ApplyCosmeticsToModel( this, pPlayer->entindex(), &m_hCosmetic );
 	}
 	else
 	{
@@ -2723,6 +2846,7 @@ C_TFPlayer::C_TFPlayer() : m_iv_angEyeAngles( "C_TFPlayer::m_iv_angEyeAngles" )
 	m_bUpdateObjectHudState = false;
 	
 	iCosmeticCount = 0;
+	m_iOldClass = -1;
 
 	ListenForGameEvent( "player_jump" );
 
@@ -2763,7 +2887,7 @@ void C_TFPlayer::UpdateOnRemove( void )
 	// Stop the taunt.
 	if ( m_bWasTaunting )
 	{
-		TurnOffTauntCam();
+		TurnOffThirdPersonCam();
 	}
 
 	// HACK!!! ChrisG needs to fix this in the particle system.
@@ -3654,107 +3778,7 @@ void C_TFPlayer::UpdateWearables( void )
 	}
 	m_hCosmetic.Purge();
 
-	if( of_disable_cosmetics.GetBool() )
-		return;	
-	
-	C_TF_PlayerResource *g_TFPR = GetTFPlayerResource();
-	if( !g_TFPR )
-	{
-		DevWarning("UpdateWearables: Unable to find player resource\n");
-		return;
-	}
-	if( g_TFPR->GetPlayerCosmeticCount( entindex() ) > 32 || g_TFPR->GetPlayerCosmeticCount( entindex() ) < 0 )
-	{
-		DevWarning("UpdateWearables: Mismatching cosmetic count\n");
-		return;
-	}
-	
-	if( g_TFPR->GetPlayerCosmeticCount( entindex() ) == 0 )
-	{
-		DevWarning("UpdateWearables: Player has no cosmetics\n");
-		return;
-	}
-
-	for( int i = 0; i < g_TFPR->GetPlayerCosmeticCount( entindex() ); i++ )
-	{
-		KeyValues *pCosmetic = GetCosmetic( g_TFPR->GetPlayerCosmetic( entindex(), i ) );
-		if( !pCosmetic )
-		{
-			DevWarning("UpdateWearables: Cant find cosmetic with ID %d\n", g_TFPR->GetPlayerCosmetic( entindex(), i ));
-			continue;
-		}
-		
-		int iStyle = g_TFPR->GetPlayerCosmeticSkin(entindex(), i);
-		KeyValues *pInfo = new KeyValues("CosmeticInfo");
-		pCosmetic->CopySubkeys(pInfo);
-
-		KeyValues *pStyles = pCosmetic->FindKey("styles");
-		if( pStyles )
-		{
-			KeyValues *pStyle = pStyles->FindKey(VarArgs("%i", iStyle));
-			if( pStyle )
-			{
-				pStyle->CopySubkeys(pInfo);
-				pInfo->RecursiveMergeKeyValues(pCosmetic);
-			}
-		}
-
-		KeyValues* pBodygroups = pInfo->FindKey("Bodygroups");
-		if( pBodygroups )
-		{
-			if( m_Shared.IsZombie() )
-			{
-				pInfo->deleteThis();
-				continue;
-			}
-			for ( KeyValues *sub = pBodygroups->GetFirstValue(); sub; sub = sub->GetNextValue() )
-			{
-				int m_Bodygroup = FindBodygroupByName( sub->GetName() );
-
-				if ( m_Bodygroup >= 0 )
-				{
-					SetBodygroup( m_Bodygroup, sub->GetInt() );
-				}
-			}
-		}
-
-		if( Q_strcmp( pInfo->GetString( "Model" ), "BLANK" ) )
-		{
-			CosmeticHandle handle = C_PlayerAttachedModel::Create( pInfo->GetString( "Model" , "models/empty.mdl" ), this, LookupAttachment("partyhat"), vec3_origin, PAM_PERMANENT, 0, EF_BONEMERGE, false );	
-
-			if( handle )
-			{
-				int iVisibleTeam = 0;
-				int iTeamCount = 1;
-				if( pInfo->GetBool( "team_skins", true ) )
-				{
-					iTeamCount = 3;
-					iVisibleTeam = GetTeamNumber();
-					if (m_Shared.InCond(TF_COND_DISGUISED) && IsEnemyPlayer())
-					{
-						iVisibleTeam = m_Shared.GetDisguiseTeam();
-					}
-
-					iVisibleTeam = iVisibleTeam - 2;
-				}
-				if( pInfo->GetBool( "uses_brightskins" ) )
-				{
-					iTeamCount++;
-					if( of_tennisball.GetInt() == 1 )
-						iVisibleTeam = iTeamCount - 1;
-				}
-				
-				handle->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
-
-				int iSkin = iTeamCount * pInfo->GetInt("skin_offset");
-				
-				handle->m_nSkin = handle->m_nSkin + iSkin;
-
-				m_hCosmetic.AddToTail(handle);
-			}
-		}
-		pInfo->deleteThis();
-	}
+	ApplyCosmeticsToModel( this, entindex(), &m_hCosmetic, GetTeamNumber() );
 }
 //-----------------------------------------------------------------------------
 // Purpose: Is this player an enemy to the local player
@@ -3832,10 +3856,20 @@ static ConVar tf_tauntcam_yaw( "tf_tauntcam_yaw", "0", FCVAR_CHEAT );
 static ConVar tf_tauntcam_pitch( "tf_tauntcam_pitch", "0", FCVAR_CHEAT );
 static ConVar tf_tauntcam_dist( "tf_tauntcam_dist", "110", FCVAR_CHEAT );
 
+extern ConVar of_allow_third_person;
+extern ConVar cl_thirdperson;
+
+bool C_TFPlayer::UseThirdPersonCam( void )
+{
+	return ( m_bWasTaunting && !tf_taunt_first_person.GetBool() )
+	|| m_Shared.IsLoser()
+	|| (cl_thirdperson.GetBool() && of_allow_third_person.GetBool());
+}
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void C_TFPlayer::TurnOnTauntCam( void )
+void C_TFPlayer::TurnOnThirdPersonCam( void )
 {
 	if ( !IsLocalPlayer() )
 		return;
@@ -3873,13 +3907,14 @@ void C_TFPlayer::TurnOnTauntCam( void )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void C_TFPlayer::TurnOffTauntCam( void )
+void C_TFPlayer::TurnOffThirdPersonCam( void )
 {
 	if ( !IsLocalPlayer() )
 		return;	
 
 	Vector vecOffset = g_ThirdPersonManager.GetCameraOffsetAngles();
 
+	// Why would this ever be used? It just breaks the taunt cam
 	tf_tauntcam_pitch.SetValue( vecOffset[PITCH] - m_angTauntPredViewAngles[PITCH] );
 	tf_tauntcam_yaw.SetValue( vecOffset[YAW] - m_angTauntPredViewAngles[YAW] );
 
@@ -3915,18 +3950,18 @@ void C_TFPlayer::HandleTaunting( void )
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
 	// Clear the taunt slot.
-	if ( !m_bWasTaunting && m_Shared.InCond( TF_COND_TAUNTING ) )
+	if ( !m_bWasTaunting && ( m_Shared.InCond( TF_COND_TAUNTING ) || m_Shared.IsLoser() ) )
 	{
 		m_bWasTaunting = true;
 
 		// Handle the camera for the local player.
 		if ( pLocalPlayer )
 		{
-			TurnOnTauntCam();
+			TurnOnThirdPersonCam();
 		}
 	}
 
-	if ( m_bWasTaunting && !m_Shared.InCond( TF_COND_TAUNTING ) )
+	if ( m_bWasTaunting && !m_Shared.InCond( TF_COND_TAUNTING ) && !m_Shared.IsLoser() )
 	{
 		m_bWasTaunting = false;
 
@@ -3936,7 +3971,7 @@ void C_TFPlayer::HandleTaunting( void )
 		// Handle the camera for the local player.
 		if ( pLocalPlayer )
 		{
-			TurnOffTauntCam();
+			TurnOffThirdPersonCam();
 		}
 	}
 }
@@ -4012,6 +4047,14 @@ void C_TFPlayer::ClientThink()
 	{
 		UpdateWearables();
 		m_bUpdateCosmetics = false;
+		if( IsLocalPlayer() )
+		{
+			IGameEvent *event = gameeventmanager->CreateEvent( "localplayer_changecosmetics" );
+			if ( event )
+			{
+				gameeventmanager->FireEventClientSide( event );
+			}
+		}
 	}
 
 	bool bRemoveEffect = !IsAlive();
@@ -5294,7 +5337,7 @@ void C_TFPlayer::ClientPlayerRespawn( void )
 		// Reset the camera.
 		if ( m_bWasTaunting )
 		{
-			TurnOffTauntCam();
+			TurnOnThirdPersonCam();
 		}
 
 		ResetToneMapping(1.0);
@@ -5938,6 +5981,7 @@ void C_TFPlayer::ComputeFxBlend( void )
 void C_TFPlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, float &zFar, float &fov )
 {
 	HandleTaunting();
+
 	BaseClass::CalcView( eyeOrigin, eyeAngles, zNear, zFar, fov );
 }
 

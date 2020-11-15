@@ -2168,6 +2168,40 @@ void CTeamplayRoundBasedRules::State_Enter_TEAM_WIN( void )
 //-----------------------------------------------------------------------------
 void CTeamplayRoundBasedRules::State_Think_TEAM_WIN( void )
 {
+	
+#ifdef OF_DLL
+	if( TFGameRules() && TFGameRules()->IsDMGamemode() && !TFGameRules()->DontCountKills()
+		&& gpGlobals->curtime >= (m_flStateTransitionTime - ( GetBonusRoundTime() * of_winscreenratio.GetFloat() )) )
+	{
+		bool bPlayMusic = false;
+		// are any of the spies disguising as this player?
+		for ( int i = 1 ; i <= gpGlobals->maxClients ; i++ )
+		{
+			CTFPlayer *pTemp = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+			if ( !pTemp )
+				continue;
+			
+			// If we have a locked player already, asume that all of them are locked
+			if( (pTemp->GetFlags() & FL_FROZEN) )
+				break;
+			
+			bPlayMusic = true;
+			
+			pTemp->AddFlag( FL_FROZEN );
+		}
+		
+		if( bPlayMusic )
+		{
+			if( DMMusicManager() )
+			{
+				DMMusicManager()->m_bDisableThink = true;
+				DMMusicManager()->pRoundMusicPlayer->m_bHardTransition = true;
+				DMMusicManager()->pRoundMusicPlayer->SetDisabled(true);
+			}
+		}
+	}
+#endif
+
 	if ( gpGlobals->curtime > m_flStateTransitionTime )
 	{
 #if defined( TF_DLL ) || defined ( OF_DLL )
@@ -2175,6 +2209,21 @@ void CTeamplayRoundBasedRules::State_Think_TEAM_WIN( void )
 		if ( event )
 		{
 			gameeventmanager->FireEvent( event );
+		}
+		// are any of the spies disguising as this player?
+		for ( int i = 1 ; i <= gpGlobals->maxClients ; i++ )
+		{
+			CTFPlayer *pTemp = ToTFPlayer( UTIL_PlayerByIndex( i ) );
+			if ( !pTemp )
+				continue;
+			
+			pTemp->RemoveFlag( FL_FROZEN );
+		}
+		if( DMMusicManager() )
+		{
+			DMMusicManager()->pRoundMusicPlayer->m_bHardTransition = false;
+			DMMusicManager()->pRoundMusicPlayer->SetDisabled(false);
+			DMMusicManager()->m_bDisableThink = false;
 		}
 #endif // TF_DLL
 
@@ -2683,65 +2732,14 @@ void CTeamplayRoundBasedRules::SetWinningTeam( int team, int iWinReason, bool bF
 #ifdef OF_DLL
 	else
 	{		
-		int numPlayers = 0;
-		CUtlVector<PlayerRoundScore_t> vecPlayerScore;
-		
-		if ( m_iWinningTeam == TF_TEAM_MERCENARY && TFGameRules() )
-		{
-			// determine the 3 players on winning team who scored the most points this round
-			// build a vector of players & round scores
-			int iPlayerIndex;
-			for( iPlayerIndex = 1 ; iPlayerIndex <= MAX_PLAYERS; iPlayerIndex++ )
-			{
-				CTFPlayer *pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( iPlayerIndex ) );
-				if ( !pTFPlayer || !pTFPlayer->IsConnected() )
-					continue;
-				// filter out spectators and, if not stalemate, all players not on winning team
-				int iPlayerTeam = pTFPlayer->GetTeamNumber();
-				if ( ( iPlayerTeam < FIRST_GAME_TEAM ) || ( m_iWinningTeam != TEAM_UNASSIGNED && ( m_iWinningTeam != iPlayerTeam ) ) )
-					continue;
-
-				int iRoundScore = 0, iTotalScore = 0;
-				PlayerStats_t *pStats = CTF_GameStats.FindPlayerStats( pTFPlayer );
-				if ( pStats )
-				{
-					iRoundScore = TFGameRules()->CalcPlayerScore( &pStats->statsCurrentRound );
-					iTotalScore = TFGameRules()->CalcPlayerScore( &pStats->statsAccumulated );
-				}
-				PlayerRoundScore_t &playerRoundScore = vecPlayerScore[vecPlayerScore.AddToTail()];
-				playerRoundScore.iPlayerIndex = iPlayerIndex;
-				playerRoundScore.iRoundScore = iRoundScore;
-				playerRoundScore.iTotalScore = iTotalScore;
-			}
-			// sort the players by round score
-			vecPlayerScore.Sort( TFGameRules()->PlayerRoundScoreSortFunc );
-
-			// set the top (up to) 3 players by round score in the event data
-			numPlayers = min( 3, vecPlayerScore.Count() );
-		}
-
 		for ( int i = 1; i <= gpGlobals->maxClients; i++ )
 		{
 			CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( i ) );
 			if ( !pPlayer )
 				continue;
 
-			if ( m_iWinningTeam == TF_TEAM_MERCENARY )
-			{
-				pPlayer->m_Shared.SetTopThree( false );
-				for ( int y = 0; y < numPlayers; y++ )
-				{
-					// only include players who have non-zero points this round; if we get to a player with 0 round points, stop
-					if ( 0 == vecPlayerScore[y].iRoundScore )
-						continue;
-
-					if ( pPlayer && pPlayer->entindex() == vecPlayerScore[y].iPlayerIndex )
-					{
-						pPlayer->m_Shared.AddCond(TF_COND_CRITBOOSTED);
-						pPlayer->m_Shared.SetTopThree( true );
-					}
-				}
-			}
+			if ( m_iWinningTeam == TF_TEAM_MERCENARY ){}
+				//pPlayer->m_Shared.SetTopThree( false );
 			else if ( pPlayer->GetTeamNumber() == m_iWinningTeam )
 				pPlayer->m_Shared.AddCond(TF_COND_CRITBOOSTED);
 		}

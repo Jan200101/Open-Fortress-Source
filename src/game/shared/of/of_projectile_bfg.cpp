@@ -39,8 +39,8 @@ extern ConVar of_muzzlelight;
 #else
 ConVar  of_bfg_boxsize("of_bfg_boxsize", "60", FCVAR_CHEAT, "Size of the AOE damage entity." );
 ConVar  of_bfg_debug("of_bfg_debug", "0", FCVAR_CHEAT, "Visualize the BFG projectiles as boxes." );
-ConVar  of_bfg_damage("of_bfg_damage", "50", FCVAR_CHEAT, "Damage the BFG does per tick." );
-ConVar  of_bfg_tickrate("of_bfg_tickrate", "0.1", FCVAR_CHEAT, "Tickrate for AOE damage." );
+ConVar  of_bfg_damage("of_bfg_damage", "25", FCVAR_CHEAT, "Damage the BFG does per tick." );
+ConVar  of_bfg_tickrate("of_bfg_tickrate", "0.03", FCVAR_CHEAT, "Tickrate for AOE damage." );
 #endif
 //=============================================================================
 //
@@ -157,7 +157,7 @@ int	CTFBFGProjectile::GetDamageType()
 		iDmgType |= DMG_CRITICAL;
 	}
 
-	return iDmgType;
+	return iDmgType | DMG_DISSOLVE;
 }
 
 //-----------------------------------------------------------------------------
@@ -279,7 +279,7 @@ const char *CTFBFGProjectile::GetTrailParticleName(void)
 	case TF_TEAM_MERCENARY:
 		return "mlg_trail_primary_dm";
 		break;
-		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -421,7 +421,6 @@ void CTFBFGArea::Spawn( void )
 
 	float iBoxSize = of_bfg_boxsize.GetFloat();
 	UTIL_SetSize( this, -Vector( iBoxSize, iBoxSize, iBoxSize ), Vector( iBoxSize, iBoxSize, iBoxSize ) );
-
 	// Setup attributes.
 	m_takedamage = DAMAGE_NO;
 	m_vecInitialPos = GetAbsOrigin();
@@ -476,53 +475,59 @@ void CTFBFGArea::FlameThink( void )
 	// Do collision detection.  We do custom collision detection because we can do it more cheaply than the
 	// standard collision detection (don't need to check against world unless we might have hit an enemy) and
 	// flame entity collision detection w/o this was a bottleneck on the X360 server
-	if ( GetAbsOrigin() != m_vecPrevPos )
+	if (GetAbsOrigin() != m_vecPrevPos)
 	{
-		CTFPlayer *pAttacker = dynamic_cast<CTFPlayer *>( (CBaseEntity *) m_hAttacker );
-		if ( !pAttacker )
+		CTFPlayer *pAttacker = dynamic_cast<CTFPlayer *>((CBaseEntity *)m_hAttacker);
+		if (!pAttacker)
 			return;
 
-		CTFTeam *pTeam = pAttacker->GetOpposingTFTeam();
-		if ( !pTeam )
-			return;
-		
-		bool bHitWorld = false;
+		CBaseEntity *pList[64];
 
-		// check collision against all enemy players
-		for ( int iPlayer= 0; iPlayer < pTeam->GetNumPlayers(); iPlayer++ )
-		{
-			CBasePlayer *pPlayer = pTeam->GetPlayer( iPlayer );
-			// Is this player connected, alive, and an enemy?
-			if ( pPlayer && pPlayer->IsConnected() && pPlayer->IsAlive() && pPlayer != pAttacker )
-			{
-				CheckCollision( pPlayer, &bHitWorld );
-				if ( bHitWorld )
-					return;
-			}
-		}
+		int iCount = UTIL_EntitiesInSphere(pList, 64, GetAbsOrigin(), of_bfg_boxsize.GetFloat(), NULL);
 
-		// check collision against all enemy objects
-		for ( int iObject = 0; iObject < pTeam->GetNumObjects(); iObject++ )
+		for (int i = 0; i < iCount; i++)
 		{
-			CBaseObject *pObject = pTeam->GetObject( iObject );
-			if ( pObject )
+			CBaseEntity *pEntity = pList[i];
+			if (!pEntity)
+				continue;
+
+			if (pEntity->IsPlayer() || pEntity->IsBaseObject())
 			{
-				CheckCollision( pObject, &bHitWorld );
-				if ( bHitWorld )
-					return;
-			}
-		}
-		// check collision against npcs
-		CAI_BaseNPC **ppAIs = g_AI_Manager.AccessAIs();
-		for (int iNPC = 0; iNPC < g_AI_Manager.NumAIs(); iNPC++)
-		{
-			CAI_BaseNPC *pNPC = ppAIs[iNPC];
-			// Is this npc alive?
-			if (pNPC && pNPC->IsAlive())
-			{
-				CheckCollision(pNPC, &bHitWorld);
-				if (bHitWorld)
-					return;
+
+				if (pEntity->GetTeamNumber() == pAttacker->GetTeamNumber() && pAttacker->GetTeamNumber() != TF_TEAM_MERCENARY)
+					continue;
+
+				if (!pEntity->IsAlive() || pEntity == pAttacker || pEntity->GetOwnerEntity() == pAttacker)
+					continue;
+
+				Ray_t ray;
+				ray.Init(GetAbsOrigin(), pEntity->GetAbsOrigin(), WorldAlignMins(), WorldAlignMaxs());
+
+				// if bounding box check passes, check player hitboxes
+				trace_t trHitbox;
+				trace_t trWorld;
+				bool bTested = pEntity->GetCollideable()->TestHitboxes(ray, MASK_SOLID | CONTENTS_HITBOX, trHitbox);
+				if (!bTested || !trHitbox.DidHit())
+					continue;
+
+				// now, let's see if the visual could have actually hit this player.  Trace backward from the
+				// point of impact to where the BFG was fired, see if we hit anything.  Since the point of impact was
+				// determined using the BFG's bounding box and we're just doing a ray test here, we extend the
+				// start point out by the radius of the box.
+				Vector vDir = ray.m_Delta;
+				vDir.NormalizeInPlace();
+				UTIL_TraceLine(GetAbsOrigin(), pEntity->GetAbsOrigin(), MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &trWorld);
+
+				if (of_bfg_debug.GetInt())
+				{
+					NDebugOverlay::Line(trWorld.startpos, trWorld.endpos, 0, 255, 0, true, 3.0f);
+				}
+
+				if (trWorld.fraction == 1.0)
+				{
+					// if there is nothing solid in the way, damage the entity
+					OnCollide(pEntity);
+				}
 			}
 		}
 	}
@@ -534,10 +539,10 @@ void CTFBFGArea::FlameThink( void )
 		{
 			int val = ( (int) ( gpGlobals->curtime * 10 ) ) % 255;
 			NDebugOverlay::EntityBounds(this, val, 255, val, 0 ,0 );
-		} 
+		}
 		else 
 		{
-			NDebugOverlay::EntityBounds(this, 0, 100, 255, 0 ,0) ;
+			NDebugOverlay::Sphere(GetAbsOrigin(), of_bfg_boxsize.GetFloat(), 0, 255, 0, false, of_bfg_tickrate.GetFloat());
 		}
 	}
 
@@ -551,50 +556,6 @@ void CTFBFGArea::FlameThink( void )
 //-----------------------------------------------------------------------------
 void CTFBFGArea::CheckCollision( CBaseEntity *pOther, bool *pbHitWorld )
 {
-	*pbHitWorld = false;
-	
-	// Do a bounding box check against the entity
-	Vector vecMins, vecMaxs;
-	pOther->GetCollideable()->WorldSpaceSurroundingBounds( &vecMins, &vecMaxs );
-	CBaseTrace trace;
-	Ray_t ray;
-	float flFractionLeftSolid;				
-	ray.Init( m_vecPrevPos, GetAbsOrigin(), WorldAlignMins(), WorldAlignMaxs() );
-	if ( IntersectRayWithBox( ray, vecMins, vecMaxs, 0.0, &trace, &flFractionLeftSolid ) )
-	{
-		// if bounding box check passes, check player hitboxes
-		trace_t trHitbox;
-		trace_t trWorld;
-		bool bTested = pOther->GetCollideable()->TestHitboxes( ray, MASK_SOLID | CONTENTS_HITBOX, trHitbox );
-		if ( !bTested || !trHitbox.DidHit() )
-			return;
-
-		// now, let's see if the visual could have actually hit this player.  Trace backward from the
-		// point of impact to where the BFG was fired, see if we hit anything.  Since the point of impact was
-		// determined using the BFG's bounding box and we're just doing a ray test here, we extend the
-		// start point out by the radius of the box.
-		Vector vDir = ray.m_Delta;
-		vDir.NormalizeInPlace();
-		UTIL_TraceLine( GetAbsOrigin() + vDir * WorldAlignMaxs().x, m_vecInitialPos, MASK_SOLID, this, COLLISION_GROUP_DEBRIS, &trWorld );			
-
-		if ( of_bfg_debug.GetInt() )
-		{
-			NDebugOverlay::Line( trWorld.startpos, trWorld.endpos, 0, 255, 0, true, 3.0f );
-		}
-		
-		if ( trWorld.fraction == 1.0 )
-		{						
-			// if there is nothing solid in the way, damage the entity
-			OnCollide( pOther );
-		}					
-		else
-		{
-			// we hit the world, remove ourselves
-			*pbHitWorld = true;
-			UTIL_Remove( this );
-		}
-	}
-
 }
 
 //-----------------------------------------------------------------------------

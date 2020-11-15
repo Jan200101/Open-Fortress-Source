@@ -197,6 +197,8 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	virtual void ItemPostFrame( void );
 	virtual void SoftZoomCheck( void );
 	
+	virtual bool IsLowered(){ return m_bLowered; };
+	
 	// Reloading
 	virtual	void			CheckReload( void );	
 	
@@ -240,6 +242,10 @@ class CTFWeaponBase : public CBaseCombatWeapon
 	bool			WeaponShouldBeLowered( void );
 	virtual bool	Ready( void );
 	virtual bool	Lower( void );
+
+#ifdef GAME_DLL
+	virtual void	HideThink( void );
+#endif
 
 	virtual void	WeaponIdle( void );
 

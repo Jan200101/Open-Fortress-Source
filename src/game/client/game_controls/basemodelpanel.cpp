@@ -29,10 +29,14 @@
 #include "iefx.h"
 #include "dlight.h"
 #include "activitylist.h"
+#include "c_tf_player.h"
+#include "hudelement.h"
+#include "tf_hud_playerstatus.h"
 
 #include "basemodelpanel.h"
 
 using namespace vgui;
+extern ConVar cl_hud_playerclass_use_playermodel;
 
 DECLARE_BUILD_FACTORY( CModelPanel );
 
@@ -49,8 +53,21 @@ CModelPanel::CModelPanel( vgui::Panel *pParent, const char *pName ) : vgui::Edit
 	m_bPanelDirty = true;
 	m_bStartFramed = false;
 	m_bAllowOffscreen = false;
+	m_bUpdateOnClasses = false;
+	m_nClassIndex = -1;
 
 	ListenForGameEvent( "game_newmap" );
+	ListenForGameEvent( "localplayer_changeclass" );
+	ListenForGameEvent( "refresh_hud_model" );
+	
+	for( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		inClassPos[i] = new KeyValues(g_aPlayerClassNames_NonLocalized[i]);
+	}
+	for( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+	{
+		inClassPortraitPos[i] = new KeyValues(g_aPlayerClassNames_NonLocalized[i]);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -79,32 +96,88 @@ void CModelPanel::ApplySettings( KeyValues *inResourceData )
 	m_bStartFramed = inResourceData->GetInt( "start_framed", false );
 	m_bAllowOffscreen = inResourceData->GetInt( "allow_offscreen", false );
 
+	
+	KeyValues *inClassData = inResourceData->FindKey( "customclassdata" );
+	if( inClassData )
+	{
+		m_bUpdateOnClasses = true;
+		for( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+		{
+			KeyValues *pClass = inClassData->FindKey(g_aPlayerClassNames_NonLocalized[i]);
+			if( pClass )
+			{
+				pClass->CopySubkeys(inClassPos[i]);
+				inClassPos[i]->SetBool("parsed", true);
+				inClassPos[i]->SetInt( "origin_x", inClassPos[i]->GetInt("origin_x") + 30 );
+			}
+		}
+	}
+	inClassData = inResourceData->FindKey( "customclassportraitdata" );
+	if( inClassData )
+	{
+		m_bUpdateOnClasses = true;
+		m_bUpdateOnPortrait = true;
+		for( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+		{
+			KeyValues *pClass = inClassData->FindKey(g_aPlayerClassNames_NonLocalized[i]);
+			if( pClass )
+			{
+				pClass->CopySubkeys(inClassPortraitPos[i]);
+				inClassPortraitPos[i]->SetBool("parsed", true);
+			}
+			else if( inClassPos[i] )
+			{
+				inClassPortraitPos[i] = inClassPos[i];
+			}
+		}
+	}
+
 	// do we have a valid "model" section in the .res file?
 	for ( KeyValues *pData = inResourceData->GetFirstSubKey() ; pData != NULL ; pData = pData->GetNextKey() )
 	{
 		if ( !Q_stricmp( pData->GetName(), "model" ) )
 		{
 			ParseModelInfo( pData );
+			for( int i = 0; i < TF_CLASS_COUNT_ALL; i++ )
+			{
+				inClassPos[i]->RecursiveMergeKeyValues(pData);
+				inClassPortraitPos[i]->RecursiveMergeKeyValues(pData);
+			}
 		}
 	}
+	
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if( !pPlayer )
+		return;
+	
+	int iClassIndex = pPlayer->GetPlayerClass()->GetClassIndex();
+	if( m_bUpdateOnPortrait && cl_hud_playerclass_use_playermodel.GetInt() == 2 )
+		ParseModelInfo(inClassPortraitPos[iClassIndex]);
+	else if( m_bUpdateOnClasses )
+		ParseModelInfo(inClassPos[iClassIndex]);
 }
 
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CModelPanel::ParseModelInfo( KeyValues *inResourceData )
+void CModelPanel::ParseModelInfo( KeyValues *inResourceData, bool bUpdate )
 {
 	// delete any current info
-	if ( m_pModelInfo )
+	if ( m_pModelInfo && !bUpdate )
 	{
 		delete m_pModelInfo;
 		m_pModelInfo = NULL;
 	}
 
-	m_pModelInfo = new CModelPanelModelInfo;
+	if( !bUpdate )
+		m_pModelInfo = new CModelPanelModelInfo;
 
 	if ( !m_pModelInfo )
 		return;
+
+	int nFov = inResourceData->GetInt( "fov", -1 );
+	if( nFov > -1 )
+		m_nFOV = nFov;
 
 	m_pModelInfo->m_pszModelName = ReadAndAllocStringValue( inResourceData, "modelname" );
 	m_pModelInfo->m_nSkin = inResourceData->GetInt( "skin", -1 );
@@ -113,6 +186,7 @@ void CModelPanel::ParseModelInfo( KeyValues *inResourceData )
 	m_pModelInfo->m_vecFramedOriginOffset.Init( inResourceData->GetFloat( "frame_origin_x", 110.0 ), inResourceData->GetFloat( "frame_origin_y", 5.0 ), inResourceData->GetFloat( "frame_origin_z", 5.0 ) );
 	m_pModelInfo->m_pszVCD = ReadAndAllocStringValue( inResourceData, "vcd" );
 	m_pModelInfo->m_bUseSpotlight = ( inResourceData->GetInt( "spotlight", 0 ) == 1 );
+
 	m_pModelInfo->m_vecViewportOffset.Init();
 
 	for ( KeyValues *pData = inResourceData->GetFirstSubKey(); pData != NULL; pData = pData->GetNextKey() )
@@ -132,9 +206,31 @@ void CModelPanel::ParseModelInfo( KeyValues *inResourceData )
 				m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
 			}
 		}
+		else if( !Q_stricmp( pData->GetName(), "spotlight" ) )
+		{
+				Vector vecPos( pData->GetFloat("x", 0),pData->GetFloat("y", 0),pData->GetFloat("z", 200));
+
+				Vector vecColor( inResourceData->GetFloat("r", 1),inResourceData->GetFloat("g", 1),inResourceData->GetFloat("b", 1));
+
+				Vector vecTarget( inResourceData->GetFloat("target_x", 0),
+								  inResourceData->GetFloat("target_y", 0),
+								  inResourceData->GetFloat("target_z", 0.75f));
+
+				float flInnerCone = inResourceData->GetFloat("inner_cone", 0.035f);
+				float flOuterCone = inResourceData->GetFloat("outer_cone", 0.873f);
+				
+				LightDesc_t spotLight( 
+					vec3_origin + vecPos, // Light origin
+					vecColor,			  // Light color
+					vecTarget,			  // Light Target, relative to the model
+					flInnerCone,		  // Inner, brighter, cone
+					flOuterCone);		  // Outer Cone
+				m_pModelInfo->m_Lights.AddToTail(spotLight);
+		}
 	}
 
-	m_bPanelDirty = true;
+	if( !bUpdate )
+		m_bPanelDirty = true;
 }
 
 //-----------------------------------------------------------------------------
@@ -177,10 +273,44 @@ void CModelPanel::FireGameEvent( IGameEvent * event )
 {	
 	const char *type = event->GetName();
 
-	if ( Q_strcmp( type, "game_newmap" ) == 0 )
+	if ( FStrEq( type, "game_newmap" ) )
 	{
 		// force the models to re-setup themselves
 		m_bPanelDirty = true;
+	}
+	else if( m_bUpdateOnClasses && FStrEq(type, "localplayer_changeclass") )
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if( !pPlayer )
+			return;
+		
+		int iClassIndex = pPlayer->GetPlayerClass()->GetClassIndex();
+		if( m_bUpdateOnPortrait && cl_hud_playerclass_use_playermodel.GetInt() == 2 )
+			ParseModelInfo(inClassPortraitPos[iClassIndex]);
+		else
+			ParseModelInfo(inClassPos[iClassIndex]);
+
+		CTFHudPlayerClass *pParent = dynamic_cast<CTFHudPlayerClass*>(GetParent());
+		if( pParent )
+			pParent->FireGameEvent(event);
+	}
+	else if( m_bUpdateOnPortrait && FStrEq(type, "refresh_hud_model") )
+	{
+		C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+		if( !pPlayer )
+			return;
+
+		int iClassIndex = pPlayer->GetPlayerClass()->GetClassIndex();
+		if( cl_hud_playerclass_use_playermodel.GetInt() == 2 )
+			ParseModelInfo(inClassPortraitPos[iClassIndex]);
+		else if( m_bUpdateOnClasses )
+			ParseModelInfo(inClassPos[iClassIndex]);
+
+		CTFHudPlayerClass *pParent = dynamic_cast<CTFHudPlayerClass*>(GetParent());
+		if( pParent )
+		{
+			pParent->FireGameEvent(event);
+		}
 	}
 }
 
@@ -241,7 +371,7 @@ void CModelPanel::SetBodygroup( const char* pszName, int nBody )
 	}
 }
 
-void CModelPanel::AddAttachment( const char* pszAttached, int iSkin )
+int CModelPanel::AddAttachment( const char* pszAttached, int iSkin )
 {
 	CModelPanelAttachedModelInfo* pAttachedModelInfo = new CModelPanelAttachedModelInfo;
 	if ( pAttachedModelInfo )
@@ -254,7 +384,84 @@ void CModelPanel::AddAttachment( const char* pszAttached, int iSkin )
 		pAttachedModelInfo->m_nSkin = iSkin;
 
 		m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
+		
+		return m_pModelInfo->m_AttachedModelsInfo.Count() - 1;
 	}
+	
+	return -1;
+}
+
+int CModelPanel::QuickAddAttachment( const char* pszAttached, int iSkin )
+{
+	CModelPanelAttachedModelInfo* pAttachedModelInfo = new CModelPanelAttachedModelInfo;
+	if ( pAttachedModelInfo )
+	{
+		size_t len = Q_strlen( pszAttached ) + 1;
+		char *pAlloced = new char[len];
+		Assert( pAlloced );
+		Q_strncpy( pAlloced, pszAttached, len );
+		pAttachedModelInfo->m_pszModelName = pAlloced;
+		pAttachedModelInfo->m_nSkin = iSkin;
+
+		m_pModelInfo->m_AttachedModelsInfo.AddToTail( pAttachedModelInfo );
+
+		C_BaseAnimating *pTemp = new C_BaseAnimating;
+
+		if ( pTemp )
+		{
+			if ( pTemp->InitializeAsClientEntity( pAttachedModelInfo->m_pszModelName, RENDER_GROUP_OPAQUE_ENTITY ) == false )
+			{	
+				// we failed to initialize this model so just skip it
+				pTemp->Remove();
+				m_pModelInfo->m_AttachedModelsInfo.Remove( m_pModelInfo->m_AttachedModelsInfo.Count() -1 );
+				return -1;
+			}
+
+			pTemp->DontRecordInTools();
+			pTemp->AddEffects( EF_NODRAW ); // don't let the renderer draw the model normally
+			pTemp->FollowEntity( m_hModel.Get() ); // attach to parent model
+		
+			pTemp->SetOwnerEntity( m_hModel.Get() );
+
+			if ( pAttachedModelInfo->m_nSkin >= 0 )
+			{
+				pTemp->m_nSkin = pAttachedModelInfo->m_nSkin;
+			}
+			else
+			{
+				if ( m_pModelInfo->m_nSkin > 2 )
+					pTemp->m_nSkin = m_pModelInfo->m_nSkin -2;
+				else
+					pTemp->m_nSkin = m_pModelInfo->m_nSkin;
+			}
+
+			pTemp->m_flAnimTime = gpGlobals->curtime;
+				
+			m_AttachedModels.AddToTail( pTemp );
+			return m_AttachedModels.Count() - 1;
+		}
+		return m_pModelInfo->m_AttachedModelsInfo.Count() - 1;
+	}
+	
+	return -1;
+}
+
+
+void CModelPanel::RemoveAttachment( int iIndex )
+{
+	if( iIndex < 0 )
+		return;
+
+	if( m_AttachedModels.Count() <= iIndex )
+		return;
+
+	if( m_pModelInfo->m_AttachedModelsInfo.Count() <= iIndex )
+		return;
+
+	m_AttachedModels[iIndex]->Remove();
+	
+	m_AttachedModels.Remove(iIndex);
+	m_pModelInfo->m_AttachedModelsInfo.Remove(iIndex);
 }
 #endif
 
@@ -446,6 +653,13 @@ void CModelPanel::PurgeAttachedModels()
 	m_AttachedModels.Purge();
 }
 
+#ifdef OF_CLIENT_DLL
+void CModelPanel::PurgeAttachedModelsInfo()
+{
+	if( m_pModelInfo )
+		m_pModelInfo->m_AttachedModelsInfo.Purge();
+}
+#endif
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -762,7 +976,8 @@ void CModelPanel::Paint()
 	{
 		Vector vecMins, vecMaxs;
 		m_hModel->GetRenderBounds( vecMins, vecMaxs );
-		LightDesc_t spotLight( vec3_origin + Vector( 0, 0, 200 ), Vector( 1, 1, 1 ), m_hModel->GetAbsOrigin() + Vector( 0, 0, ( vecMaxs.z - vecMins.z ) * 0.75 ), 0.035, 0.873 );
+		Vector vecBounds = vecMaxs - vecMins;
+		LightDesc_t spotLight(vec3_origin + Vector(0, 0, 200), Vector(1, 1, 1), m_hModel->GetAbsOrigin() + Vector(0, 0, (vecMaxs.z - vecMins.z) * 0.75), 0.035, 0.873);
 		g_pStudioRender->SetLocalLights( 1, &spotLight );
 	}
 

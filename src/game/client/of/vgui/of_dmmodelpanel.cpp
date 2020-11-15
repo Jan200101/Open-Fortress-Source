@@ -151,7 +151,7 @@ void DMModelPanel::PaintBackground()
 						pInfo->RecursiveMergeKeyValues(pCosmetic);
 					}
 				}
-				int iVisibleTeam = 1;
+				int iVisibleTeam = 0;
 				int iTeamCount = 1;
 
 				if( pInfo->GetBool( "team_skins", true ) )

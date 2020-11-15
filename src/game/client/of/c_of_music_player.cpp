@@ -31,9 +31,8 @@ C_TFMusicPlayer::C_TFMusicPlayer()
 	bParsed = false;
 	m_flDelay = 0;
 	m_iPhase = 0;
-	m_Songdata.SetSize( 3 );
-	if( pSystem )
-		pSystem->createChannelGroup("Parent", &pChannel);
+	iSoundIndex = -1;
+	pSound = NULL;
 }
 
 C_TFMusicPlayer::~C_TFMusicPlayer()
@@ -42,8 +41,9 @@ C_TFMusicPlayer::~C_TFMusicPlayer()
 	bInLoop = false;
 	bParsed = false;
 	m_iPhase = 0;
-	m_Songdata.Purge();
-	FMODManager()->StopAmbientSound( pChannel, false );
+
+	if (iSoundIndex != -1)
+		FMODManager()->StopSound(szLoopingSong, iSoundIndex);
 }
 
 void C_TFMusicPlayer::Spawn( void )
@@ -80,24 +80,29 @@ void C_TFMusicPlayer::ClientThink( void )
 		{
 			bIsPlaying = false;
 			m_iPhase = 0;
-			FMODManager()->StopAmbientSound( pChannel, false );
-			if( m_bHardTransition )
+			if( iSoundIndex != -1 )
 			{
-				FMODManager()->PlayMusicEnd( pChannel, m_Songdata[2].path );
+				if( m_bHardTransition )
+				{
+					FMODManager()->SetLoopSound(szLoopingSong, false, iSoundIndex);
+					FMODManager()->ToEndSound(szLoopingSong, iSoundIndex);
+				}
+				else
+					FMODManager()->StopSound(szLoopingSong, iSoundIndex);
 			}
 		}
 		else
 		{
-			FMODManager()->StopAmbientSound( pChannel, false );
+			if( iSoundIndex != -1 )
+				FMODManager()->StopSound(szLoopingSong, iSoundIndex);
+
 			bIsPlaying = true;
 			bInLoop = false;
-			if ( m_Songdata[0].path[0] != 0 )
+			pSound = FMODManager()->PlaySound(szLoopingSong);
+			if( pSound != NULL )
 			{
-				FMODManager()->PlayLoopingMusic( pChannel, m_Songdata[1].path, m_Songdata[0].path, m_flDelay );
-			}
-			else
-			{
-				FMODManager()->PlayLoopingMusic( pChannel,m_Songdata[1].path, NULL , m_flDelay );
+				pSound->SetLooping(true);
+				iSoundIndex = pSound->m_iIndex;
 			}
 		}
 	}
@@ -115,22 +120,17 @@ extern ConVar of_winscreenratio;
 void C_TFMusicPlayer::HandleVolume( void )
 {
 	C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
-	snd_musicvolume = g_pCVar->FindVar("snd_musicvolume");
-	snd_mute_losefocus = g_pCVar->FindVar("snd_mute_losefocus");
 
 	float flVolumeMod = 1.0f;
 	
-	if (pLocalPlayer && !pLocalPlayer->IsAlive())
+	if( pLocalPlayer && !pLocalPlayer->IsAlive() )
 		flVolumeMod *= 0.4f;
 
-	if (!engine->IsActiveApp() && snd_mute_losefocus->GetBool())
-		flVolumeMod = 0.0f;
-	
-	if( TeamplayRoundBasedRules()->RoundHasBeenWon() )
-		flVolumeMod *= ( TeamplayRoundBasedRules()->m_flStartedWinState + TeamplayRoundBasedRules()->GetBonusRoundTime() - gpGlobals->curtime ) / ( TeamplayRoundBasedRules()->GetBonusRoundTime() * of_winscreenratio.GetFloat() );
-		
-	if( pChannel )
-		pChannel->setVolume(m_flVolume * snd_musicvolume->GetFloat() * flVolumeMod);
+	if( iSoundIndex != -1 )
+	{
+		FMODManager()->SetSoundVolume( m_flVolume * flVolumeMod, szLoopingSong, iSoundIndex );
+	}
+
 }
 
 void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
@@ -140,45 +140,6 @@ void C_TFMusicPlayer::OnDataChanged(DataUpdateType_t updateType)
 	{
 		if ( bParsed )
 			return;
-		
-		char szScriptName[MAX_PATH];
-		Q_strncpy( szScriptName, szLoopingSong, sizeof( szScriptName ) );
-		
-		KeyValues *pSound = GetSoundscript( szScriptName );
-		
-		if ( pSound )
-		{
-			Q_strncpy( m_Songdata[1].name, pSound->GetString( "Name", "Unknown" ) , sizeof( m_Songdata[1].name ) );
-			Q_strncpy( m_Songdata[1].artist, pSound->GetString( "Artist", "Unknown" ) , sizeof( m_Songdata[1].artist ) );
-			Q_strncpy( m_Songdata[1].path, pSound->GetString( "wave" ) , sizeof( m_Songdata[1].path ) );
-			m_Songdata[1].volume = pSound->GetFloat( "volume", 0.9f );
-
-			if ( !Q_strncmp( m_Songdata[1].path, "#", 1 ) )
-			{
-				memmove(&m_Songdata[1].path,&m_Songdata[1].path[1], strlen(m_Songdata[1].path)); // Use memmove for overlapping buffers.
-			}
-			DevMsg("Intro is %s\nOutro is %s\n", pSound->GetString( "intro" ), pSound->GetString( "outro" ));
-			KeyValues *pSoundIntro = GetSoundscript( pSound->GetString( "intro" ) );
-			if( pSoundIntro )
-			{
-				Q_strncpy( m_Songdata[0].path, pSoundIntro->GetString( "wave" ) , sizeof( m_Songdata[0].path ) );
-				if ( !Q_strncmp( m_Songdata[0].path, "#", 1 ) )
-				{
-					memmove(&m_Songdata[0].path,&m_Songdata[0].path[1], strlen(m_Songdata[0].path));
-				}
-				DevMsg("Intro wav is %s\n", m_Songdata[0].path);
-			}
-			KeyValues *pSoundOutro = GetSoundscript( pSound->GetString( "outro" ) );
-			if( pSoundOutro )
-			{
-				Q_strncpy( m_Songdata[2].path, pSoundOutro->GetString( "wave" ) , sizeof( m_Songdata[2].path ) );
-				if ( !Q_strncmp( m_Songdata[2].path, "#", 1 ) )
-				{
-					memmove(&m_Songdata[2].path,&m_Songdata[2].path[1], strlen(m_Songdata[2].path));
-				}
-				DevMsg("Outro wav is %s\n", m_Songdata[2].path);
-			}
-		}
 
 		bParsed = true;			
 	}

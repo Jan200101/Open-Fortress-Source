@@ -141,6 +141,8 @@ ConVar of_forcezombieclass	( "of_forcezombieclass", "0", FCVAR_REPLICATED | FCVA
 
 ConVar of_disable_drop_weapons("of_disable_drop_weapons", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable dropping weapons on death."  );
 
+ConVar of_allow_third_person( "of_allow_third_person", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Allow clients to go into third person." );
+
 #ifdef GAME_DLL
 // TF overrides the default value of the convars below.
 ConVar mp_waitingforplayers_time( "mp_waitingforplayers_time", "30", FCVAR_GAMEDLL, "Length in seconds to wait for players." );
@@ -2234,6 +2236,16 @@ void CTFGameRules::PrecacheGameMode()
 					if( Q_stricmp(pCosmetic->GetString( "Model" ), "BLANK") )
 						CBaseEntity::PrecacheModel( pCosmetic->GetString( "Model" ) );
 					
+					KeyValues *pStyles = pCosmetic->FindKey("Styles");
+					if( pStyles )
+					{
+						FOR_EACH_SUBKEY( pStyles, kvStyle )
+						{
+							if( Q_stricmp(kvStyle->GetString( "Model" ), "BLANK") )
+								CBaseEntity::PrecacheModel( kvStyle->GetString( "Model" ) );
+						}
+					}
+					
 					if ( !Q_stricmp(pCosmetic->GetString("region"), "gloves") || !Q_stricmp(pCosmetic->GetString("region"), "suit") )
 						if( Q_stricmp(pCosmetic->GetString( "viewmodel" ), "BLANK") )
 							CBaseEntity::PrecacheModel( pCosmetic->GetString( "viewmodel" ) );					
@@ -3167,7 +3179,6 @@ void CTFGameRules::InitTeams( void )
 	// clear the player class data
 	ResetFilePlayerClassInfoDatabase();
 }
-
 
 ConVar tf_fixedup_damage_radius ( "tf_fixedup_damage_radius", "1", FCVAR_CHEAT );
 //-----------------------------------------------------------------------------
@@ -4305,7 +4316,7 @@ CBaseEntity *CTFGameRules::GetPlayerSpawnSpot( CBasePlayer *pPlayer )
 	if ( pSpawnSpot )
 	{
 		// drop down to ground
-		Vector GroundPos = DropToGround( pPlayer, pSpawnSpot->GetAbsOrigin(), VEC_HULL_MIN, VEC_HULL_MAX );
+		Vector GroundPos = DropToGround( pPlayer, pSpawnSpot->GetAbsOrigin() + Vector(0,0,1), VEC_HULL_MIN, VEC_HULL_MAX );
 
 		// Move the player to the place it said.
 		pPlayer->SetLocalOrigin( GroundPos + Vector(0,0,1) );
@@ -4430,7 +4441,8 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 		return true;
 
 	trace_t trace;
-	UTIL_TraceHull( pSpot->GetAbsOrigin(), pSpot->GetAbsOrigin(), mins, maxs, MASK_PLAYERSOLID, pPlayer, COLLISION_GROUP_PLAYER_MOVEMENT, &trace );
+	UTIL_TraceHull(pSpot->GetAbsOrigin(), pSpot->GetAbsOrigin(), mins, maxs, MASK_PLAYERSOLID, NULL, bIgnorePlayers ? COLLISION_GROUP_DEBRIS : COLLISION_GROUP_PLAYER_MOVEMENT, &trace);
+	// COLLISION_GROUP_PLAYER_MOVEMENT includes other players and Objects, so just use collision group player if we're ignoring players
 	return ( trace.fraction == 1 && trace.allsolid != 1 && (trace.startsolid != 1) );
 }
 
@@ -4920,7 +4932,6 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					( TFTeamMgr()->GetTeam(TF_TEAM_BLUE)->GetScore() >= ( (float)iFragLimit * 0.8 ) ) ) 
 					&& !TFGameRules()->IsInWaitingForPlayers() )
 				{
-					DevMsg( "VoteController: Team fraglimit is 80%%, begin nextlevel voting... \n" );
 					m_bStartedVote = true;
 					//engine->ServerCommand( "callvote nextlevel" );
 					char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -4951,7 +4962,6 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 					// one of our players is at 80% of the fragcount, start voting for next map
 					if ( of_votenearend.GetBool() && !m_bStartedVote && ( pTFPlayerScorer->FragCount() >= ( (float)iFragLimit * 0.8 ) ) && !IsInWaitingForPlayers() )
 					{
-						DevMsg( "VoteController: Player fraglimit is 80%%, begin nextlevel voting... \n" );
 						m_bStartedVote = true;
 						//engine->ServerCommand( "callvote nextlevel" );
 						char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -4972,7 +4982,6 @@ void CTFGameRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &in
 
 		if ( of_votenearend.GetBool() && !m_bStartedVote && ( pTFPlayerScorer->GGLevel() >= ( (float)m_iMaxLevel * 0.8 ) ) && !TFGameRules()->IsInWaitingForPlayers() )
 		{
-			DevMsg( "VoteController: GGLevel is 80%%, begin nextlevel voting... \n" );
 			m_bStartedVote = true;
 			//engine->ServerCommand( "callvote nextlevel" );
 			char szEmptyDetails[MAX_VOTE_DETAILS_LENGTH];
@@ -5487,6 +5496,8 @@ void CTFGameRules::SendWinPanelInfo( void )
 			CTFPlayer *pTFPlayer = ToTFPlayer( UTIL_PlayerByIndex( iPlayerIndex ) );
 			if ( !pTFPlayer || !pTFPlayer->IsConnected() )
 				continue;
+			
+			pTFPlayer->m_Shared.SetTopThree( false );
 
 			// filter out spectators and, if not stalemate, all players not on winning team
 			int iPlayerTeam = pTFPlayer->GetTeamNumber();
@@ -5528,7 +5539,14 @@ void CTFGameRules::SendWinPanelInfo( void )
 			Q_snprintf( szPlayerIndexVal, ARRAYSIZE( szPlayerIndexVal ), "player_%d", i+ 1 );
 			Q_snprintf( szPlayerScoreVal, ARRAYSIZE( szPlayerScoreVal ), "player_%d_points", i+ 1 );
 			winEvent->SetInt( szPlayerIndexVal, vecPlayerScore[i].iPlayerIndex );
-			winEvent->SetInt( szPlayerScoreVal, vecPlayerScore[i].iRoundScore );				
+			winEvent->SetInt( szPlayerScoreVal, vecPlayerScore[i].iRoundScore );
+
+			CTFPlayer *pPlayer = ToTFPlayer( UTIL_PlayerByIndex( vecPlayerScore[i].iPlayerIndex ) );
+			if( pPlayer )
+			{
+				pPlayer->m_Shared.SetTopThree( true );
+				pPlayer->m_Shared.AddCond(TF_COND_CRITBOOSTED);
+			}
 		}
 
 		if ( !bRoundComplete && ( TEAM_UNASSIGNED != m_iWinningTeam ) )
@@ -5574,13 +5592,13 @@ void CTFGameRules::FillOutTeamplayRoundWinEvent( IGameEvent *event )
 	switch( event->GetInt( "team" ) )
 	{
 	case TF_TEAM_RED:
-		iLosingTeam = TF_TEAM_BLUE + TF_TEAM_MERCENARY;
+		iLosingTeam = TF_TEAM_BLUE;
 		break;
 	case TF_TEAM_BLUE:
-		iLosingTeam = TF_TEAM_RED + TF_TEAM_MERCENARY;
+		iLosingTeam = TF_TEAM_RED;
 		break;
 	case TF_TEAM_MERCENARY:
-		iLosingTeam = TF_TEAM_RED + TF_TEAM_BLUE;
+		iLosingTeam = TF_TEAM_MERCENARY;
 	break;
 	case TEAM_UNASSIGNED:
 	default:
@@ -7121,6 +7139,13 @@ bool CTFGameRules::IsConnectedUserInfoChangeAllowed( CBasePlayer *pPlayer )
 		return true;
 
 	return false;
+}
+
+bool CTFGameRules::AllowThirdPersonCamera()
+{ 
+	ConVar *sv_cheats = cvar->FindVar("sv_cheats");
+
+	return of_allow_third_person.GetBool() || sv_cheats->GetBool(); 
 }
 
 #ifdef CLIENT_DLL

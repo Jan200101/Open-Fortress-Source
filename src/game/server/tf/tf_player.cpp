@@ -859,6 +859,9 @@ void CTFPlayer::Precache()
 	PrecacheParticleSystem( "electrocuted_gibbed_red" );
 	PrecacheParticleSystem( "electrocuted_gibbed_blue" );
 	PrecacheParticleSystem( "electrocuted_gibbed_dm" );
+	PrecacheParticleSystem( "electrocutedplayer_red" );
+	PrecacheParticleSystem( "electrocutedplayer_blue" );
+	PrecacheParticleSystem( "electrocutedplayer_dm" );
 
 	// should hopefully stop stuttering
 	PrecacheParticleSystem( "ExplosionCore_wall" );
@@ -1344,10 +1347,10 @@ void CTFPlayer::UpdateCosmetics()
 			kvDesiredCosmetics->deleteThis();
 		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 
-		char szDesired[64] = { '\0' };
+		char szDesired[128] = { '\0' };
 
-	// Drop a pack with their leftover ammo
-	// This is terrible but it works for now
+		// Drop a pack with their leftover ammo
+		// This is terrible but it works for now
 		if( !IsFakeClient() || bIsTempBot )
 			Q_strncpy(szDesired,engine->GetClientConVarValue( entindex(), g_aLoadoutConvarNames[ GetDesiredPlayerClassIndex() ] ), sizeof(szDesired));
 		else
@@ -1368,24 +1371,122 @@ void CTFPlayer::UpdateCosmetics()
 		CCommand args;
 		args.Tokenize(szDesired);
 		
+		bool bArmCosmetic = false;
+		bool bGloveCosmetic = false;
+		
 		for( int i = 0; i < args.ArgC(); i++ )
 		{
 			KeyValues *pCosmetic = GetCosmetic( (int)( atof( args[i] ) ) );
 			if( !pCosmetic )
 				continue;
 			
+			float flCosmetic = atof( args[i] );
+			// This is real hacky but more often than not the float is missing 1 for some reason
+			// So just add that back, it gets rounded down anyways so we dont need to worry about it
+			flCosmetic += 0.001;
+
+			flCosmetic = flCosmetic - (int)flCosmetic;
+			
+			flCosmetic *= 100;
+			
+			int iStyle = (int)flCosmetic;
+			
 			const char *szRegion = pCosmetic->GetString( "region", "none" );
 			kvDesiredCosmetics->SetString( szRegion, args[i] );
 
-			if ( !Q_stricmp( szRegion, "gloves" ) )
-				m_chzVMCosmeticGloves = pCosmetic->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/gloves/default.mdl" );
-			else if ( !Q_stricmp(szRegion, "suit") )
-				m_chzVMCosmeticSleeves = pCosmetic->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );			
+			KeyValues *pInfo = new KeyValues("CosmeticInfo");
+			pCosmetic->CopySubkeys(pInfo);
 
+			KeyValues *pStyles = pCosmetic->FindKey("styles");
+			if( pStyles )
+			{
+				KeyValues *pStyle = pStyles->FindKey(UTIL_VarArgs("%i", iStyle));
+				if( pStyle )
+				{
+					pStyle->CopySubkeys(pInfo);
+					pInfo->RecursiveMergeKeyValues(pCosmetic);
+				}
+			}
+
+			if ( !Q_stricmp( szRegion, "gloves" ) )
+			{
+				m_chzVMCosmeticGloves = pInfo->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/gloves/default.mdl" );
+				if ( GetViewModel( TF_VIEWMODEL_ARMS ) )
+				{
+					bGloveCosmetic = true;
+					if ( m_chzVMCosmeticGloves )
+						GetViewModel( TF_VIEWMODEL_ARMS )->SetModel( m_chzVMCosmeticGloves );
+
+					int iVisibleTeam = 0;
+					int iTeamCount = 1;
+					if( pInfo->GetBool( "team_skins", true ) )
+					{
+						iTeamCount = 3;
+						iVisibleTeam = GetTeamNumber();
+						
+
+						iVisibleTeam = iVisibleTeam - 2;
+					}
+					if( pInfo->GetBool( "uses_brightskins" ) )
+					{
+						iTeamCount++;
+						if( V_atoi( engine->GetClientConVarValue(entindex(), "of_tennisball") ) == 1 )
+							iVisibleTeam = iTeamCount - 1;
+					}
+					
+					GetViewModel( TF_VIEWMODEL_ARMS )->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+
+					int iSkin = iTeamCount * pInfo->GetInt("skin_offset");
+					
+					GetViewModel( TF_VIEWMODEL_ARMS )->m_nSkin += iSkin;
+				}
+			}
+			else if ( !Q_stricmp(szRegion, "suit") )
+			{
+				m_chzVMCosmeticSleeves = pInfo->GetString( "viewmodel", "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );			
+				if ( GetViewModel( TF_VIEWMODEL_COSMETICS ) )
+				{
+					bArmCosmetic = true;
+					if ( m_chzVMCosmeticSleeves )
+						GetViewModel( TF_VIEWMODEL_COSMETICS )->SetModel( m_chzVMCosmeticSleeves );
+					
+					int iVisibleTeam = 0;
+					int iTeamCount = 1;
+					if( pInfo->GetBool( "team_skins", true ) )
+					{
+						iTeamCount = 3;
+						iVisibleTeam = GetTeamNumber();
+						
+
+						iVisibleTeam = iVisibleTeam - 2;
+					}
+					if( pInfo->GetBool( "uses_brightskins" ) )
+					{
+						iTeamCount++;
+						if( V_atoi( engine->GetClientConVarValue(entindex(), "of_tennisball") ) == 1 )
+							iVisibleTeam = iTeamCount - 1;
+					}
+					
+					GetViewModel( TF_VIEWMODEL_COSMETICS )->m_nSkin = iVisibleTeam < 0 ? 0 : iVisibleTeam;
+
+					int iSkin = iTeamCount * pInfo->GetInt("skin_offset");
+					
+					GetViewModel( TF_VIEWMODEL_COSMETICS )->m_nSkin += iSkin;
+				}
+			}
+			
+			pInfo->deleteThis();
 			// undone: causes too much stuttering, its now done in tf_gamerules precache instead
 			//const char *pModel = pCosmetic->GetString( "Model" , "models/error.mdl" );
 			//PrecacheModel( pModel );
 		}
+		
+		
+		if( !bArmCosmetic && GetViewModel( TF_VIEWMODEL_COSMETICS ) )
+			GetViewModel( TF_VIEWMODEL_COSMETICS )->SetModel( "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );
+
+		if( !bGloveCosmetic && GetViewModel( TF_VIEWMODEL_ARMS ) )
+			GetViewModel( TF_VIEWMODEL_ARMS )->SetModel( "models/weapons/c_models/cosmetics/merc/gloves/default.mdl" );
 
 		KeyValues *pHat = kvDesiredCosmetics->GetFirstValue();
 		for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
@@ -1397,29 +1498,6 @@ void CTFPlayer::UpdateCosmetics()
 		if( kvDesiredCosmetics )
 			kvDesiredCosmetics->deleteThis();
 		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
-	}
-
-	if ( !GetPlayerClass()->GetModifiers() && GetPlayerClass()->GetClass() == TF_CLASS_MERCENARY )
-	{
-		if ( GetViewModel( TF_VIEWMODEL_ARMS ) )
-		{
-			if ( m_chzVMCosmeticGloves )
-				GetViewModel( TF_VIEWMODEL_ARMS )->SetModel( m_chzVMCosmeticGloves );
-			else
-				GetViewModel( TF_VIEWMODEL_ARMS )->SetModel( "models/weapons/c_models/cosmetics/merc/gloves/default.mdl" );
-
-			GetViewModel( TF_VIEWMODEL_ARMS )->m_nSkin = GetTeamNumber() - 2;
-		}
-
-		if ( GetViewModel( TF_VIEWMODEL_COSMETICS ) )
-		{
-			if ( m_chzVMCosmeticSleeves )
-				GetViewModel( TF_VIEWMODEL_COSMETICS )->SetModel( m_chzVMCosmeticSleeves );
-			else
-				GetViewModel( TF_VIEWMODEL_COSMETICS )->SetModel( "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );
-			
-			GetViewModel( TF_VIEWMODEL_COSMETICS )->m_nSkin = GetTeamNumber() - 2;
-		}
 	}
 	
 	GetTFPlayerResource()->UpdatePlayerCosmetics( this );
@@ -2526,6 +2604,8 @@ CBaseEntity* CTFPlayer::EntSelectSpawnPoint()
 			// zombies (in infection) also use DM spawning algorithms
 			if ( ( TFGameRules()->IsDMGamemode() && !TFGameRules()->IsTeamplay() ) || m_Shared.IsZombie() )
 			{
+				// Find the first spawn point
+				pSpot = gEntList.FindEntityByClassname( NULL, pSpawnPointName );
 				bFind = SelectDMSpawnSpots( pSpawnPointName, pSpot );
 			}
 			else
@@ -2715,8 +2795,6 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 	CBaseEntity *pFurthest = NULL;
 
 	CUtlVector<CBaseEntity*> hSpawnPoints;
-	
-	pSpot = gEntList.FindEntityByClassname( pSpot, pEntClassName );
 
 	// Check the distance from all other players
 
@@ -2772,42 +2850,39 @@ bool CTFPlayer::SelectDMSpawnSpots( const char *pEntClassName, CBaseEntity* &pSp
 	else
 		pFurthest = pFirstSpot;
 
-	if ( pFurthest )
+	pSpot = pFurthest;
+
+	if ( pSpot )
 	{
-		pSpot = pFurthest;
+		// zombies don't telefrag
 
-		if ( pSpot )
+		// Why not? - Kay
+		if ( !m_Shared.IsZombie() )
 		{
-			// zombies don't telefrag
+			// telefragging
+			CBaseEntity *pList[ 32 ];
+			Vector mins = pSpot->GetAbsOrigin() + VEC_HULL_MIN;
+			Vector maxs = pSpot->GetAbsOrigin() + VEC_HULL_MAX;
+			int targets = UTIL_EntitiesInBox( pList, 32, mins, maxs, FL_CLIENT );
 
-			// Why not? - Kay
-			if ( !m_Shared.IsZombie() )
+			for ( int i = 0; i < targets; i++ )
 			{
-				// telefragging
-				CBaseEntity *pList[ 32 ];
-				Vector mins = pSpot->GetAbsOrigin() + VEC_HULL_MIN;
-				Vector maxs = pSpot->GetAbsOrigin() + VEC_HULL_MAX;
-				int targets = UTIL_EntitiesInBox( pList, 32, mins, maxs, FL_CLIENT );
-
-				for ( int i = 0; i < targets; i++ )
+				// don't telefrag ourselves
+				CBaseEntity *ent = pList[ i ];
+				if ( ent != this && ( ent->GetTeamNumber() != GetTeamNumber() || ent->GetTeamNumber() == TF_TEAM_MERCENARY ) )
 				{
-					// don't telefrag ourselves
-					CBaseEntity *ent = pList[ i ];
-					if ( ent != this && ( ent->GetTeamNumber() != GetTeamNumber() || ent->GetTeamNumber() == TF_TEAM_MERCENARY ) )
-					{
-						ent->m_iHealth = 0;
-						// special damage type to bypass uber or spawn protection in DM
-						CTakeDamageInfo info(pSpot, this, 0, DMG_PREVENT_PHYSICS_FORCE | (DMG_BLAST | DMG_ALWAYSGIB), TF_DMG_CUSTOM_TELEFRAG);
-						ent->Event_Killed(info);
-						if( ent->IsPlayer() )
-							ToBasePlayer(ent)->Event_Dying(info);
-					}
-				}	
-			}
-
-			// Found a valid spawn point.
-			return true;
+					ent->m_iHealth = 0;
+					// special damage type to bypass uber or spawn protection in DM
+					CTakeDamageInfo info(pSpot, this, 0, DMG_PREVENT_PHYSICS_FORCE | (DMG_BLAST | DMG_ALWAYSGIB), TF_DMG_CUSTOM_TELEFRAG);
+					ent->Event_Killed(info);
+					if( ent->IsPlayer() )
+						ToBasePlayer(ent)->Event_Dying(info);
+				}
+			}	
 		}
+
+		// Found a valid spawn point.
+		return true;
 	}
 
 	return false;
@@ -3628,6 +3703,21 @@ void CTFPlayer::HandleCommand_JoinClass( const char *pClassName, bool bForced )
 		if ( GetPlayerClass()->GetClassIndex() != iDesiredClass )
 			GetPlayerClass()->Init( iDesiredClass, iModifiers );
 	}	
+}
+
+void CTFPlayer::PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper)
+{
+	// Prevent player moving when taunting
+	if( m_Shared.InCond( TF_COND_TAUNTING ) )
+	{
+		ucmd->forwardmove = 0.0f;
+		ucmd->sidemove = 0.0f;
+		ucmd->upmove = 0.0f;
+		ucmd->buttons = 0;
+		ucmd->weaponselect = 0;
+	}
+	
+	BaseClass::PlayerRunCommand( ucmd, moveHelper );
 }
 
 //-----------------------------------------------------------------------------

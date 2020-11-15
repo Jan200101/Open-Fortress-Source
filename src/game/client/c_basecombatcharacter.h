@@ -133,6 +133,9 @@ private:
 
 	CHandle<C_BaseCombatWeapon>		m_hMyWeapons[MAX_WEAPONS];
 	CHandle< C_BaseCombatWeapon > m_hActiveWeapon;
+#ifdef OF_CLIENT_DLL
+	CHandle< C_BaseCombatWeapon > m_hOldActiveWeapon;
+#endif
 	CNetworkVar( unsigned int, m_iWeaponCount );
 	
 #ifndef OF_CLIENT_DLL

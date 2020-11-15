@@ -185,6 +185,8 @@ public:
 	void				ForceChangeTeam( int iTeamNum );
 	virtual void		ChangeTeam( int iTeamNum, bool bNoKill = false );
 
+	virtual void		PlayerRunCommand(CUserCmd *ucmd, IMoveHelper *moveHelper);
+
 	// mp_fadetoblack
 	void				HandleFadeToBlack( void );
 

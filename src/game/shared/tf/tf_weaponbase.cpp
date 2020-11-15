@@ -268,6 +268,7 @@ DEFINE_FIELD(m_flWindTick, FIELD_TIME),
 DEFINE_FIELD(m_iShotsDue, FIELD_INTEGER),
 DEFINE_FIELD(m_bSwapFire, FIELD_BOOLEAN),
 DEFINE_FIELD(m_flDamageBuildup, FIELD_TIME),
+DEFINE_THINKFUNC( HideThink ),
 DEFINE_FUNCTION(FallThink)
 END_DATADESC()
 
@@ -1768,6 +1769,13 @@ void CTFWeaponBase::ItemBusyFrame(void)
 		return;
 	}
 
+	if( pOwner->m_Shared.IsLoser() )
+		Lower();
+	
+	// If we're lowered, we're not allowed to fire
+	if (m_bLowered)
+		return;
+
 	bool bDidSkill = false;
 
 	if ((pOwner->m_nButtons & IN_ATTACK2) && m_bInReload == false && m_bInAttack2 == false)
@@ -1865,6 +1873,10 @@ void CTFWeaponBase::ItemPostFrame(void)
 	CTFPlayer *pOwner = ToTFPlayer( GetOwner() );
 	if ( !pOwner )
 		return;
+	
+	// If we're lowered, we're not allowed to fire
+	if (m_bLowered)
+		return;
 
 	if (m_bWindingUp && gpGlobals->curtime >= m_flWindTick)
 		PrimaryAttack();
@@ -1879,13 +1891,6 @@ void CTFWeaponBase::ItemPostFrame(void)
 	{
 		m_bInAttack2 = false;
 	}
-
-	// If we're lowered, we're not allowed to fire
-	if (m_bLowered)
-		return;
-
-	if (pOwner->m_Shared.IsLoser())
-		Lower();
 
 #ifdef GAME_DLL
 	float flTimeToDeplete = 1.0f / m_pWeaponInfo->m_flConsecutiveDamageLostPerSecond;
@@ -2155,16 +2160,28 @@ bool CTFWeaponBase::Lower(void)
 {
 	AbortReload();
 
-	// If we don't have the anim, just hide for now
+	/* If we don't have the anim, just hide for now
+		No weapon has this so just nodraw
 	if (SelectWeightedSequence(ACT_VM_IDLE_LOWERED) == ACTIVITY_NOT_AVAILABLE)
 	{
 		AddEffects(EF_NODRAW);
 	}
-
+	*/
+	SetWeaponVisible(false);
+	SetThink(NULL);
 	m_bLowered = true;
 	SendWeaponAnim(ACT_VM_IDLE_LOWERED);
 	return true;
 }
+
+#ifdef GAME_DLL
+void CTFWeaponBase::HideThink(void)
+{
+	BaseClass::HideThink();
+	m_flNextPrimaryAttack = gpGlobals->curtime + 1.0f;
+	m_flNextSecondaryAttack = gpGlobals->curtime + 1.0f;
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Show/hide weapon and corresponding view model if any
@@ -2172,6 +2189,8 @@ bool CTFWeaponBase::Lower(void)
 //-----------------------------------------------------------------------------
 void CTFWeaponBase::SetWeaponVisible(bool visible)
 {
+	visible &= !m_bLowered;
+
 	if (visible)
 	{
 		RemoveEffects(EF_NODRAW);
@@ -2659,8 +2678,8 @@ void CTFWeaponBase::OnDataChanged(DataUpdateType_t type)
 	//Our owner is alive
 	if (pOwner && pOwner->IsAlive() == true)
 	{
-		//And he is NOT taunting
-		if (pOwner->m_Shared.InCond(TF_COND_TAUNTING) == false)
+		//And he is NOT taunting NOR in the looser state
+		if( !pOwner->m_Shared.InCond(TF_COND_TAUNTING) && !pOwner->m_Shared.IsLoser() )
 		{
 			//Then why the hell am I NODRAW?
 			if (pOwner->GetActiveWeapon() == this && IsEffectActive(EF_NODRAW))
