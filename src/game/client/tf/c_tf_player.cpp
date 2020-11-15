@@ -3426,7 +3426,7 @@ void C_TFPlayer::OnAddTeleported( void )
 			pEffect = "player_recent_teleport_red";
 			break;
 		case TF_TEAM_MERCENARY:
-			pEffect = "player_recent_teleport_mercenary";
+			pEffect = "player_recent_teleport_dm";
 			break;
 		default:
 			break;

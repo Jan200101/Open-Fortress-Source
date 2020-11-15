@@ -14,6 +14,7 @@
 	#include "tf_player.h"
 #endif
 
+extern ConVar of_haste_fire_multiplier;
 //=============================================================================
 //
 // Weapon Crowbar tables.
@@ -253,10 +254,21 @@ void CTFLeadPipe::PrimaryAttack()
 
 			if (m_bReady)
 			{
-				m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
+				if (pPlayer->m_Shared.InCond(TF_COND_HASTE))
+				{
+					m_flChargedDamage = min(((m_flChargedDamage + (1.0f - of_haste_fire_multiplier.GetFloat()) * 2) + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
 
-				float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
-				DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
+					float m_flChargedDamageMath = ((m_flChargedDamage + (1.0f - of_haste_fire_multiplier.GetFloat()) * 2) + gpGlobals->frametime * GetDamage());
+					DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
+
+				}
+				else
+				{
+					m_flChargedDamage = min((m_flChargedDamage + gpGlobals->frametime * GetDamage()), GetDamage() * 3);
+
+					float m_flChargedDamageMath = (m_flChargedDamage + gpGlobals->frametime * GetDamage());
+					DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
+				}
 			}
 
 			break;
@@ -296,8 +308,6 @@ void CTFLeadPipe::ItemPostFrame()
 	{
 		if (m_flNextPrimaryAttack <= gpGlobals->curtime)
 		{ 
-			DevMsg("You let go of the Pipe Wrench\n");
-
 			Swing(pOwner);
 
 			m_bReady = false;

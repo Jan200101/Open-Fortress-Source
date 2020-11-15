@@ -306,7 +306,9 @@ bool CHudWeaponWheel::ShouldDraw( void )
 
 	return CHudElement::ShouldDraw();
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CHudWeaponWheel::WeaponSelected( int id, int bucket, bool bCloseAfterwards )
 {
 	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
@@ -365,7 +367,9 @@ void CHudWeaponWheel::WeaponSelected( int id, int bucket, bool bCloseAfterwards 
 	if ( bCloseAfterwards )
 		bWheelActive = false;
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 void CHudWeaponWheel::CheckMousePos()
 {
 	::input->ActivateMouse();
@@ -450,9 +454,16 @@ void CHudWeaponWheel::CheckMousePos()
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
 // DO NOT CALL THIS EVERY FRAME.
 void CHudWeaponWheel::RefreshEquippedWeapons( void )
 {
+	C_TFPlayer *pPlayer = C_TFPlayer::GetLocalTFPlayer();
+	if (!pPlayer)
+		return;
+
 	if ( GetHudWeaponSelection() )
 	{
 		for ( int slot = 0; slot < numberOfSegments; slot++ )
@@ -465,7 +476,16 @@ void CHudWeaponWheel::RefreshEquippedWeapons( void )
 				weaponInSlot = GetHudWeaponSelection()->GetWeaponInSlot( slot, bucketSlot );
 				if ( weaponInSlot )
 				{
-					segments[slot].imageIcon[bucketSlot] = weaponInSlot->GetSpriteActive();
+					segments[slot].imageIcon[bucketSlot] = weaponInSlot->GetSpriteIconRed();
+
+					if (pPlayer->GetTeamNumber() == TF_TEAM_BLUE)
+					{
+						segments[slot].imageIcon[bucketSlot] = weaponInSlot->GetSpriteIconBlue();
+					}
+					else if (pPlayer->GetTeamNumber() == TF_TEAM_MERCENARY)
+					{
+						segments[slot].imageIcon[bucketSlot] = weaponInSlot->GetSpriteIconCustom();
+					}
 					segments[slot].bHasIcon = true;
 
 					if ( isFirstBucket )

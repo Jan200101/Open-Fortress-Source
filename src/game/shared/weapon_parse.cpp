@@ -416,8 +416,9 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	iAmmo2Type = 0;
 	m_bMeleeWeapon = false;
 	iSpriteCount = 0;
-	iconActive = 0;
-	iconInactive = 0;
+	iconRed = 0;
+	iconBlue = 0;
+	iconCustom = 0;
 	iconAmmo = 0;
 	iconAmmo2 = 0;
 	iconCrosshair = 0;

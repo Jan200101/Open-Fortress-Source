@@ -389,7 +389,7 @@ void CHudHistoryResource::Paint( void )
 						clr[3] = MIN( scale, 255 );
 					}
 
-					itemIcon = pWeapon->GetSpriteInactive();
+					itemIcon = pWeapon->GetSpriteIconRed();
 					bHalfHeight = false;
 				}
 				break;

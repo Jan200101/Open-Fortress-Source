@@ -102,8 +102,9 @@ void WeaponsResource::LoadWeaponSprites( WEAPON_FILE_INFO_HANDLE hWeaponFileInfo
 
 	pWeaponInfo->bLoadedHudElements = true;
 
-	pWeaponInfo->iconActive = NULL;
-	pWeaponInfo->iconInactive = NULL;
+	pWeaponInfo->iconRed = NULL;
+	pWeaponInfo->iconBlue = NULL;
+	pWeaponInfo->iconCustom = NULL;
 	pWeaponInfo->iconAmmo = NULL;
 	pWeaponInfo->iconAmmo2 = NULL;
 	pWeaponInfo->iconCrosshair = NULL;
@@ -149,8 +150,9 @@ void WeaponsResource::LoadWeaponSprites( WEAPON_FILE_INFO_HANDLE hWeaponFileInfo
 	if ( !tempList.Count() )
 	{
 		// no sprite description file for weapon, use default small blocks
-		pWeaponInfo->iconActive = gHUD.GetIcon( "selection" );
-		pWeaponInfo->iconInactive = gHUD.GetIcon( "selection" );
+		pWeaponInfo->iconRed =	gHUD.GetIcon( "selection" );
+		pWeaponInfo->iconBlue = gHUD.GetIcon( "selection" );
+		pWeaponInfo->iconCustom = gHUD.GetIcon( "selection" );
 		pWeaponInfo->iconAmmo = gHUD.GetIcon( "bucket1" );
 		return;
 	}
@@ -194,21 +196,31 @@ void WeaponsResource::LoadWeaponSprites( WEAPON_FILE_INFO_HANDLE hWeaponFileInfo
 		p = FindHudTextureInDict( tempList, "weapon" );
 		if ( p )
 		{
-			pWeaponInfo->iconInactive = gHUD.AddUnsearchableHudIconToList( *p );
-			if ( pWeaponInfo->iconInactive )
+			pWeaponInfo->iconRed = gHUD.AddUnsearchableHudIconToList( *p );
+			if ( pWeaponInfo->iconRed )
 			{
-				pWeaponInfo->iconInactive->Precache();
-				pHudHR->SetHistoryGap( pWeaponInfo->iconInactive->Height() );
+				pWeaponInfo->iconRed->Precache();
+				pHudHR->SetHistoryGap( pWeaponInfo->iconRed->Height() );
 			}
 		}
 
 		p = FindHudTextureInDict( tempList, "weapon_s" );
 		if ( p )
 		{
-			pWeaponInfo->iconActive = gHUD.AddUnsearchableHudIconToList( *p );
-			if ( pWeaponInfo->iconActive )
+			pWeaponInfo->iconBlue = gHUD.AddUnsearchableHudIconToList( *p );
+			if ( pWeaponInfo->iconBlue )
 			{
-				pWeaponInfo->iconActive->Precache();
+				pWeaponInfo->iconBlue->Precache();
+			}
+		}
+
+		p = FindHudTextureInDict(tempList, "weapon_t");
+		if (p)
+		{
+			pWeaponInfo->iconCustom = gHUD.AddUnsearchableHudIconToList(*p);
+			if (pWeaponInfo->iconCustom)
+			{
+				pWeaponInfo->iconCustom->Precache();
 			}
 		}
 
