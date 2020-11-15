@@ -105,6 +105,7 @@ void C_BaseCombatCharacter::OnDataChanged( DataUpdateType_t updateType )
 #ifdef OF_CLIENT_DLL
 	if (m_hActiveWeapon != m_hOldActiveWeapon)
 	{
+		m_hOldActiveWeapon = m_hActiveWeapon;
 		if( GetLocalPlayerIndex() == entindex() )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent("weapon_switched");
