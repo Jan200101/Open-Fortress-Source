@@ -109,7 +109,7 @@ void C_BaseCombatCharacter::OnDataChanged( DataUpdateType_t updateType )
 		if( GetLocalPlayerIndex() == entindex() )
 		{
 			IGameEvent *event = gameeventmanager->CreateEvent("weapon_switched");
-			if (event)
+			if( event && m_hActiveWeapon )
 			{
 				event->SetInt("weapon", m_hActiveWeapon->entindex());
 				gameeventmanager->FireEventClientSide(event);
