@@ -150,6 +150,8 @@ public:
 	bool	m_bAirblastOnSwing;
 	bool	m_bAppearOnBack;
 	
+	bool	m_b150Headshot;
+
 	float	m_flDespawnTime;
 	
 	int		m_iContinuousFireDamageIncrease;

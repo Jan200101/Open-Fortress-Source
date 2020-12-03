@@ -979,13 +979,16 @@ void CTFHudDeathNotice::OnGameEvent( IGameEvent *event, int iDeathNoticeMsg )
 		case TF_DMG_CUSTOM_BACKSTAB:
 			Q_strncpy( msg.szIcon, "d_backstab", ARRAYSIZE( msg.szIcon ) );
 			break;
+		case TF_DMG_CUSTOM_RAILGUN_HEADSHOT:
 		case TF_DMG_CUSTOM_HEADSHOT:
 			Q_strncpy( msg.szIcon, "d_headshot", ARRAYSIZE( msg.szIcon ) );
 			break;
 		case TF_DMG_CUSTOM_BURNING:
 			// special-case if custom kill is burning; if the attacker is dead we can't get weapon information, so force flamethrower as weapon
 			Q_strncpy( msg.szIcon, "d_flamethrower", ARRAYSIZE( msg.szIcon ) );
-			msg.wzInfoText[0] = 0;
+			break;
+		case TF_DMG_CUSTOM_POISON:
+			Q_strncpy(msg.szIcon, "d_poison", ARRAYSIZE(msg.szIcon));
 			break;
 		case TF_DMG_CUSTOM_SUICIDE:
 			{

@@ -95,6 +95,7 @@ protected:
  
  				switch( iCustomDamage )
  				{
+				case TF_DMG_CUSTOM_RAILGUN_HEADSHOT:
  				case TF_DMG_CUSTOM_HEADSHOT:
  					pszCustom = "headshot";
  					break;

@@ -4524,9 +4524,18 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 				if ( bCritical )
 				{
-					info_modified.AddDamageType( DMG_CRITICAL );
-					if( info_modified.GetDamageCustom() != TF_DMG_CUSTOM_CRIT_POWERUP || TF_DAMAGE_CRIT_MULTIPLIER >= of_crit_multiplier.GetFloat() )
-						info_modified.SetDamageCustom( TF_DMG_CUSTOM_HEADSHOT );
+					if (!pWpn->GetTFWpnData().m_b150Headshot)
+					{
+						info_modified.AddDamageType(DMG_CRITICAL);
+						if (info_modified.GetDamageCustom() != TF_DMG_CUSTOM_CRIT_POWERUP || TF_DAMAGE_CRIT_MULTIPLIER >= of_crit_multiplier.GetFloat())
+							info_modified.SetDamageCustom(TF_DMG_CUSTOM_HEADSHOT);
+					}
+					else if (pWpn->GetTFWpnData().m_b150Headshot)
+					{
+
+						if (info_modified.GetDamageCustom() != TF_DMG_CUSTOM_CRIT_POWERUP || TF_DAMAGE_CRIT_MULTIPLIER >= of_crit_multiplier.GetFloat())
+							info_modified.SetDamageCustom(TF_DMG_CUSTOM_RAILGUN_HEADSHOT);
+					}
 
 					// play the critical shot sound to the shooter	
 					if ( pWpn )
@@ -4570,7 +4579,7 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 	//DevMsg( 1, "CURRENT DAMAGE IS %.2f \n", info_modified.GetDamage() );
 
-	if ( info_modified.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT || info_modified.GetDamageType() & DMG_CRITICAL )
+	if (info_modified.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT || info_modified.GetDamageType() & DMG_CRITICAL || info_modified.GetDamageCustom() == TF_DMG_CUSTOM_RAILGUN_HEADSHOT)
 	{
 		switch ( ptr->hitgroup )
 		{
@@ -5068,6 +5077,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			{
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT, "damagecritical:1" );
 			}
+
 		}
 		else
 		{
@@ -5141,11 +5151,33 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 			if ( !(bitsDamage & DMG_BURN ) )
 				SpeakConceptIfAllowed( MP_CONCEPT_HURT );
 		}
-		
-		if (bitsCustomDamage == TF_DMG_CUSTOM_LEGSHOT)
-			flDamage = info.GetDamage() * 0.5f;
 
 		info.SetDamage( flDamage );
+	}
+
+	if (bitsCustomDamage == TF_DMG_CUSTOM_LEGSHOT)
+		info.SetDamage(info.GetDamage() * 0.5);
+
+	if (bitsCustomDamage == TF_DMG_CUSTOM_RAILGUN_HEADSHOT)
+	{
+		info.SetDamage(info.GetDamage() * 1.875);
+
+		if (bIsPlayer && !m_Shared.InCond(TF_COND_DISGUISED))
+		{
+			CEffectData	data;
+			data.m_nHitBox = GetParticleSystemIndex("crit_text");
+			data.m_vOrigin = WorldSpaceCenter() + Vector(0, 0, 32);
+			data.m_vAngles = vec3_angle;
+			data.m_nEntIndex = 0;
+
+			CSingleUserRecipientFilter filter((CBasePlayer*)pAttacker);
+			te->DispatchEffect(filter, 0.0, data.m_vOrigin, "ParticleEffect", data);
+
+			EmitSound_t params;
+			params.m_flSoundTime = 0;
+			params.m_pSoundName = "TFPlayer.CritHit";
+			EmitSound(filter, pAttacker->entindex(), params);
+		}
 	}
 
 	if ( info.GetDamageCustom() == TF_DMG_CUSTOM_MINIGUN && TFGameRules()->IsInfGamemode() )
@@ -5640,7 +5672,7 @@ bool CTFPlayer::ShouldGib(const CTakeDamageInfo &info)
 	CTFWeaponBase *pWeapon =(CTFWeaponBase *)( info.GetWeapon() );
 	if( pWeapon && pWeapon->GetTFWpnData().m_bGibOnOverkill && info.GetDamage() > GetMaxHealth() )
 		return true;
-	if( pWeapon && pWeapon->GetTFWpnData().m_bGibOnHeadshot && info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT )
+	if (pWeapon && pWeapon->GetTFWpnData().m_bGibOnHeadshot && ((info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT) || (info.GetDamageCustom() == TF_DMG_CUSTOM_RAILGUN_HEADSHOT)))
 		return true;
 
 	if ( ( info.GetDamageType() & DMG_BLAST )
@@ -5682,7 +5714,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			pszCustomDeath = "customdeath:sentrygun";
 		}
-		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT )
+		else if (info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT || info.GetDamageCustom() == TF_DMG_CUSTOM_RAILGUN_HEADSHOT)
 		{				
 			pszCustomDeath = "customdeath:headshot";
 		}
@@ -5746,7 +5778,7 @@ void CTFPlayer::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo &
 		{
 			pszCustomDeath = "customdeath:sentrygun";
 		}
-		else if ( info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT )
+		else if (info.GetDamageCustom() == TF_DMG_CUSTOM_HEADSHOT || info.GetDamageCustom() == TF_DMG_CUSTOM_RAILGUN_HEADSHOT)
 		{				
 			pszCustomDeath = "customdeath:headshot";
 		}
@@ -6125,7 +6157,7 @@ void CTFPlayer::Event_Killed( const CTakeDamageInfo &info )
 	if ( iDamageType & DMG_DISSOLVE )
 		bDissolve = true;
 	
-	if ( TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom() && pInflictor )
+	if (((TF_DMG_CUSTOM_HEADSHOT == info.GetDamageCustom()) || (TF_DMG_CUSTOM_RAILGUN_HEADSHOT == info.GetDamageCustom())) && pInflictor )
 		CTF_GameStats.Event_Headshot( pPlayerAttacker );
 	else if ( TF_DMG_CUSTOM_BACKSTAB == info.GetDamageCustom() && pInflictor )
 		CTF_GameStats.Event_Backstab( pPlayerAttacker );

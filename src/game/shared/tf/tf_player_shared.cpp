@@ -2861,6 +2861,7 @@ int CTFPlayerShared::PlayDeathAnimation( CBaseAnimating *pAnim, int iDamageCusto
 		// play a custom death animation depending on the type of damage it was
 		switch ( iDamageCustom )
 		{
+		case TF_DMG_CUSTOM_RAILGUN_HEADSHOT:
 		case TF_DMG_CUSTOM_HEADSHOT:
 		case TF_DMG_CUSTOM_DECAPITATION_BOSS:
 			pszSequence = "primary_death_headshot";

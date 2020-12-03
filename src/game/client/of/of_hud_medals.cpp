@@ -197,7 +197,7 @@ void CTFHudMedals::FireGameEvent(IGameEvent *event)
 				AddMedal(PERFORATED);
 
 			//Headshot
-			if (event->GetInt("customkill") == TF_DMG_CUSTOM_HEADSHOT || event->GetInt("customkill") == TF_DMG_CUSTOM_HEADSHOT_DECAPITATION)
+			if (event->GetInt("customkill") == TF_DMG_CUSTOM_HEADSHOT || event->GetInt("customkill") == TF_DMG_CUSTOM_HEADSHOT_DECAPITATION || event->GetInt("customkill") == TF_DMG_CUSTOM_RAILGUN_HEADSHOT)
 				AddMedal(HEADSHOT);
 
 			//Excellent
