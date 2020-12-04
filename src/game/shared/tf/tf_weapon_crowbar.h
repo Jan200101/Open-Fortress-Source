@@ -109,7 +109,6 @@ public:
 
 	CTFPoisonShank();
 	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_POISONSHANK; }
-	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
 
 private:
 
@@ -132,7 +131,6 @@ public:
 	virtual float		GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage);
 	virtual bool		Holster(CBaseCombatWeapon *pSwitchingTo);
 	virtual void		ItemPostFrame(void);
-	virtual bool		CalcIsAttackCriticalHelper(void);
 
 private:
 

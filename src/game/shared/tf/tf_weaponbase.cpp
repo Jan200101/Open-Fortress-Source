@@ -1252,6 +1252,14 @@ void CTFWeaponBase::CalcIsAttackCritical(void)
 		// call the weapon-specific helper method
 		m_bCurrentAttackIsCrit = CalcIsAttackCriticalHelper();
 	}
+
+	if (m_pWeaponInfo->m_bCritMidAir)
+	{
+		if (pPlayer->m_Shared.InCond(TF_COND_BLASTJUMP))
+		{
+			m_bCurrentAttackIsCrit = true;
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

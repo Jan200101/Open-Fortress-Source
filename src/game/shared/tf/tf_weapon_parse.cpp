@@ -369,6 +369,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bCanIgnite = pKeyValuesData->GetBool("CanIgnite", 0);
 	m_flAfterBurnEffectDuration = pKeyValuesData->GetFloat("AfterBurnEffectDuration", 0.0f);
 
+	m_bCritMidAir = pKeyValuesData->GetBool("CritMidAir", 0);
+
 	m_flWeaponSpeedReduction = pKeyValuesData->GetFloat("WeaponSpeedReduction", 0.0f);
 	m_flSpeedReduction = pKeyValuesData->GetFloat("SpeedReduction", 0.0f);
 

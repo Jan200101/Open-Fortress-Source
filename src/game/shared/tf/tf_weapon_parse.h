@@ -176,6 +176,8 @@ public:
 	float 	m_flAfterBurnEffectDuration;
 	bool	m_bCanIgnite;
 
+	bool	m_bCritMidAir;
+
 	// Mag
 	char    m_szMagModel[128];
 	int     m_iMagBodygroup;                // Body group of the magazine refer to the mag uneject function

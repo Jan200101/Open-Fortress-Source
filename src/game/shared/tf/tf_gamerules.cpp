@@ -3386,21 +3386,29 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 				CTFPlayer *pTFAttacker = ToTFPlayer(info.GetAttacker());
 
-				DevMsg("AAAAA THIS SUCKS");
-				if (GetEnemyTeam(pEntity) == pInflictor->GetTeamNumber())
+				if (pWeapon != NULL)
 				{
-					if (pWeapon->GetTFWpnData().m_bCanTranq)
+
+					if (GetEnemyTeam(pEntity) == pInflictor->GetTeamNumber())
 					{
-						pTFOther->m_Shared.Tranq(pTFAttacker, pWeapon->GetTFWpnData().m_flTranqEffectDuration, pWeapon->GetTFWpnData().m_flSpeedReduction, pWeapon->GetTFWpnData().m_flWeaponSpeedReduction);
+						if (pWeapon->GetTFWpnData().m_bCanTranq)
+						{
+							pTFOther->m_Shared.Tranq(pTFAttacker, pWeapon->GetTFWpnData().m_flTranqEffectDuration, pWeapon->GetTFWpnData().m_flSpeedReduction, pWeapon->GetTFWpnData().m_flWeaponSpeedReduction);
+						}
+						if (pWeapon->GetTFWpnData().m_bCanPoison)
+						{
+							pTFOther->m_Shared.Poison(pTFAttacker, pWeapon->GetTFWpnData().m_flPoisonEffectDuration);
+						}
+						if (pWeapon->GetTFWpnData().m_bCanIgnite)
+						{
+							pTFOther->m_Shared.Burn(pTFAttacker, pWeapon->GetTFWpnData().m_flAfterBurnEffectDuration);
+						}
 					}
-					if (pWeapon->GetTFWpnData().m_bCanPoison)
-					{
-						pTFOther->m_Shared.Poison(pTFAttacker, pWeapon->GetTFWpnData().m_flPoisonEffectDuration);
-					}
-					if (pWeapon->GetTFWpnData().m_bCanIgnite)
-					{
-						pTFOther->m_Shared.Burn(pTFAttacker, pWeapon->GetTFWpnData().m_flAfterBurnEffectDuration);
-					}
+				}
+
+				if (pTFOther == pTFAttacker)
+				{
+					pTFOther->m_Shared.AddCond(TF_COND_BLASTJUMP);
 				}
 			}
 		}
