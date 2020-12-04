@@ -349,30 +349,50 @@ void CTFBaseProjectile::ProjectileTouch( CBaseEntity *pOther )
 
 	// determine the inflictor, which is the weapon which fired this projectile
 	CBaseEntity *pInflictor = NULL;
-	CBaseEntity *pOwner = GetOwnerEntity();
-	if ( pOwner )
-	{
-		CTFPlayer *pTFPlayer = ToTFPlayer( pOwner );
-		if ( pTFPlayer )
-		{
-			pInflictor = pTFPlayer->Weapon_OwnsThisID( GetWeaponID() );
-		}
-	}
+	CTFPlayer *pTFOwner = ToTFPlayer(GetOwnerEntity());
+
+	if (pTFOwner)
+		pInflictor = pTFOwner->Weapon_OwnsThisID(GetWeaponID());
 
 	CTakeDamageInfo info;
-	info.SetAttacker( GetOwnerEntity() );		// the player who operated the thing that emitted nails
-	info.SetInflictor( pInflictor );	// the weapon that emitted this projectile
-	info.SetDamage( GetDamage() );
-	info.SetDamageForce( GetDamageForce() );
-	info.SetDamagePosition( GetAbsOrigin() );
-	info.SetDamageType( GetDamageType() );
+	info.SetAttacker(pTFOwner);					// the player who operated the thing that emitted nails
+	info.SetInflictor(pInflictor);				// the weapon that emitted this projectile
+	info.SetDamage(GetDamage());
+	info.SetDamageForce(GetDamageForce());
+	info.SetDamagePosition(GetAbsOrigin());
+	info.SetDamageType(GetDamageType());
 	info.SetDamageCustom(GetCustomDamageType());
 
 	Vector dir;
-	AngleVectors( GetAbsAngles(), &dir );
+	AngleVectors(GetAbsAngles(), &dir);
 
-	pOther->DispatchTraceAttack( info, dir, pNewTrace );
+	pOther->DispatchTraceAttack(info, dir, pNewTrace);
 	ApplyMultiDamage();
+
+	CTFPlayer *pTFOther = ToTFPlayer(pOther);
+
+	if (pTFOther)
+	{
+		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot(pInflictor->GetClassname());
+		Assert(hWpnInfo != GetInvalidWeaponInfoHandle());
+		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo *>(GetFileWeaponInfoFromHandle(hWpnInfo));
+
+		if (GetEnemyTeam(pTFOther) == pTFOwner->GetTeamNumber())
+		{
+			if (pWeaponInfo->m_bCanTranq)
+			{
+				pTFOther->m_Shared.Tranq(pTFOwner, pWeaponInfo->m_flTranqEffectDuration, pWeaponInfo->m_flSpeedReduction, pWeaponInfo->m_flWeaponSpeedReduction);
+			}
+			if (pWeaponInfo->m_bCanPoison)
+			{
+				pTFOther->m_Shared.Poison(pTFOwner, pWeaponInfo->m_flPoisonEffectDuration);
+			}
+			if (pWeaponInfo->m_bCanIgnite)
+			{
+				pTFOther->m_Shared.Burn(pTFOwner, pWeaponInfo->m_flAfterBurnEffectDuration);
+			}
+		}
+	}
 
 	UTIL_Remove( this );
 }
