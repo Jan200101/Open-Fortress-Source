@@ -5135,7 +5135,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 					// SSG gets 100% bonus of other weapons at short range
 					case TF_WEAPON_SUPERSHOTGUN:
-						flRandomDamage *= 2.f;
+						flRandomDamage *= (pWeapon->GetTFWpnData().m_flSuperShotgunRampUp);
 						break;
 
 					default:
