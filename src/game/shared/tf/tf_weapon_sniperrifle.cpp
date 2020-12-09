@@ -531,7 +531,7 @@ void CTFSniperRifle::ZoomOut( void )
 void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 {
 	// Check the ammo.  We don't use clip ammo, check the primary ammo type.
-	if ( ReserveAmmo() <= 0 && Clip1() <= 0 )
+	if ((ReserveAmmo() <= 0 && !UsesClipsForAmmo1()) || (Clip1() <= 0 && UsesClipsForAmmo1()))
 	{
 		HandleFireOnEmpty();
 		return;
@@ -548,7 +548,13 @@ void CTFSniperRifle::Fire( CTFPlayer *pPlayer )
 		// If we have more bullets, zoom out, play the bolt animation and zoom back in
 		if( ReserveAmmo() > 0 )
 		{
-			SetRezoom( true, 0.5f );	// zoom out in 0.5 seconds, then rezoom
+			if (UsesClipsForAmmo1())
+			{
+				if (Clip1() <= 0)
+					SetRezoom(true, 0.25f);
+			}
+			else
+				SetRezoom( true, 0.5f );	// zoom out in 0.5 seconds, then rezoom
 		}
 		else	
 		{
