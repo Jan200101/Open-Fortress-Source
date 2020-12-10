@@ -78,6 +78,7 @@ void Button::Init()
 	SetMouseClickEnabled( MOUSE_LEFT, true );
 	SetButtonActivationType(ACTIVATE_ONPRESSEDANDRELEASED);
 	_image = NULL;
+	allowTextureDraw = false;
 
 	// labels have this off by default, but we need it on
 	SetPaintBackgroundEnabled( true );
@@ -386,7 +387,7 @@ void Button::Paint(void)
 		DrawFocusBorder(x0, y0, x1, y1);
 	}
 
-	if (texture)
+	if (texture && allowTextureDraw == true)
 	{
 		surface()->DrawSetTexture(texture);
 		surface()->DrawSetColor(255, 255, 255, 255);
@@ -875,6 +876,11 @@ void Button::ApplySettings( KeyValues *inResourceData )
 	if (*image)
 	{
 		SetTexture(image);
+		allowTextureDraw = true;
+	}
+	else
+	{
+		allowTextureDraw = false;
 	}
 
 	const char *cmd = inResourceData->GetString("command", "");

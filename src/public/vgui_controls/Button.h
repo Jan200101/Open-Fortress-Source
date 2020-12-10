@@ -238,6 +238,7 @@ protected:
 	bool m_bStaySelectedOnClick;
 
 	int texture;
+	bool allowTextureDraw;
 };
 
 } // namespace vgui
