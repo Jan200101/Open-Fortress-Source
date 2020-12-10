@@ -33,9 +33,14 @@ public:
 	Button(Panel *parent, const char *panelName, const char *text, Panel *pActionSignalTarget=NULL, const char *pCmd=NULL);
 	Button(Panel *parent, const char *panelName, const wchar_t *text, Panel *pActionSignalTarget=NULL, const char *pCmd=NULL);
 	virtual ~Button();
+	char *_image;
 private:
 	void Init();
 public:
+
+	//virtual void SetTexture(IImage *image);
+	virtual void SetTexture(const char *image);
+
 	// Set armed state.
 	virtual void SetArmed(bool state);
 	// Check armed state
@@ -231,6 +236,8 @@ protected:
 	unsigned short	   m_sArmedSoundName, m_sDepressedSoundName, m_sReleasedSoundName;
 	bool m_bSelectionStateSaved;
 	bool m_bStaySelectedOnClick;
+
+	int texture;
 };
 
 } // namespace vgui

@@ -77,6 +77,7 @@ void Button::Init()
 	SetTextInset(6, 0);
 	SetMouseClickEnabled( MOUSE_LEFT, true );
 	SetButtonActivationType(ACTIVATE_ONPRESSEDANDRELEASED);
+	_image = NULL;
 
 	// labels have this off by default, but we need it on
 	SetPaintBackgroundEnabled( true );
@@ -104,6 +105,35 @@ Button::~Button()
 	{
 		_actionMessage->deleteThis();
 	}
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+//void Button::SetTexture(IImage *image)
+//{
+//	m_pImage = image;
+//	Repaint();
+//}
+
+//-----------------------------------------------------------------------------
+// Purpose: sets an image by file name
+//-----------------------------------------------------------------------------
+void Button::SetTexture(const char *image)
+{
+	if (image && _image && V_stricmp(image, _image) == 0)
+		return;
+
+	int len = Q_strlen(image) + 1;
+	delete[] _image;
+	_image = new char[len];
+	Q_strncpy(_image, image, len);
+	//InvalidateLayout(false, true); // force applyschemesettings to run
+
+	DevMsg(image);
+	DevMsg("\n");
+	texture = surface()->CreateNewTextureID();
+	surface()->DrawSetTextureFile(texture, _image, true, false); //"hud/menu/menu_power"
 }
 
 //-----------------------------------------------------------------------------
@@ -346,13 +376,21 @@ void Button::Paint(void)
 
 	BaseClass::Paint();
 
+	int x0, y0, x1, y1;
+	int wide, tall;
+	GetSize(wide, tall);
+	x0 = 3, y0 = 3, x1 = wide - 4, y1 = tall - 2;
+
 	if ( HasFocus() && IsEnabled() && IsDrawingFocusBox() )
 	{
-		int x0, y0, x1, y1;
-		int wide, tall;
-		GetSize(wide, tall);
-		x0 = 3, y0 = 3, x1 = wide - 4 , y1 = tall - 2;
 		DrawFocusBorder(x0, y0, x1, y1);
+	}
+
+	if (texture)
+	{
+		surface()->DrawSetTexture(texture);
+		surface()->DrawSetColor(255, 255, 255, 255);
+		surface()->DrawTexturedRect(x0, y0, x1, y1);
 	}
 }
 
@@ -832,6 +870,12 @@ void Button::GetSettings( KeyValues *outResourceData )
 void Button::ApplySettings( KeyValues *inResourceData )
 {
 	BaseClass::ApplySettings(inResourceData);
+
+	const char *image = inResourceData->GetString("image", "");
+	if (*image)
+	{
+		SetTexture(image);
+	}
 
 	const char *cmd = inResourceData->GetString("command", "");
 	if (*cmd)
