@@ -212,7 +212,7 @@ void CTFHudKills::ShowBottom( bool bShow )
 {
 	if( bBottomVisible == bShow )
 		return;
-
+	/*
 	ImagePanel *m_pBGImage = dynamic_cast<ImagePanel *>( FindChildByName("MainBG") );
 	if( m_pBGImage )
 	{
@@ -225,7 +225,7 @@ void CTFHudKills::ShowBottom( bool bShow )
 	GetPos( x, y );
 	int iPosAdj = bShow ? 50 : -50;
 	SetPos( x, y - iPosAdj );
-	
+	*/
 	CExLabel *m_pPlayerPlayingToLabel = dynamic_cast<CExLabel *>( FindChildByName( "PlayingToLabel" ) );
 	if( m_pPlayerPlayingToLabel )
 	{
