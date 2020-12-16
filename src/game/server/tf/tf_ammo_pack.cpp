@@ -120,9 +120,9 @@ void CTFAmmoPack::PackTouch( CBaseEntity *pOther )
 
 //	int i;
 	bool bSuccess = false;
-	if ( pTFPlayer->RestockAmmo( 0.5f ) )
+	if ( pTFPlayer->RestockAmmo( 0.2f ) )
 			bSuccess = true;
-	if ( pTFPlayer->RestockCloak( 0.5f ) )
+	if ( pTFPlayer->RestockCloak( 0.2f ) )
 			bSuccess = true;
 		
 	int iAmmoTaken = 0;

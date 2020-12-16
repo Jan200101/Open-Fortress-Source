@@ -6441,7 +6441,7 @@ void CTFPlayer::DropAmmoPack( void )
 		return;
 
 	// We need to find bones on the world model, so switch the weapon to it.
-	const char *pszWorldModel = "models/items/ammopack_medium.mdl";
+	const char *pszWorldModel = "models/items/ammopack_small.mdl";
 	PrecacheModel( pszWorldModel );
 	pWeapon->SetModel( pszWorldModel );
 
