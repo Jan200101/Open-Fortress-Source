@@ -73,10 +73,6 @@ public:
 	virtual const char *GetProjectileModelName(void);
 	virtual float GetGravity(void);
 
-#ifdef GAME_DLL
-	virtual void ProjectileTouch(CBaseEntity *pOther);
-#endif
-
 	static float	GetInitialVelocity(void) { return 1000.0; }
 };
 

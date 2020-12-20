@@ -166,39 +166,6 @@ acttable_t *CTFCrowbar::ActivityList( int &iActivityCount )
 //-----------------------------------------------------------------------------
 // Purpose: Do backstab damage
 //-----------------------------------------------------------------------------
-float CTFPoisonShank::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
-{
-	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
-
-	CTFPlayer *pPlayer = ToTFPlayer(GetPlayerOwner());
-
-	#ifdef GAME_DLL
-	CTFPlayer *pTFPlayer = ToTFPlayer(pTarget);
-	#endif 
-
-	if ( pTarget->IsPlayer() )
-	{
-		if (GetEnemyTeam(pTarget) == pPlayer->GetTeamNumber())
-		{
-		#ifdef GAME_DLL
-			CTakeDamageInfo info;
-
-			info.SetAttacker(GetOwnerEntity());		// the player who operated the thing that emitted nails
-			info.SetInflictor(pPlayer);				// the weapon that emitted this projectile
-
-			pTFPlayer->m_Shared.Poison(pPlayer, GetTFWpnData().m_flEffectDuration);
-
-			iCustomDamage = TF_DMG_CUSTOM_POISON;
-		#endif
-		}
-	}
-
-	return flBaseDamage;
-
-}
-//-----------------------------------------------------------------------------
-// Purpose: Do backstab damage
-//-----------------------------------------------------------------------------
 float CTFLeadPipe::GetMeleeDamage(CBaseEntity *pTarget, int &iCustomDamage)
 {
 	float flBaseDamage = BaseClass::GetMeleeDamage(pTarget, iCustomDamage);
@@ -322,25 +289,6 @@ void CTFLeadPipe::ItemPostFrame()
 	}
 
 	BaseClass::ItemPostFrame();
-}
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-bool CTFLeadPipe::CalcIsAttackCriticalHelper(void)
-{
-	CTFPlayer *pOwner = ToTFPlayer(GetOwner());
-
-	if (!pOwner)
-		return false;
-	
-	if (pOwner->m_Shared.InCond(TF_COND_BLASTJUMP))
-	{
-		return true;
-	}
-	else
-	{
-		return false;
-	}
 }
 //-----------------------------------------------------------------------------
 // Purpose:

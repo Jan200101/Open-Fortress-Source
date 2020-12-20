@@ -95,7 +95,7 @@ public:
 	bool	m_bSwapFireAnims;
 	bool	m_bNoFixedSpread;
 	
-	bool	m_bCanHeadshot;
+	int		m_iCanHeadshot;
 	int		m_iReloadTypeOverride;
 	
 	// Grenade.
@@ -161,15 +161,23 @@ public:
 	int		m_iHitsForConsecutiveDamage;
 	float	m_flConsecutiveDamageLostPerSecond;
 
-	// Effect Duration Amount
-	float 	m_flEffectDuration;
+	float 	m_flTranqEffectDuration;
+	bool	m_bCanTranq;
+
 	//Movement Speed Reduction, Higher = Less Reduction
 	float 	m_flSpeedReduction;
-	//Weapon Speed Reduction
 	float 	m_flWeaponSpeedReduction;
 
-	//Weapon Self Knockbac
-	float m_flSelfKnockBack;
+	float 	m_flPiecedLegsEffectDuration;
+	bool	m_bCanPieceLegs;
+
+	float 	m_flPoisonEffectDuration;
+	bool	m_bCanPoison;
+
+	float 	m_flAfterBurnEffectDuration;
+	bool	m_bCanIgnite;
+
+	bool	m_bCritMidAir;
 
 	// Mag
 	char    m_szMagModel[128];

@@ -3364,6 +3364,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 			adjustedInfo.SetDamageForce(dir * flForce);
 			adjustedInfo.SetDamagePosition(vecSrc);
+
 		}
 
 		if ( tr.fraction != 1.0 && pEntity == tr.m_pEnt )
@@ -3376,6 +3377,40 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		else
 		{
 			pEntity->TakeDamage( adjustedInfo );
+
+			if (pEntity)
+			{
+				CTFWeaponBase *pWeapon = dynamic_cast<CTFWeaponBase*>(info.GetWeapon());
+
+				CTFPlayer *pTFOther = ToTFPlayer(pEntity);
+
+				CTFPlayer *pTFAttacker = ToTFPlayer(info.GetAttacker());
+
+				if (pWeapon != NULL)
+				{
+
+					if (GetEnemyTeam(pEntity) == pInflictor->GetTeamNumber())
+					{
+						if (pWeapon->GetTFWpnData().m_bCanTranq)
+						{
+							pTFOther->m_Shared.Tranq(pTFAttacker, pWeapon->GetTFWpnData().m_flTranqEffectDuration, pWeapon->GetTFWpnData().m_flSpeedReduction, pWeapon->GetTFWpnData().m_flWeaponSpeedReduction);
+						}
+						if (pWeapon->GetTFWpnData().m_bCanPoison)
+						{
+							pTFOther->m_Shared.Poison(pTFAttacker, pWeapon->GetTFWpnData().m_flPoisonEffectDuration);
+						}
+						if (pWeapon->GetTFWpnData().m_bCanIgnite)
+						{
+							pTFOther->m_Shared.Burn(pTFAttacker, pWeapon->GetTFWpnData().m_flAfterBurnEffectDuration);
+						}
+					}
+				}
+
+				if (pTFOther == pTFAttacker)
+				{
+					pTFOther->m_Shared.AddCond(TF_COND_BLASTJUMP);
+				}
+			}
 		}
 
 		// Now hit all triggers along the way that respond to damage... 
