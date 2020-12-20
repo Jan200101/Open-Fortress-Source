@@ -355,6 +355,7 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bExplosionOnHit = ( pKeyValuesData->GetInt( "ExplosionOnHit", 0 ) != 0 );
 	m_bAirblastOnSwing = ( pKeyValuesData->GetInt( "AirblastOnSwing", 0 ) != 0 );
 	m_bAppearOnBack = ( pKeyValuesData->GetInt( "AppearOnBack", 0 ) != 0 );
+
 	m_b150Headshot = (pKeyValuesData->GetBool("RailgunNerf", 0) != 0);
 
 	m_bCanTranq = pKeyValuesData->GetBool("CanTranq", 0);
@@ -370,6 +371,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_flAfterBurnEffectDuration = pKeyValuesData->GetFloat("AfterBurnEffectDuration", 0.0f);
 
 	m_bCritMidAir = pKeyValuesData->GetBool("CritMidAir", 0);
+	m_flSuperShotgunRampUp = pKeyValuesData->GetFloat("SuperShotgunRampup", 2.0f);
+
 
 	m_flWeaponSpeedReduction = pKeyValuesData->GetFloat("WeaponSpeedReduction", 0.0f);
 	m_flSpeedReduction = pKeyValuesData->GetFloat("SpeedReduction", 0.0f);

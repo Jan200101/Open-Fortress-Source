@@ -151,6 +151,7 @@ public:
 	bool	m_bAppearOnBack;
 	
 	bool	m_b150Headshot;
+	float	m_flSuperShotgunRampUp;
 
 	float	m_flDespawnTime;
 	

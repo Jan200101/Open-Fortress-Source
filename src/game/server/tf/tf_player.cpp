@@ -5154,7 +5154,7 @@ int CTFPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 					// SSG gets 100% bonus of other weapons at short range
 					case TF_WEAPON_SUPERSHOTGUN:
-						flRandomDamage *= 2.f;
+						flRandomDamage *= (pWeapon->GetTFWpnData().m_flSuperShotgunRampUp);
 						break;
 
 					default:
@@ -6460,7 +6460,7 @@ void CTFPlayer::DropAmmoPack( void )
 		return;
 
 	// We need to find bones on the world model, so switch the weapon to it.
-	const char *pszWorldModel = "models/items/ammopack_medium.mdl";
+	const char *pszWorldModel = "models/items/ammopack_small.mdl";
 	PrecacheModel( pszWorldModel );
 	pWeapon->SetModel( pszWorldModel );
 

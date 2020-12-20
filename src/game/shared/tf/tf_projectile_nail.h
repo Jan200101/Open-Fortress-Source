@@ -38,7 +38,7 @@ public:
 //-----------------------------------------------------------------------------
 class CTFProjectile_Nail : public CTFBaseProjectile
 {
-#define NAIL_SPEED 2000.0f
+#define NAIL_SPEED 1000.0f
 
 	DECLARE_CLASS(CTFProjectile_Nail, CTFBaseProjectile);
 
