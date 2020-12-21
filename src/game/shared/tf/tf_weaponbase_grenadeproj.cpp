@@ -374,6 +374,7 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 				CTFPlayer *pPlayer = ToTFPlayer( GetThrower() );
 
 				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, pWeaponInfo, GetTeamNumber() );
+				pBomb->SetLauncher(GetOriginalLauncher());
 				pBomb->SetDamage( pWeaponInfo->m_flBombletDamage );
 				pBomb->SetDetonateTimerLength( pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f ) );
 				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );

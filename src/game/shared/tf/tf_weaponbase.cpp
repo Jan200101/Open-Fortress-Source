@@ -803,7 +803,9 @@ bool CTFWeaponBase::IsGrenadeWeapon() const
 int	CTFWeaponBase::GetDamageType() const
 {
 	int iAdditional = 0;
-	if( GetTFWpnData().m_bCanHeadshot )
+	if( GetTFWpnData().m_iCanHeadshot == 1 )
+		iAdditional |= DMG_USE_HITLOCATIONS;
+	if (GetTFWpnData().m_bCanPieceLegs)
 		iAdditional |= DMG_USE_HITLOCATIONS;
 	return g_aWeaponDamageTypes[ GetWeaponID() ] | iAdditional;
 }
@@ -1249,6 +1251,14 @@ void CTFWeaponBase::CalcIsAttackCritical(void)
 	{
 		// call the weapon-specific helper method
 		m_bCurrentAttackIsCrit = CalcIsAttackCriticalHelper();
+	}
+
+	if (m_pWeaponInfo->m_bCritMidAir)
+	{
+		if (pPlayer->m_Shared.InCond(TF_COND_BLASTJUMP))
+		{
+			m_bCurrentAttackIsCrit = true;
+		}
 	}
 }
 

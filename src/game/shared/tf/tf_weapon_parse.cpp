@@ -299,7 +299,8 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bLastShotAnim = pKeyValuesData->GetBool( "LastShotAnim", 0 );
 	m_bSwapFireAnims = pKeyValuesData->GetBool( "SwapFireAnims", 0 );
 	m_bNoFixedSpread = pKeyValuesData->GetBool( "NoFixedSpread", 0 );
-	m_bCanHeadshot = pKeyValuesData->GetBool( "CanHeadshot", 0 );
+	m_iCanHeadshot = pKeyValuesData->GetInt("CanHeadshot", -1);
+
 	m_iReloadTypeOverride = pKeyValuesData->GetInt( "ReloadTypeOverride", -1 );
 	
 	m_iContinuousFireDamageIncrease = pKeyValuesData->GetInt( "ContinuousFire_DamageIncrease", 0 );
@@ -354,13 +355,27 @@ void CTFWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	m_bExplosionOnHit = ( pKeyValuesData->GetInt( "ExplosionOnHit", 0 ) != 0 );
 	m_bAirblastOnSwing = ( pKeyValuesData->GetInt( "AirblastOnSwing", 0 ) != 0 );
 	m_bAppearOnBack = ( pKeyValuesData->GetInt( "AppearOnBack", 0 ) != 0 );
-	m_b150Headshot = (pKeyValuesData->GetInt("RailgunNerf", 0) != 0);
+
+	m_b150Headshot = (pKeyValuesData->GetBool("RailgunNerf", 0) != 0);
+
+	m_bCanTranq = pKeyValuesData->GetBool("CanTranq", 0);
+	m_flTranqEffectDuration = pKeyValuesData->GetFloat("TranqEffectDuration", 0.0f);
+
+	m_bCanPieceLegs = pKeyValuesData->GetBool("CanPieceLegs", 0);
+	m_flPiecedLegsEffectDuration = pKeyValuesData->GetFloat("PiecedLegsEffectDuration", 0.0f);
+
+	m_bCanPoison = pKeyValuesData->GetBool("CanPoison", 0);
+	m_flPoisonEffectDuration = pKeyValuesData->GetFloat("PoisonEffectDuration", 0.0f);
+
+	m_bCanIgnite = pKeyValuesData->GetBool("CanIgnite", 0);
+	m_flAfterBurnEffectDuration = pKeyValuesData->GetFloat("AfterBurnEffectDuration", 0.0f);
+
+	m_bCritMidAir = pKeyValuesData->GetBool("CritMidAir", 0);
 	m_flSuperShotgunRampUp = pKeyValuesData->GetFloat("SuperShotgunRampup", 2.0f);
 
-	m_flEffectDuration = pKeyValuesData->GetFloat("EffectDuration", 0.0f);
+
 	m_flWeaponSpeedReduction = pKeyValuesData->GetFloat("WeaponSpeedReduction", 0.0f);
 	m_flSpeedReduction = pKeyValuesData->GetFloat("SpeedReduction", 0.0f);
-	m_flSelfKnockBack = pKeyValuesData->GetFloat("SelfKnockBack", 0.0f);
 
 	m_flDespawnTime	= pKeyValuesData->GetFloat( "DespawnTime", 30.0f );
 

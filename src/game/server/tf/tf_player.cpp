@@ -4515,13 +4515,16 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 		case HITGROUP_HEAD:
 			{
 				CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
-				bool bCritical = true;
 
-				if ( pWpn && !pWpn->CanFireCriticalShot( true ) )
+				bool bCritical = true;
+				
+
+				if ((pWpn && !pWpn->CanFireCriticalShot(true)) || (pWpn->GetTFWpnData().m_iCanHeadshot == 0 && of_headshots.GetBool() == 0))
 				{
 					bCritical = false;
 				}
 
+		
 				if ( bCritical )
 				{
 					if (!pWpn->GetTFWpnData().m_b150Headshot)
@@ -4551,12 +4554,11 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 		{
 			CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
 
-			if (pWpn->GetWeaponID() == TFC_WEAPON_SNIPER_RIFLE)
+			if (pWpn->GetTFWpnData().m_bCanPieceLegs)
 			{
-				//Someone needs to make it so it takes the vars from the weapon's script file
 				CTakeDamageInfo info;
 
-				m_Shared.FuckUpLegs(pAttacker, pWpn->GetTFWpnData().m_flEffectDuration, pWpn->GetTFWpnData().m_flSpeedReduction);
+				m_Shared.FuckUpLegs(pAttacker, pWpn->GetTFWpnData().m_flPiecedLegsEffectDuration, pWpn->GetTFWpnData().m_flSpeedReduction);
 				info_modified.SetDamageCustom(TF_DMG_CUSTOM_LEGSHOT);
 			}
 			break;
@@ -4566,6 +4568,23 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 		}
 	}
 
+	if (GetEnemyTeam(pAttacker) == pAttacker->GetTeamNumber())
+	{
+		CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
+
+		if (pWpn->GetTFWpnData().m_bCanTranq)
+		{
+			m_Shared.Tranq(pAttacker, pWpn->GetTFWpnData().m_flTranqEffectDuration, pWpn->GetTFWpnData().m_flSpeedReduction, pWpn->GetTFWpnData().m_flWeaponSpeedReduction);
+		}
+		if (pWpn->GetTFWpnData().m_bCanPoison)
+		{
+			m_Shared.Poison(pAttacker, pWpn->GetTFWpnData().m_flPoisonEffectDuration);
+		}
+		if (pWpn->GetTFWpnData().m_bCanIgnite)
+		{
+			m_Shared.Burn(pAttacker, pWpn->GetTFWpnData().m_flAfterBurnEffectDuration);
+		}
+	}
 	/*
 	m_HeadBodygroup = FindBodygroupByName("head");
 	m_LeftArmBodygroup = FindBodygroupByName("leftarm");
