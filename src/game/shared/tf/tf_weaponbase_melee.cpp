@@ -13,6 +13,8 @@
 	#include "tf_gamestats.h"
 	#include "ilagcompensationmanager.h"
 	#include "tf_fx.h"
+#else
+	#include "soundenvelope.h"
 #endif
 
 //=============================================================================
@@ -206,6 +208,18 @@ void CTFWeaponBaseMelee::SecondaryAttack()
 		{
 			pPlayer->m_Shared.AddCond( TF_COND_SHIELD_CHARGE );
 			bStartedCharge = true;
+			if (m_pChainsawChargeSound == NULL)
+			{
+				const char *chargesound = "Chainsaw.Charge";
+				CLocalPlayerFilter filter;
+
+				CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
+				m_pChainsawChargeSound = controller.SoundCreate(filter, entindex(), chargesound);
+
+				controller.Play(m_pChainsawChargeSound, 0.75, 100);
+
+				DevMsg("This should play the charge sound\n");
+			}
 		}
 		else
 		{
@@ -398,6 +412,8 @@ void CTFWeaponBaseMelee::ShieldChargeThink()
 			{
 				pOwner->m_Shared.RemoveCond( TF_COND_SHIELD_CHARGE );
 				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_DEMO_CHARGE );
+				m_iNumBeepsToBeep = 1;
+				m_iChargeSound = 0;
 			}
 		}
 	}
@@ -406,6 +422,12 @@ void CTFWeaponBaseMelee::ShieldChargeThink()
 		float flChargeAmount = gpGlobals->frametime / m_pWeaponInfo->m_flChargeRechargeRate;
 		float flNewLevel = min( m_flChargeMeter + flChargeAmount, 1 );
 		m_flChargeMeter = flNewLevel;
+	}
+
+	if (m_flChargeMeter == 1.0f && m_iNumBeepsToBeep > 0)
+	{
+		pOwner->EmitSound("Hud.Warning");
+		m_iNumBeepsToBeep = 0;
 	}
 }
 
