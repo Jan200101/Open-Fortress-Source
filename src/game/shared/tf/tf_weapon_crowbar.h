@@ -99,22 +99,6 @@ private:
 	CTFCUmbrella( const CTFCUmbrella & ) {}
 };
 
-class CTFPoisonShank : public CTFWeaponBaseMelee
-{
-public:
-
-	DECLARE_CLASS(CTFPoisonShank, CTFWeaponBaseMelee);
-	DECLARE_NETWORKCLASS();
-	DECLARE_PREDICTABLE();
-
-	CTFPoisonShank();
-	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_POISONSHANK; }
-
-private:
-
-	CTFPoisonShank(const CTFPoisonShank &) {}
-};
-
 class CTFLeadPipe : public CTFWeaponBaseMelee
 {
 public:

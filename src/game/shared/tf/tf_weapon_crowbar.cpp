@@ -63,17 +63,6 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tfc_weapon_umbrella, CTFCUmbrella );
 //PRECACHE_WEAPON_REGISTER( tfc_weapon_umbrella );
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFPoisonShank, DT_TFWeaponPoisonShank)
-
-BEGIN_NETWORK_TABLE(CTFPoisonShank, DT_TFWeaponPoisonShank)
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA(CTFPoisonShank)
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS(tf_weapon_poisonshank, CTFPoisonShank);
-//PRECACHE_WEAPON_REGISTER( tf_weapon_poisonshank );
-
 IMPLEMENT_NETWORKCLASS_ALIASED(TFLeadPipe, DT_TFWeaponLeadPipe)
 
 BEGIN_NETWORK_TABLE(CTFLeadPipe, DT_TFWeaponLeadPipe)
@@ -103,9 +92,6 @@ CTFCCrowbar::CTFCCrowbar()
 {
 }
 CTFCUmbrella::CTFCUmbrella()
-{
-}
-CTFPoisonShank::CTFPoisonShank()
 {
 }
 CTFLeadPipe::CTFLeadPipe()
