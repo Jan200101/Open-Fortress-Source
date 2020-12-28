@@ -10,11 +10,16 @@
 #include "vgui/ILocalize.h"
 #include "fmtstr.h"
 #include "filesystem.h"
+#include <string>
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+extern IFileSystem *filesystem;
+
 #define GAMEIU_MULTI_LOADSCREENS
+#define DEFAULT_RATIO_WIDE 1920.0 / 1080.0
+#define DEFAULT_RATIO 1024.0 / 768.0
 
 using namespace vgui;
 using namespace BaseModUI;
@@ -137,8 +142,33 @@ void LoadingProgress::FireGameEvent(IGameEvent * event)
 			{
 				pLabel->SetVisible(true);
 			}
+			// set background image
+			int width, height;
+			surface()->GetScreenSize(width, height);
+
+			float fRatio = (float)width / (float)height;
+			bool bWidescreen = (fRatio < 1.5 ? false : true);
+
+			SetMapBackgroundImage(bWidescreen, pMapName);
 		}
 	}
+}
+
+void LoadingProgress::SetMapBackgroundImage(bool bWidescreen, const char *pMapName)
+{
+	const char *MapName = pMapName;
+	const char *_formatImageA = bWidescreen ? "../console/loading/%s_widescreen" : "../console/loading/%s";
+	const char *_formatImageB = bWidescreen ? "/console/loading/%s_widescreen" : "/console/loading/%s";
+	const char *_checkFile = "materials%s.vmt";
+	char _setImage[128];
+	char _temp[128];
+	char _dirImage[128];
+
+	sprintf(_setImage, _formatImageA, MapName);
+	sprintf(_temp, _checkFile, _formatImageB);
+	sprintf(_dirImage, _temp, MapName);
+
+	if (filesystem->FileExists(_dirImage)) m_pPoster->SetImage(_setImage);
 }
 
 //=============================================================================
@@ -483,7 +513,7 @@ void LoadingProgress::SetupControlStates()
 		// set the correct background image
 		if ( m_LoadingType == LT_POSTER )
 		{
-			//m_pBGImage->SetImage( "../vgui/LoadingScreen_background" );
+			//m_pBGImage->SetImage( "console/background05" );
 		}
 		else
 		{
@@ -579,7 +609,7 @@ void LoadingProgress::SetupPoster( void )
 #endif
 
 		const char *pszPosterImage = NULL;
-		pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/background01_widescreen" : "../console/background01";
+		pszPosterImage = ( m_bFullscreenPoster && bIsWidescreen ) ? "../console/loading/noimage_widescreen" : "../console/loading/noimage";
 		
 		if( BackgroundSettings() )
 		{
