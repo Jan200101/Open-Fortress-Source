@@ -460,10 +460,10 @@ void BaseModHybridButton::PaintButtonEx()
 		}
 		else
 		{
-			int blotchWide = textWide + vgui::scheme()->GetProportionalScaledValueEx( GetScheme(), 40 );
-			int blotchX = x + textInsetX;
-			surface()->DrawFilledRectFade( blotchX, y, blotchX + 0.25f * blotchWide, y+tall, 0, 150, true );
-			surface()->DrawFilledRectFade( blotchX + 0.25f * blotchWide, y, blotchX + blotchWide, y+tall, 150, 0, true );
+			//int blotchWide = textWide + vgui::scheme()->GetProportionalScaledValueEx( GetScheme(), 40 );
+			//int blotchX = x + textInsetX;
+			//surface()->DrawFilledRectFade( blotchX, y, blotchX + 0.25f * blotchWide, y+tall, 0, 150, true );
+			//surface()->DrawFilledRectFade( blotchX + 0.25f * blotchWide, y, blotchX + blotchWide, y+tall, 150, 0, true );
 		}
 
 		// draw border lines
@@ -487,10 +487,10 @@ void BaseModHybridButton::PaintButtonEx()
 		else
 		{
 			// top and bottom border lines
-			surface()->DrawFilledRectFade( x, y, x + 0.5f * wide, y+2, 0, 255, true );
-			surface()->DrawFilledRectFade( x + 0.5f * wide, y, x + wide, y+2, 255, 0, true );
-			surface()->DrawFilledRectFade( x, y+tall-2, x + 0.5f * wide, y+tall, 0, 255, true );
-			surface()->DrawFilledRectFade( x + 0.5f * wide, y+tall-2, x + wide, y+tall, 255, 0, true );
+			//surface()->DrawFilledRectFade( x, y, x + 0.5f * wide, y+2, 0, 255, true );
+			//surface()->DrawFilledRectFade( x + 0.5f * wide, y, x + wide, y+2, 255, 0, true );
+			//surface()->DrawFilledRectFade( x, y+tall-2, x + 0.5f * wide, y+tall, 0, 255, true );
+			//surface()->DrawFilledRectFade( x + 0.5f * wide, y+tall-2, x + wide, y+tall, 255, 0, true );
 		}
 	}
 
