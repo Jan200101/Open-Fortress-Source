@@ -65,6 +65,7 @@ private:
 	void				SetupControlStates( void );
 	void				SetupPoster( void );
 	void				UpdateWorkingAnim();
+	void				SetMapBackgroundImage(bool bWidescreen, const char *pMapName);
 
 	vgui::ProgressBar	*m_pProTotalProgress;
 	vgui::ImagePanel	*m_pWorkingAnim;

@@ -131,10 +131,10 @@ void CLoadingTipPanel::PaintBackground( void )
 {
 	BaseClass::PaintBackground();
 
-	DrawSmearBackgroundFade( 
-		0, 
-		-scheme()->GetProportionalScaledValue( 20 ), 
-		GetWide(), 
-		GetTall() ); 
+	//DrawSmearBackgroundFade( 
+	//	0, 
+	//	-scheme()->GetProportionalScaledValue( 20 ), 
+	//	GetWide(), 
+	//	GetTall() ); 
 
 }
