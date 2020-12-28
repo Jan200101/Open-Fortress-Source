@@ -81,7 +81,7 @@ public:
 private:
 	CNetworkVar( float,		m_flChargeMeter );
 	int m_iNumBeepsToBeep;
-	CSoundPatch *m_pChainsawChargeSound;
+	int m_iChargeSound;
 	
 protected:
 

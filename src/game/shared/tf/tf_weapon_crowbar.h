@@ -17,7 +17,6 @@
 #define CTFUmbrella C_TFUmbrella
 #define CTFCCrowbar C_TFCCrowbar
 #define CTFCUmbrella C_TFCUmbrella
-#define CTFPoisonShank C_TFPoisonShank
 #define CTFLeadPipe C_TFLeadPipe
 #endif
 
@@ -125,5 +124,6 @@ private:
 
 	void WindUp(void);
 
+	int m_iNumBeepsToBeep;
 };
 #endif // TF_WEAPON_CROWBAR_H

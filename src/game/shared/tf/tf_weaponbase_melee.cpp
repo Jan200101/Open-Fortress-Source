@@ -204,21 +204,15 @@ void CTFWeaponBaseMelee::SecondaryAttack()
 	
 	if ( CanShieldCharge() )
 	{
-		if ( m_flChargeMeter >= 1.0f )
+		if (m_flChargeMeter >= 1.0f)
 		{
-			pPlayer->m_Shared.AddCond( TF_COND_SHIELD_CHARGE );
+			pPlayer->m_Shared.AddCond(TF_COND_SHIELD_CHARGE);
 			bStartedCharge = true;
-			if (m_pChainsawChargeSound == NULL)
+			if (m_iChargeSound == 0)
 			{
-				const char *chargesound = "Chainsaw.Charge";
-				CLocalPlayerFilter filter;
-
-				CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
-				m_pChainsawChargeSound = controller.SoundCreate(filter, entindex(), chargesound);
-
-				controller.Play(m_pChainsawChargeSound, 0.75, 100);
-
-				DevMsg("This should play the charge sound\n");
+			pPlayer->EmitSound("Chainsaw.Charge");
+			m_iChargeSound = 1;
+			DevMsg("This should play the charge sound\n");
 			}
 		}
 		else

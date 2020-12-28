@@ -255,6 +255,13 @@ void CTFChainsaw::ItemPostFrame()
 		// Time to weapon idle.
 		m_flTimeWeaponIdle = gpGlobals->curtime + 2.0;
 	}
+
+	if (pOwner->m_Shared.InCond(TF_COND_SHIELD_CHARGE))
+	{
+		//HACK HACK HACK
+		pOwner->m_nButtons = IN_ATTACK;
+		PrimaryAttack();
+	}
 	BaseClass::ItemPostFrame();
 }
 

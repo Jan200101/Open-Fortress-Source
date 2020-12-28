@@ -179,12 +179,14 @@ void CTFLeadPipe::PrimaryAttack()
 		return;
 	}
 
+#ifdef GAME_DLL
 	switch (m_iWeaponState)
 	{
 	default:
 	case AC_STATE_IDLE:
 		{
 			m_flChargedDamage = GetDamage();
+			m_iNumBeepsToBeep = 1;
 			if (m_flNextPrimaryAttack <= gpGlobals->curtime)
 			{
 				DevMsg("You start to charge up the Pipe Wrench\n");
@@ -224,9 +226,17 @@ void CTFLeadPipe::PrimaryAttack()
 				}
 			}
 
+			if ((m_flChargedDamage == (GetDamage() * 3)) && m_iNumBeepsToBeep > 0)
+			{
+				pPlayer->EmitSound("Hud.Warning");
+				m_iNumBeepsToBeep = 0;
+				DevMsg("EmitSound\n");
+			}
+
 			break;
 		}
 	}
+#endif
 }
 //-----------------------------------------------------------------------------
 // Purpose:
