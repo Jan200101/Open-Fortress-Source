@@ -179,7 +179,7 @@ void CTFLeadPipe::PrimaryAttack()
 		return;
 	}
 
-#ifdef GAME_DLL
+//#ifdef GAME_DLL
 	switch (m_iWeaponState)
 	{
 	default:
@@ -225,18 +225,24 @@ void CTFLeadPipe::PrimaryAttack()
 					DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
 				}
 			}
-
+#ifdef CLIENT_DLL
 			if ((m_flChargedDamage == (GetDamage() * 3)) && m_iNumBeepsToBeep > 0)
 			{
-				pPlayer->EmitSound("Hud.Warning");
+				C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+				if ( !pLocalPlayer )
+					return;
+
+				pLocalPlayer->EmitSound("Leadpipe.FullCharge");
+
 				m_iNumBeepsToBeep = 0;
 				DevMsg("EmitSound\n");
 			}
-
+#endif
 			break;
 		}
 	}
-#endif
+//#endif
 }
 //-----------------------------------------------------------------------------
 // Purpose:

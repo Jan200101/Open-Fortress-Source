@@ -417,12 +417,18 @@ void CTFWeaponBaseMelee::ShieldChargeThink()
 		float flNewLevel = min( m_flChargeMeter + flChargeAmount, 1 );
 		m_flChargeMeter = flNewLevel;
 	}
-
+#ifdef CLIENT_DLL
 	if (m_flChargeMeter == 1.0f && m_iNumBeepsToBeep > 0)
 	{
-		pOwner->EmitSound("Hud.Warning");
+		C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+		if (!pLocalPlayer)
+			return;
+
+		pLocalPlayer->EmitSound("ChargeFilled.Ding");
 		m_iNumBeepsToBeep = 0;
 	}
+#endif
 }
 
 void CTFWeaponBaseMelee::BurstFire( void )
