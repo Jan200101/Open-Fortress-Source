@@ -377,19 +377,22 @@ void CTFBaseProjectile::ProjectileTouch( CBaseEntity *pOther )
 		Assert(hWpnInfo != GetInvalidWeaponInfoHandle());
 		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo *>(GetFileWeaponInfoFromHandle(hWpnInfo));
 
-		if (GetEnemyTeam(pTFOther) == pTFOwner->GetTeamNumber())
+		if (pWeaponInfo != NULL)
 		{
-			if (pWeaponInfo->m_bCanTranq)
+			if (GetEnemyTeam(pTFOther) == pTFOwner->GetTeamNumber())
 			{
-				pTFOther->m_Shared.Tranq(pTFOwner, pWeaponInfo->m_flTranqEffectDuration, pWeaponInfo->m_flSpeedReduction, pWeaponInfo->m_flWeaponSpeedReduction);
-			}
-			if (pWeaponInfo->m_bCanPoison)
-			{
-				pTFOther->m_Shared.Poison(pTFOwner, pWeaponInfo->m_flPoisonEffectDuration);
-			}
-			if (pWeaponInfo->m_bCanIgnite)
-			{
-				pTFOther->m_Shared.Burn(pTFOwner, pWeaponInfo->m_flAfterBurnEffectDuration);
+				if (pWeaponInfo->m_bCanTranq)
+				{
+					pTFOther->m_Shared.Tranq(pTFOwner, pWeaponInfo->m_flTranqEffectDuration, pWeaponInfo->m_flSpeedReduction, pWeaponInfo->m_flWeaponSpeedReduction);
+				}
+				if (pWeaponInfo->m_bCanPoison)
+				{
+					pTFOther->m_Shared.Poison(pTFOwner, pWeaponInfo->m_flPoisonEffectDuration);
+				}
+				if (pWeaponInfo->m_bCanIgnite)
+				{
+					pTFOther->m_Shared.Burn(pTFOwner, pWeaponInfo->m_flAfterBurnEffectDuration);
+				}
 			}
 		}
 	}
