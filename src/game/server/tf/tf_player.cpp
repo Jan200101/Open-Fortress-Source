@@ -4567,22 +4567,25 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 			break;
 		}
 	}
+	CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
 
-	if (GetEnemyTeam(pAttacker) == pAttacker->GetTeamNumber())
+	if (pWpn != NULL)
 	{
-		CTFWeaponBase *pWpn = pAttacker->GetActiveTFWeapon();
+		if (GetEnemyTeam(pAttacker) == pAttacker->GetTeamNumber())
+		{
 
-		if (pWpn->GetTFWpnData().m_bCanTranq)
-		{
-			m_Shared.Tranq(pAttacker, pWpn->GetTFWpnData().m_flTranqEffectDuration, pWpn->GetTFWpnData().m_flSpeedReduction, pWpn->GetTFWpnData().m_flWeaponSpeedReduction);
-		}
-		if (pWpn->GetTFWpnData().m_bCanPoison)
-		{
-			m_Shared.Poison(pAttacker, pWpn->GetTFWpnData().m_flPoisonEffectDuration);
-		}
-		if (pWpn->GetTFWpnData().m_bCanIgnite)
-		{
-			m_Shared.Burn(pAttacker, pWpn->GetTFWpnData().m_flAfterBurnEffectDuration);
+			if (pWpn->GetTFWpnData().m_bCanTranq)
+			{
+				m_Shared.Tranq(pAttacker, pWpn->GetTFWpnData().m_flTranqEffectDuration, pWpn->GetTFWpnData().m_flSpeedReduction, pWpn->GetTFWpnData().m_flWeaponSpeedReduction);
+			}
+			if (pWpn->GetTFWpnData().m_bCanPoison)
+			{
+				m_Shared.Poison(pAttacker, pWpn->GetTFWpnData().m_flPoisonEffectDuration);
+			}
+			if (pWpn->GetTFWpnData().m_bCanIgnite)
+			{
+				m_Shared.Burn(pAttacker, pWpn->GetTFWpnData().m_flAfterBurnEffectDuration);
+			}
 		}
 	}
 	/*
