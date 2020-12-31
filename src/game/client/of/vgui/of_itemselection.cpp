@@ -75,12 +75,9 @@ void CTFItemSelection::ApplySettings(KeyValues *inResourceData)
 	if (inItemImage)
 		pItemImage->ApplySettings(inItemImage);
 
-	//if (inResourceData->GetInt("ItemID"))
-	//{
-	//	SetItemID(inResourceData->GetInt("ItemID"));
-	//	//debugging
-	//	DevMsg("Second Test: %i\n", inResourceData->GetInt("ItemID"));
-	//}
+	if (inResourceData->GetInt("ItemID"))
+		SetItemID(inResourceData->GetInt("ItemID"));
+		
 	m_iSoundChance = 4;
 }
 

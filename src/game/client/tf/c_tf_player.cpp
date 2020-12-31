@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2003, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2003, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -117,6 +117,7 @@ void RefreshDesiredCosmetics( int iClass )
 {
 	if( GetLoadout() )
 	{
+		DevMsg("uh\n");
 		KeyValues *pCosmetics = GetLoadout()->FindKey("Cosmetics");
 		if( pCosmetics )
 		{
@@ -128,16 +129,25 @@ void RefreshDesiredCosmetics( int iClass )
 				szCommand[0] = '\0';
 				for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 				{
+					DevMsg("pass 1\n");
 					if( szCommand[0] != '\0' )
+					{
+						DevMsg("Pass 2: %s\n",pHat->GetString());
 						Q_snprintf( szCommand, sizeof( szCommand ), "%s %s", szCommand, pHat->GetString() );
+					}
 					else
+					{
+						DevMsg("Pass 3: %s\n",pHat->GetString());
 						Q_snprintf( szCommand, sizeof( szCommand ), "%s", pHat->GetString() );
+					}
 				}
 				ConVarRef var( g_aLoadoutConvarNames[iClass] );
-				if ( var.IsValid() )
-				{
+				//if ( var.IsValid() )
+				//{
+					DevMsg("Begin pass 4\n");
+					DevMsg("Pass 4: %s\n",szCommand);
 					var.SetValue(szCommand);
-				}
+				//}
 			}
 		}
 	}
