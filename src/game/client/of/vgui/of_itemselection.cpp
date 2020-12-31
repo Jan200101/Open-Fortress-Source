@@ -77,6 +77,8 @@ void CTFItemSelection::ApplySettings(KeyValues *inResourceData)
 
 	if( inResourceData->GetInt("ItemID") )
 		SetItemID( inResourceData->GetInt("ItemID") );
+		//debugging
+		DevMsg("%i\n", inResourceData->GetInt("ItemID"));
 
 	m_iSoundChance = 4;
 }
