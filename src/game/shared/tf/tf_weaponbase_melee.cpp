@@ -13,8 +13,6 @@
 	#include "tf_gamestats.h"
 	#include "ilagcompensationmanager.h"
 	#include "tf_fx.h"
-#else
-	#include "soundenvelope.h"
 #endif
 
 //=============================================================================
