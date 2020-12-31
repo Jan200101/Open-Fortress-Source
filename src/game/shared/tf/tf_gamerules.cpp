@@ -3386,10 +3386,10 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 
 				CTFPlayer *pTFAttacker = ToTFPlayer(info.GetAttacker());
 
-				if (pWeapon != NULL)
+				if ((pWeapon != NULL) && (pTFOther != NULL))
 				{
 
-					if (GetEnemyTeam(pEntity) == pInflictor->GetTeamNumber())
+					if (GetEnemyTeam(pTFOther) == pInflictor->GetTeamNumber())
 					{
 						if (pWeapon->GetTFWpnData().m_bCanTranq)
 						{
@@ -3406,7 +3406,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 					}
 				}
 
-				if (pTFOther == pTFAttacker)
+				if ((pTFOther == pTFAttacker) && (pTFAttacker != NULL))
 				{
 					pTFOther->m_Shared.AddCond(TF_COND_BLASTJUMP);
 				}
