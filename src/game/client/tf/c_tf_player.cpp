@@ -127,27 +127,26 @@ void RefreshDesiredCosmetics( int iClass )
 				KeyValues *pHat = pClass->GetFirstValue();
 				char szCommand[128];
 				szCommand[0] = '\0';
+				char *_point = szCommand;
 				for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 				{
-					DevMsg("pass 1\n");
 					if( szCommand[0] != '\0' )
 					{
-						DevMsg("Pass 2: %s\n",pHat->GetString());
-						Q_snprintf( szCommand, sizeof( szCommand ), "%s %s", szCommand, pHat->GetString() );
+						_point += Q_snprintf( _point, sizeof( szCommand ), " %s", pHat->GetString());
+						DevMsg("szCommand: %s\n",szCommand);
 					}
 					else
 					{
-						DevMsg("Pass 3: %s\n",pHat->GetString());
+						DevMsg("Pass Else Before: %s\n",szCommand);
 						Q_snprintf( szCommand, sizeof( szCommand ), "%s", pHat->GetString() );
+						DevMsg("Pass Else After: %s\n",szCommand);
 					}
 				}
 				ConVarRef var( g_aLoadoutConvarNames[iClass] );
-				//if ( var.IsValid() )
-				//{
-					DevMsg("Begin pass 4\n");
-					DevMsg("Pass 4: %s\n",szCommand);
+				if ( var.IsValid() )
+				{
 					var.SetValue(szCommand);
-				//}
+				}
 			}
 		}
 	}
