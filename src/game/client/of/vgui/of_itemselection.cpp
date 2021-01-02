@@ -72,18 +72,20 @@ void CTFItemSelection::ApplySettings(KeyValues *inResourceData)
 	Q_strncpy(szCommand, inResourceData->GetString("command"), sizeof(szCommand));
 
 	KeyValues *inItemImage = inResourceData->FindKey("ItemImage");
-	if( inItemImage )
+	if (inItemImage)
 		pItemImage->ApplySettings(inItemImage);
 
-	if( inResourceData->GetInt("ItemID") )
-		SetItemID( inResourceData->GetInt("ItemID") );
-
+	if (inResourceData->GetInt("ItemID"))
+		SetItemID(inResourceData->GetInt("ItemID"));
+		
 	m_iSoundChance = 4;
 }
 
 void CTFItemSelection::SetItemID( int iID )
 {
 	iItemID = iID;
+	//debugging
+	//DevMsg("Third Test: %i\n", iItemID);
 	Q_strncpy(szCommand, VarArgs("loadout_equip cosmetics mercenary %d.%02d", iItemID, iSkin), sizeof(szCommand));
 
 	KeyValues *pCosmetic = GetCosmetic(iItemID);

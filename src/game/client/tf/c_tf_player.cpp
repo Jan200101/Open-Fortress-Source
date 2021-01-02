@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2003, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2003, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -126,12 +126,17 @@ void RefreshDesiredCosmetics( int iClass )
 				KeyValues *pHat = pClass->GetFirstValue();
 				char szCommand[128];
 				szCommand[0] = '\0';
+				char *_point = szCommand;
 				for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 				{
 					if( szCommand[0] != '\0' )
-						Q_snprintf( szCommand, sizeof( szCommand ), "%s %s", szCommand, pHat->GetString() );
+					{
+						_point += Q_snprintf( _point, sizeof( szCommand ), " %s", pHat->GetString());
+					}
 					else
+					{
 						Q_snprintf( szCommand, sizeof( szCommand ), "%s", pHat->GetString() );
+					}
 				}
 				ConVarRef var( g_aLoadoutConvarNames[iClass] );
 				if ( var.IsValid() )
@@ -156,12 +161,12 @@ void RefreshDesiredWeapons( int iClass )
 				KeyValues *pWeapon = pClass->GetFirstValue();
 				char szCommand[128];
 				szCommand[0] = '\0';
+				char *_point = szCommand;
 				for( pWeapon; pWeapon != NULL; pWeapon = pWeapon->GetNextValue() ) // Loop through all the keyvalues
 				{
-					if( szCommand[0] != '\0' )
-						Q_snprintf( szCommand, sizeof( szCommand ), "%s %s %d", szCommand, pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
-					else
-						Q_snprintf( szCommand, sizeof( szCommand ), "%s %d", pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+					DevMsg("Weapons Before If: %s\n",szCommand);
+					_point += Q_snprintf( _point, sizeof( szCommand ), " %s %d", pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+					DevMsg("Weapons After If: %s\n",szCommand);
 				}
 				ConVarRef var( g_aArsenalConvarNames[iClass] );
 				if ( var.IsValid() )
