@@ -117,7 +117,6 @@ void RefreshDesiredCosmetics( int iClass )
 {
 	if( GetLoadout() )
 	{
-		DevMsg("uh\n");
 		KeyValues *pCosmetics = GetLoadout()->FindKey("Cosmetics");
 		if( pCosmetics )
 		{
@@ -133,13 +132,10 @@ void RefreshDesiredCosmetics( int iClass )
 					if( szCommand[0] != '\0' )
 					{
 						_point += Q_snprintf( _point, sizeof( szCommand ), " %s", pHat->GetString());
-						DevMsg("szCommand: %s\n",szCommand);
 					}
 					else
 					{
-						DevMsg("Pass Else Before: %s\n",szCommand);
 						Q_snprintf( szCommand, sizeof( szCommand ), "%s", pHat->GetString() );
-						DevMsg("Pass Else After: %s\n",szCommand);
 					}
 				}
 				ConVarRef var( g_aLoadoutConvarNames[iClass] );
@@ -165,12 +161,20 @@ void RefreshDesiredWeapons( int iClass )
 				KeyValues *pWeapon = pClass->GetFirstValue();
 				char szCommand[128];
 				szCommand[0] = '\0';
+				char *_point = szCommand;
 				for( pWeapon; pWeapon != NULL; pWeapon = pWeapon->GetNextValue() ) // Loop through all the keyvalues
 				{
-					if( szCommand[0] != '\0' )
-						Q_snprintf( szCommand, sizeof( szCommand ), "%s %s %d", szCommand, pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
-					else
-						Q_snprintf( szCommand, sizeof( szCommand ), "%s %d", pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+					//if( szCommand[0] != '\0' )
+					//{
+						DevMsg("Weapons Before If: %s\n",szCommand);
+						_point += Q_snprintf( _point, sizeof( szCommand ), " %s %d", pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+						DevMsg("Weapons After If: %s\n",szCommand);
+					//}
+					//else
+					//{
+					//	Q_snprintf( szCommand, sizeof( szCommand ), "%s %d", pWeapon->GetName(), GetItemSchema()->GetWeaponID(pWeapon->GetString()) );
+					//	DevMsg("Weapons Else: %s\n",szCommand);
+					//}
 				}
 				ConVarRef var( g_aArsenalConvarNames[iClass] );
 				if ( var.IsValid() )
