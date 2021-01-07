@@ -84,6 +84,17 @@ LINK_ENTITY_TO_CLASS( tfc_weapon_flamethrower, CTFCFlameThrower );
 BEGIN_DATADESC( CTFCFlameThrower )
 END_DATADESC()
 
+IMPLEMENT_NETWORKCLASS_ALIASED(TFFlameThrowerPyro, DT_TFFlameThrowerPyro)
+
+BEGIN_NETWORK_TABLE(CTFFlameThrowerPyro, DT_TFFlameThrowerPyro)
+END_NETWORK_TABLE()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_flamethrower_pyro, CTFFlameThrowerPyro);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower_pyro );
+
+BEGIN_DATADESC(CTFFlameThrowerPyro)
+END_DATADESC()
+
 #ifdef CLIENT_DLL
 extern ConVar of_muzzlelight;
 #endif
