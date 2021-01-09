@@ -120,6 +120,8 @@ void CTFWeaponBaseMelee::WeaponReset( void )
 void CTFWeaponBaseMelee::Precache()
 {
 	BaseClass::Precache();
+
+	CBaseEntity::PrecacheScriptSound("Chainsaw.Charge");
 }
 
 // -----------------------------------------------------------------------------
