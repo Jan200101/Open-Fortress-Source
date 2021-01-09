@@ -16,7 +16,6 @@
 	#define CTFFlameThrower C_TFFlameThrower
 	#define CTFFlameRocket C_TFFlameRocket
 	#define CTFCFlameThrower C_TFCFlameThrower
-	#define CTFFlameThrowerPyro C_TFFlameThrowerPyro
 #else
 	#include "tf_projectile_rocket.h"
 #endif
@@ -166,14 +165,6 @@ private:
 class CTFCFlameThrower : public CTFFlameThrower
 {
 	DECLARE_CLASS( CTFCFlameThrower, CTFFlameThrower );
-public:
-	DECLARE_DATADESC();
-	DECLARE_NETWORKCLASS(); 
-};
-
-class CTFFlameThrowerPyro : public CTFFlameThrower
-{
-	DECLARE_CLASS( CTFFlameThrowerPyro, CTFFlameThrower );
 public:
 	DECLARE_DATADESC();
 	DECLARE_NETWORKCLASS(); 

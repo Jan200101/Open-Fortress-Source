@@ -82,11 +82,11 @@ void CTFDroppedWeapon::Spawn(void)
 
 	SetTouch( &CTFDroppedWeapon::PackTouch );
 	//if weapon was thrown to hurt an enemy the owner cannot ever pick it up again
-	//if ( !m_bThrown )
-	//{
-	SetNextThink( gpGlobals->curtime + 0.75f );
-	SetThink( &CTFDroppedWeapon::FlyThink );
-	//}
+	if ( !m_bThrown )
+	{
+		SetNextThink( gpGlobals->curtime + 0.75f );
+		SetThink( &CTFDroppedWeapon::FlyThink );
+	}
 
 	m_flCreationTime = gpGlobals->curtime;
 	m_flNextPickupTime = 0.f;

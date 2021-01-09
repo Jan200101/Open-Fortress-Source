@@ -80,8 +80,6 @@ public:
 
 private:
 	CNetworkVar( float,		m_flChargeMeter );
-	int m_iNumBeepsToBeep;
-	int m_iChargeSound;
 	
 protected:
 

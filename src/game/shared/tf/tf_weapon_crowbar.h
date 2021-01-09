@@ -17,6 +17,7 @@
 #define CTFUmbrella C_TFUmbrella
 #define CTFCCrowbar C_TFCCrowbar
 #define CTFCUmbrella C_TFCUmbrella
+#define CTFPoisonShank C_TFPoisonShank
 #define CTFLeadPipe C_TFLeadPipe
 #endif
 
@@ -98,6 +99,22 @@ private:
 	CTFCUmbrella( const CTFCUmbrella & ) {}
 };
 
+class CTFPoisonShank : public CTFWeaponBaseMelee
+{
+public:
+
+	DECLARE_CLASS(CTFPoisonShank, CTFWeaponBaseMelee);
+	DECLARE_NETWORKCLASS();
+	DECLARE_PREDICTABLE();
+
+	CTFPoisonShank();
+	virtual int			GetWeaponID(void) const			{ return TF_WEAPON_POISONSHANK; }
+
+private:
+
+	CTFPoisonShank(const CTFPoisonShank &) {}
+};
+
 class CTFLeadPipe : public CTFWeaponBaseMelee
 {
 public:
@@ -124,6 +141,5 @@ private:
 
 	void WindUp(void);
 
-	int m_iNumBeepsToBeep;
 };
 #endif // TF_WEAPON_CROWBAR_H
