@@ -408,6 +408,8 @@ void CTFWeaponBaseMelee::ShieldChargeThink()
 			{
 				pOwner->m_Shared.RemoveCond( TF_COND_SHIELD_CHARGE );
 				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_DEMO_CHARGE );
+				m_iNumBeepsToBeep = 1;
+				m_iChargeSound = 0;
 			}
 		}
 	}
