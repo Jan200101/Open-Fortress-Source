@@ -6629,7 +6629,10 @@ CON_COMMAND( buy, "Buy weapon.\n\tArguments: <item_name>" )
 				CTFWeaponBase *pOverlappingWeapon = pPlayer->GetWeaponInSlot( pGivenWeapon->GetSlot(), pGivenWeapon->GetPosition() );
 				if( pOverlappingWeapon )
 				{
-					pPlayer->DropWeapon( pOverlappingWeapon, true, false, pPlayer->m_Shared.GetActiveTFWeapon()->m_iClip1, pPlayer->m_Shared.GetActiveTFWeapon()->m_iReserveAmmo  );
+					int Clip = pOverlappingWeapon->m_iClip1;
+					int ReserveAmmo = pOverlappingWeapon->m_iReserveAmmo;
+
+					pPlayer->DropWeapon(pOverlappingWeapon, true, false, Clip, ReserveAmmo);
 					UTIL_Remove( pOverlappingWeapon );
 				}
 				pPlayer->m_iAccount -= WeaponCost;

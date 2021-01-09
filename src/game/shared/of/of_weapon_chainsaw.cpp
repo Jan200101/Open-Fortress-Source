@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -243,8 +243,8 @@ void CTFChainsaw::ItemPostFrame()
 	if ( !pOwner )
 		return;
 	
-	if ( m_iWeaponState > CS_IDLE && m_flNextPrimaryAttack < gpGlobals->curtime && !( pOwner->m_nButtons & IN_ATTACK ) )
-	{
+	if ( m_iWeaponState > CS_IDLE && m_flNextPrimaryAttack < gpGlobals->curtime && !( pOwner->m_nButtons & IN_ATTACK ) && !pOwner->m_Shared.InCond(TF_COND_SHIELD_CHARGE))
+	{	//if we are not idling, next primary attack is not up, player not pressing button, and not charging
 		SendWeaponAnim( ACT_MP_ATTACK_STAND_POSTFIRE );
 
 		// Set the appropriate firing state.
@@ -254,6 +254,12 @@ void CTFChainsaw::ItemPostFrame()
 #endif
 		// Time to weapon idle.
 		m_flTimeWeaponIdle = gpGlobals->curtime + 2.0;
+	}
+
+	if (pOwner->m_Shared.InCond(TF_COND_SHIELD_CHARGE))
+	{
+		//HACK HACK HACK
+		PrimaryAttack();
 	}
 	BaseClass::ItemPostFrame();
 }

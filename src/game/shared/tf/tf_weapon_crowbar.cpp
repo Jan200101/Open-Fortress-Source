@@ -63,17 +63,6 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( tfc_weapon_umbrella, CTFCUmbrella );
 //PRECACHE_WEAPON_REGISTER( tfc_weapon_umbrella );
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFPoisonShank, DT_TFWeaponPoisonShank)
-
-BEGIN_NETWORK_TABLE(CTFPoisonShank, DT_TFWeaponPoisonShank)
-END_NETWORK_TABLE()
-
-BEGIN_PREDICTION_DATA(CTFPoisonShank)
-END_PREDICTION_DATA()
-
-LINK_ENTITY_TO_CLASS(tf_weapon_poisonshank, CTFPoisonShank);
-//PRECACHE_WEAPON_REGISTER( tf_weapon_poisonshank );
-
 IMPLEMENT_NETWORKCLASS_ALIASED(TFLeadPipe, DT_TFWeaponLeadPipe)
 
 BEGIN_NETWORK_TABLE(CTFLeadPipe, DT_TFWeaponLeadPipe)
@@ -103,9 +92,6 @@ CTFCCrowbar::CTFCCrowbar()
 {
 }
 CTFCUmbrella::CTFCUmbrella()
-{
-}
-CTFPoisonShank::CTFPoisonShank()
 {
 }
 CTFLeadPipe::CTFLeadPipe()
@@ -193,12 +179,14 @@ void CTFLeadPipe::PrimaryAttack()
 		return;
 	}
 
+//#ifdef GAME_DLL
 	switch (m_iWeaponState)
 	{
 	default:
 	case AC_STATE_IDLE:
 		{
 			m_flChargedDamage = GetDamage();
+			m_iNumBeepsToBeep = 1;
 			if (m_flNextPrimaryAttack <= gpGlobals->curtime)
 			{
 				DevMsg("You start to charge up the Pipe Wrench\n");
@@ -237,10 +225,24 @@ void CTFLeadPipe::PrimaryAttack()
 					DevMsg("m_flChargedDamage is %f\n", m_flChargedDamageMath);
 				}
 			}
+#ifdef CLIENT_DLL
+			if ((m_flChargedDamage == (GetDamage() * 3)) && m_iNumBeepsToBeep > 0)
+			{
+				C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
 
+				if ( !pLocalPlayer )
+					return;
+
+				pLocalPlayer->EmitSound("Leadpipe.FullCharge");
+
+				m_iNumBeepsToBeep = 0;
+				DevMsg("EmitSound\n");
+			}
+#endif
 			break;
 		}
 	}
+//#endif
 }
 //-----------------------------------------------------------------------------
 // Purpose:

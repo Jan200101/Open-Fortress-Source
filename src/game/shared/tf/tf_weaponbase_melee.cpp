@@ -120,6 +120,8 @@ void CTFWeaponBaseMelee::WeaponReset( void )
 void CTFWeaponBaseMelee::Precache()
 {
 	BaseClass::Precache();
+
+	CBaseEntity::PrecacheScriptSound("Chainsaw.Charge");
 }
 
 // -----------------------------------------------------------------------------
@@ -202,10 +204,16 @@ void CTFWeaponBaseMelee::SecondaryAttack()
 	
 	if ( CanShieldCharge() )
 	{
-		if ( m_flChargeMeter >= 1.0f )
+		if (m_flChargeMeter >= 1.0f)
 		{
-			pPlayer->m_Shared.AddCond( TF_COND_SHIELD_CHARGE );
+			pPlayer->m_Shared.AddCond(TF_COND_SHIELD_CHARGE);
 			bStartedCharge = true;
+			if (m_iChargeSound == 0)
+			{
+			pPlayer->EmitSound("Chainsaw.Charge");
+			m_iChargeSound = 1;
+			DevMsg("This should play the charge sound\n");
+			}
 		}
 		else
 		{
@@ -398,6 +406,8 @@ void CTFWeaponBaseMelee::ShieldChargeThink()
 			{
 				pOwner->m_Shared.RemoveCond( TF_COND_SHIELD_CHARGE );
 				pOwner->m_Shared.RemoveCond( TF_COND_CRITBOOSTED_DEMO_CHARGE );
+				m_iNumBeepsToBeep = 1;
+				m_iChargeSound = 0;
 			}
 		}
 	}
@@ -407,6 +417,18 @@ void CTFWeaponBaseMelee::ShieldChargeThink()
 		float flNewLevel = min( m_flChargeMeter + flChargeAmount, 1 );
 		m_flChargeMeter = flNewLevel;
 	}
+#ifdef CLIENT_DLL
+	if (m_flChargeMeter == 1.0f && m_iNumBeepsToBeep > 0)
+	{
+		C_TFPlayer *pLocalPlayer = C_TFPlayer::GetLocalTFPlayer();
+
+		if (!pLocalPlayer)
+			return;
+
+		pLocalPlayer->EmitSound("ChargeFilled.Ding");
+		m_iNumBeepsToBeep = 0;
+	}
+#endif
 }
 
 void CTFWeaponBaseMelee::BurstFire( void )
