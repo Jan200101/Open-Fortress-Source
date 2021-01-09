@@ -44,9 +44,6 @@
 #define TF_FLAMETHROWER_MUZZLEPOS_RIGHT			12.0f
 #define TF_FLAMETHROWER_MUZZLEPOS_UP			-12.0f
 
-#define TF_FLAMETHROWER_AMMO_PER_SECOND_PRIMARY_ATTACK		14.0f
-#define TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK	20
-
 IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameThrower, DT_WeaponFlameThrower )
 
 BEGIN_NETWORK_TABLE( CTFFlameThrower, DT_WeaponFlameThrower )
@@ -82,6 +79,17 @@ LINK_ENTITY_TO_CLASS( tfc_weapon_flamethrower, CTFCFlameThrower );
 //PRECACHE_WEAPON_REGISTER( tfc_weapon_flamethrower );
 
 BEGIN_DATADESC( CTFCFlameThrower )
+END_DATADESC()
+
+IMPLEMENT_NETWORKCLASS_ALIASED(TFFlameThrowerPyro, DT_TFFlameThrowerPyro)
+
+BEGIN_NETWORK_TABLE(CTFFlameThrowerPyro, DT_TFFlameThrowerPyro)
+END_NETWORK_TABLE()
+
+LINK_ENTITY_TO_CLASS(tf_weapon_flamethrower_pyro, CTFFlameThrowerPyro);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower_pyro );
+
+BEGIN_DATADESC(CTFFlameThrowerPyro)
 END_DATADESC()
 
 #ifdef CLIENT_DLL
@@ -207,11 +215,14 @@ void CTFFlameThrower::ItemPostFrame()
 	int iAmmo = ReserveAmmo();
 	
 	// TODO: add a delay here
-	if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK2 ) && iAmmo >= TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK && CanPerformSecondaryAttack() )
+	if (pOwner->IsAlive() && (pOwner->m_nButtons & IN_ATTACK2) && iAmmo >= (GetTFWpnData().m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_iAmmoPerShot) && CanPerformSecondaryAttack())
 	{
-		SecondaryAttack();
+		if (!GetTFWpnData().m_bDisableSecondaryAttack)
+		{
+			SecondaryAttack();
+		}
 	}
-	else if ( pOwner->IsAlive() && ( pOwner->m_nButtons & IN_ATTACK ) && ((!( pOwner->m_nButtons & IN_ATTACK2 ) && CanPerformSecondaryAttack()) || iAmmo < TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK) && iAmmo > 0 )
+	else if (pOwner->IsAlive() && (pOwner->m_nButtons & IN_ATTACK) && ((!(pOwner->m_nButtons & IN_ATTACK2) && CanPerformSecondaryAttack()) || iAmmo < (GetTFWpnData().m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_iAmmoPerShot)) && iAmmo > 0)
 	{
 		PrimaryAttack();
 	}
@@ -260,7 +271,7 @@ void CTFFlameThrower::PrimaryAttack()
 	if ( m_flNextPrimaryAttack > gpGlobals->curtime )
 		return;
 
-	if ( !CanPerformSecondaryAttack() && ReserveAmmo() >= TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK )
+	if (!CanPerformSecondaryAttack() && ReserveAmmo() >= (GetTFWpnData().m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_iAmmoPerShot))
 		return;
 
 	// Get the player owning the weapon.
@@ -456,7 +467,7 @@ void CTFFlameThrower::PrimaryAttack()
 	if (pOwner->m_Shared.InCond(TF_COND_HASTE))
 		flAmmoRate *= 1.0f + ( 1.0f - of_haste_fire_multiplier.GetFloat());
 	
-	m_flAmmoUseRemainder += TF_FLAMETHROWER_AMMO_PER_SECOND_PRIMARY_ATTACK * flAmmoRate;
+	m_flAmmoUseRemainder += (GetTFWpnData().m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_iAmmoPerShot) * flAmmoRate;
 	// take the integer portion of the ammo use accumulator and subtract it from player's ammo count; any fractional amount of ammo use
 	// remains and will get used in the next shot
 	int iAmmoToSubtract = (int) m_flAmmoUseRemainder;
@@ -509,7 +520,7 @@ void CTFFlameThrower::SecondaryAttack()
 	}
 
 	if( !of_infiniteammo.GetBool() )
-		m_iReserveAmmo = m_iReserveAmmo - TF_FLAMETHROWER_AMMO_PER_SECONDARY_ATTACK;
+		m_iReserveAmmo = m_iReserveAmmo - GetTFWpnData().m_WeaponData[TF_WEAPON_SECONDARY_MODE].m_iAmmoPerShot;
 
 	float flFiringInterval = GetFireRate();
 	m_flNextSecondaryAttack = gpGlobals->curtime + flFiringInterval;
