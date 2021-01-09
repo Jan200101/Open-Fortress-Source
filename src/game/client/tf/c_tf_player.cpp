@@ -129,7 +129,14 @@ void RefreshDesiredCosmetics( int iClass )
 				char *_point = szCommand;
 				for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
 				{
-					_point += Q_snprintf( _point, sizeof( szCommand ), " %s", pHat->GetString());
+					if( szCommand[0] != '\0' )
+					{
+						_point += Q_snprintf( _point, sizeof( szCommand ), " %s", pHat->GetString());
+					}
+					else
+					{
+						Q_snprintf( szCommand, sizeof( szCommand ), "%s", pHat->GetString() );
+					}
 				}
 				ConVarRef var( g_aLoadoutConvarNames[iClass] );
 				if ( var.IsValid() )

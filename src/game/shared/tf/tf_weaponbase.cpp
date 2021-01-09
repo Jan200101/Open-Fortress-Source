@@ -1032,10 +1032,7 @@ bool CTFWeaponBase::Holster(CBaseCombatWeapon *pSwitchingTo)
 		m_hMuzzleFlashModel[0]->Release();
 
 	if (pOwner && pOwner->GetViewModel(m_nViewModelIndex))
-	{
-		if (GetWeaponID() == TF_WEAPON_GIB) pOwner->GetViewModel(m_nViewModelIndex)->ParticleProp()->StopEmissionAndDestroyImmediately();
 		pOwner->GetViewModel(m_nViewModelIndex)->ParticleProp()->StopEmission();
-	}
 
 	if (pOwner)
 	{
