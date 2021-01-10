@@ -124,7 +124,7 @@ void RefreshDesiredCosmetics( int iClass )
 			if( pClass )
 			{
 				KeyValues *pHat = pClass->GetFirstValue();
-				char szCommand[128];
+				char szCommand[256];
 				szCommand[0] = '\0';
 				char *_point = szCommand;
 				for( pHat; pHat != NULL; pHat = pHat->GetNextValue() ) // Loop through all the keyvalues
@@ -152,7 +152,7 @@ void RefreshDesiredWeapons( int iClass )
 			if( pClass )
 			{
 				KeyValues *pWeapon = pClass->GetFirstValue();
-				char szCommand[128];
+				char szCommand[256];
 				szCommand[0] = '\0';
 				char *_point = szCommand;
 				for( pWeapon; pWeapon != NULL; pWeapon = pWeapon->GetNextValue() ) // Loop through all the keyvalues

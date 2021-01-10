@@ -1347,7 +1347,7 @@ void CTFPlayer::UpdateCosmetics()
 			kvDesiredCosmetics->deleteThis();
 		kvDesiredCosmetics = new KeyValues( "DesiredCosmetics" );
 
-		char szDesired[128] = { '\0' };
+		char szDesired[256] = { '\0' };
 
 		// Drop a pack with their leftover ammo
 		// This is terrible but it works for now
