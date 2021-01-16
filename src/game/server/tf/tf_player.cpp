@@ -1480,7 +1480,12 @@ void CTFPlayer::UpdateCosmetics()
 			//const char *pModel = pCosmetic->GetString( "Model" , "models/error.mdl" );
 			//PrecacheModel( pModel );
 		}
-		
+
+		if (V_atoi(engine->GetClientConVarValue(entindex(), "of_disable_viewmodel_cosmetics")) == 1)
+		{
+			bArmCosmetic = false;
+			bGloveCosmetic = false;
+		}
 		
 		if( !bArmCosmetic && GetViewModel( TF_VIEWMODEL_COSMETICS ) )
 			GetViewModel( TF_VIEWMODEL_COSMETICS )->SetModel( "models/weapons/c_models/cosmetics/merc/sleeves/default.mdl" );
