@@ -103,16 +103,21 @@ void CTFFlameThrower::Precache( void )
 {
 	BaseClass::Precache();
 
-	PrecacheParticleSystem( "pyro_blast" );
-	PrecacheParticleSystem( "deflect_fx" );
-
-	PrecacheScriptSound( "TFPlayer.AirBlastImpact" );
-	PrecacheScriptSound( "TFPlayer.FlameOut" );
-	PrecacheScriptSound( "Weapon_FlameThrower.AirBurstAttack" );
-	PrecacheScriptSound( "Weapon_FlameThrower.AirBurstAttackDeflect" );
 	PrecacheScriptSound( "Weapon_FlameThrower.FireHit" );
 }
+void CTFFlameThrowerPyro::Precache(void)
+{
+	BaseClass::Precache();
 
+	PrecacheParticleSystem("pyro_blast");
+	PrecacheParticleSystem("deflect_fx");
+
+	PrecacheScriptSound("TFPlayer.AirBlastImpact");
+	PrecacheScriptSound("TFPlayer.FlameOut");
+	PrecacheScriptSound("Weapon_FlameThrower.AirBurstAttack");
+	PrecacheScriptSound("Weapon_FlameThrower.AirBurstAttackDeflect");
+	PrecacheScriptSound("Weapon_FlameThrower.FireHit");
+}
 // ------------------------------------------------------------------------------------------------ //
 // CTFFlameThrower implementation.
 // ------------------------------------------------------------------------------------------------ //
