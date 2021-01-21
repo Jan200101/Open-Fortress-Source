@@ -84,9 +84,10 @@ void OFTennisballCallback(IConVar *var, const char *pOldString, float flOldValue
 	}
 }
 
-ConVar of_tennisball( "of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Big Tiddie Tennis GF", OFTennisballCallback );
+ConVar of_tennisball( "of_tennisball", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "1- Enable Bright Skins.\n2- Force players to wear the same color as you.", OFTennisballCallback );
 ConVar of_force_cosmetics( "of_force_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Force players to wear the same cosmetics as you.", OFTennisballCallback );
-ConVar of_disable_cosmetics( "of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Because you CAN have TF2 without hats" );
+ConVar of_disable_cosmetics( "of_disable_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable cosmetics." );
+ConVar of_disable_viewmodel_cosmetics("of_disable_viewmodel_cosmetics", "0", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable first person cosmetics.");
 
 ConVar tf_hud_no_crosshair_on_scope_zoom( "tf_hud_no_crosshair_on_scope_zoom", "1", FCVAR_ARCHIVE | FCVAR_USERINFO, "Disable the crosshair when scoped in with a Sniper Rifle or Railgun." );
 

@@ -177,6 +177,8 @@ class CTFFlameThrowerPyro : public CTFFlameThrower
 public:
 	DECLARE_DATADESC();
 	DECLARE_NETWORKCLASS(); 
+
+	virtual void	Precache(void);
 };
 
 #endif // TF_WEAPON_FLAMETHROWER_H
