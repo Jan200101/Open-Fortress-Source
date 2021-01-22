@@ -44,9 +44,9 @@
 #define TF_FLAMETHROWER_MUZZLEPOS_RIGHT			12.0f
 #define TF_FLAMETHROWER_MUZZLEPOS_UP			-12.0f
 
-IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameThrower, DT_WeaponFlameThrower )
+IMPLEMENT_NETWORKCLASS_ALIASED( TFFlameThrowerPyro, DT_WeaponFlameThrowerPyro )
 
-BEGIN_NETWORK_TABLE( CTFFlameThrower, DT_WeaponFlameThrower )
+BEGIN_NETWORK_TABLE( CTFFlameThrowerPyro, DT_WeaponFlameThrowerPyro )
 	#if defined( CLIENT_DLL )
 		RecvPropInt( RECVINFO( m_iWeaponState ) ),
 		RecvPropInt( RECVINFO( m_bCritFire ) ),
@@ -58,16 +58,16 @@ BEGIN_NETWORK_TABLE( CTFFlameThrower, DT_WeaponFlameThrower )
 END_NETWORK_TABLE()
 
 #if defined( CLIENT_DLL )
-BEGIN_PREDICTION_DATA( CTFFlameThrower )
+BEGIN_PREDICTION_DATA( CTFFlameThrowerPyro )
 	DEFINE_PRED_FIELD( m_iWeaponState, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_bCritFire, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),
 END_PREDICTION_DATA()
 #endif
 
-LINK_ENTITY_TO_CLASS( tf_weapon_flamethrower, CTFFlameThrower );
-//PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower );
+LINK_ENTITY_TO_CLASS( tf_weapon_flamethrower_pyro, CTFFlameThrowerPyro );
+//PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower_pyro );
 
-BEGIN_DATADESC( CTFFlameThrower )
+BEGIN_DATADESC( CTFFlameThrowerPyro )
 END_DATADESC()
 
 IMPLEMENT_NETWORKCLASS_ALIASED( TFCFlameThrower, DT_TFCFlameThrower )
@@ -81,15 +81,15 @@ LINK_ENTITY_TO_CLASS( tfc_weapon_flamethrower, CTFCFlameThrower );
 BEGIN_DATADESC( CTFCFlameThrower )
 END_DATADESC()
 
-IMPLEMENT_NETWORKCLASS_ALIASED(TFFlameThrowerPyro, DT_TFFlameThrowerPyro)
+IMPLEMENT_NETWORKCLASS_ALIASED(TFFlameThrowerDM, DT_TFFlameThrowerDM)
 
-BEGIN_NETWORK_TABLE(CTFFlameThrowerPyro, DT_TFFlameThrowerPyro)
+BEGIN_NETWORK_TABLE(CTFFlameThrowerDM, DT_TFFlameThrowerDM)
 END_NETWORK_TABLE()
 
-LINK_ENTITY_TO_CLASS(tf_weapon_flamethrower_pyro, CTFFlameThrowerPyro);
-//PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower_pyro );
+LINK_ENTITY_TO_CLASS(tf_weapon_flamethrower, CTFFlameThrowerDM);
+//PRECACHE_WEAPON_REGISTER( tf_weapon_flamethrower );
 
-BEGIN_DATADESC(CTFFlameThrowerPyro)
+BEGIN_DATADESC(CTFFlameThrowerDM)
 END_DATADESC()
 
 #ifdef CLIENT_DLL
@@ -99,19 +99,14 @@ extern ConVar of_muzzlelight;
 extern ConVar of_infiniteammo;
 extern ConVar of_haste_fire_multiplier;
 
-void CTFFlameThrower::Precache( void )
-{
-	BaseClass::Precache();
-
-	PrecacheScriptSound( "Weapon_FlameThrower.FireHit" );
-}
-void CTFFlameThrowerPyro::Precache(void)
+void CTFFlameThrowerPyro::Precache( void )
 {
 	BaseClass::Precache();
 
 	PrecacheParticleSystem("pyro_blast");
 	PrecacheParticleSystem("deflect_fx");
 
+	PrecacheScriptSound("Weapon_FlameThrower.FireHit");
 	PrecacheScriptSound("TFPlayer.AirBlastImpact");
 	PrecacheScriptSound("TFPlayer.FlameOut");
 	PrecacheScriptSound("Weapon_FlameThrower.AirBurstAttack");
@@ -119,12 +114,12 @@ void CTFFlameThrowerPyro::Precache(void)
 	PrecacheScriptSound("Weapon_FlameThrower.FireHit");
 }
 // ------------------------------------------------------------------------------------------------ //
-// CTFFlameThrower implementation.
+// CTFFlameThrowerPyro implementation.
 // ------------------------------------------------------------------------------------------------ //
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFFlameThrower::CTFFlameThrower()
+CTFFlameThrowerPyro::CTFFlameThrowerPyro()
 {
 	WeaponReset();
 
@@ -140,12 +135,12 @@ CTFFlameThrower::CTFFlameThrower()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-CTFFlameThrower::~CTFFlameThrower()
+CTFFlameThrowerPyro::~CTFFlameThrowerPyro()
 {
 	DestroySounds();
 }
 
-void CTFFlameThrower::DestroySounds( void )
+void CTFFlameThrowerPyro::DestroySounds( void )
 {
 #if defined( CLIENT_DLL )
 	CSoundEnvelopeController &controller = CSoundEnvelopeController::GetController();
@@ -167,7 +162,7 @@ void CTFFlameThrower::DestroySounds( void )
 #endif
 
 }
-void CTFFlameThrower::WeaponReset( void )
+void CTFFlameThrowerPyro::WeaponReset( void )
 {
 	BaseClass::WeaponReset();
 
@@ -182,7 +177,7 @@ void CTFFlameThrower::WeaponReset( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::Spawn( void )
+void CTFFlameThrowerPyro::Spawn( void )
 {
 	m_iAltFireHint = HINT_ALTFIRE_FLAMETHROWER;
 	BaseClass::Spawn();
@@ -191,7 +186,7 @@ void CTFFlameThrower::Spawn( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFFlameThrower::Holster( CBaseCombatWeapon *pSwitchingTo )
+bool CTFFlameThrowerPyro::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
 	m_iWeaponState = FT_STATE_IDLE;
 	m_bCritFire = false;
@@ -207,7 +202,7 @@ bool CTFFlameThrower::Holster( CBaseCombatWeapon *pSwitchingTo )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::ItemPostFrame()
+void CTFFlameThrowerPyro::ItemPostFrame()
 {
 	if ( m_bLowered )
 		return;
@@ -268,7 +263,7 @@ public:
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::PrimaryAttack()
+void CTFFlameThrowerPyro::PrimaryAttack()
 {
 	m_iWeaponMode = TF_WEAPON_PRIMARY_MODE;
 
@@ -498,7 +493,7 @@ void CTFFlameThrower::PrimaryAttack()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::SecondaryAttack()
+void CTFFlameThrowerPyro::SecondaryAttack()
 {
 	if( !CanSecondaryAttack() )
 		return;
@@ -640,7 +635,7 @@ void CTFFlameThrower::SecondaryAttack()
 }
 
 #ifdef GAME_DLL
-void CTFFlameThrower::OnAirblast( CBaseEntity *pEntity )
+void CTFFlameThrowerPyro::OnAirblast( CBaseEntity *pEntity )
 {
 	CTFPlayer *pTFPlayer = ToTFPlayer( pEntity );
 	CBaseEntity *pOwner = GetOwner();
@@ -668,7 +663,7 @@ void CTFFlameThrower::OnAirblast( CBaseEntity *pEntity )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-bool CTFFlameThrower::Lower( void )
+bool CTFFlameThrowerPyro::Lower( void )
 {
 	if ( BaseClass::Lower() )
 	{
@@ -688,7 +683,7 @@ bool CTFFlameThrower::Lower( void )
 //-----------------------------------------------------------------------------
 // Purpose: Returns the position of the tip of the muzzle at it appears visually
 //-----------------------------------------------------------------------------
-Vector CTFFlameThrower::GetVisualMuzzlePos()
+Vector CTFFlameThrowerPyro::GetVisualMuzzlePos()
 {
 	return GetMuzzlePosHelper( true );
 }
@@ -696,7 +691,7 @@ Vector CTFFlameThrower::GetVisualMuzzlePos()
 //-----------------------------------------------------------------------------
 // Purpose: Returns the position at which to spawn flame damage entities
 //-----------------------------------------------------------------------------
-Vector CTFFlameThrower::GetFlameOriginPos()
+Vector CTFFlameThrowerPyro::GetFlameOriginPos()
 {
 	return GetMuzzlePosHelper( false );
 }
@@ -704,7 +699,7 @@ Vector CTFFlameThrower::GetFlameOriginPos()
 //-----------------------------------------------------------------------------
 // Purpose: Returns the position of the tip of the muzzle
 //-----------------------------------------------------------------------------
-Vector CTFFlameThrower::GetMuzzlePosHelper( bool bVisualPos )
+Vector CTFFlameThrowerPyro::GetMuzzlePosHelper( bool bVisualPos )
 {
 	Vector vecMuzzlePos;
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
@@ -725,7 +720,7 @@ Vector CTFFlameThrower::GetMuzzlePosHelper( bool bVisualPos )
 
 #if defined( CLIENT_DLL )
 
-bool CTFFlameThrower::Deploy( void )
+bool CTFFlameThrowerPyro::Deploy( void )
 {
 	StartPilotLight();
 
@@ -735,7 +730,7 @@ bool CTFFlameThrower::Deploy( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::OnDataChanged(DataUpdateType_t updateType)
+void CTFFlameThrowerPyro::OnDataChanged(DataUpdateType_t updateType)
 {
 	BaseClass::OnDataChanged(updateType);
 
@@ -760,7 +755,7 @@ void CTFFlameThrower::OnDataChanged(DataUpdateType_t updateType)
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::UpdateOnRemove( void )
+void CTFFlameThrowerPyro::UpdateOnRemove( void )
 {
 	StopFlame();
 	StopPilotLight();
@@ -771,7 +766,7 @@ void CTFFlameThrower::UpdateOnRemove( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::SetDormant( bool bDormant )
+void CTFFlameThrowerPyro::SetDormant( bool bDormant )
 {
 	// If I'm going from active to dormant and I'm carried by another player, stop our firing sound.
 	if ( !IsCarriedByLocalPlayer() )
@@ -790,7 +785,7 @@ void CTFFlameThrower::SetDormant( bool bDormant )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::StartFlame()
+void CTFFlameThrowerPyro::StartFlame()
 {
 	if ( !CanPerformSecondaryAttack() )
 		return;
@@ -854,7 +849,7 @@ void CTFFlameThrower::StartFlame()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::StopFlame( bool bAbrupt /* = false */ )
+void CTFFlameThrowerPyro::StopFlame( bool bAbrupt /* = false */ )
 {
 	if ( ( m_pFiringLoop || m_pFiringStartSound ) && !bAbrupt )
 	{
@@ -923,7 +918,7 @@ void CTFFlameThrower::StopFlame( bool bAbrupt /* = false */ )
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::StartPilotLight()
+void CTFFlameThrowerPyro::StartPilotLight()
 {
 	if ( !m_pPilotLightSound )
 	{
@@ -943,7 +938,7 @@ void CTFFlameThrower::StartPilotLight()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::StopPilotLight()
+void CTFFlameThrowerPyro::StopPilotLight()
 {
 	if ( m_pPilotLightSound )
 	{
@@ -955,7 +950,7 @@ void CTFFlameThrower::StopPilotLight()
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
-void CTFFlameThrower::RestartParticleEffect( void )
+void CTFFlameThrowerPyro::RestartParticleEffect( void )
 {
 	CTFPlayer *pOwner = ToTFPlayer( GetPlayerOwner() );
 	if ( !pOwner )
@@ -1320,7 +1315,7 @@ void CTFFlameEntity::OnCollide( CBaseEntity *pOther )
 
 #endif // GAME_DLL
 
-acttable_t CTFFlameThrower::m_acttableFlameThrower[] =
+acttable_t CTFFlameThrowerPyro::m_acttableFlameThrower[] =
 {
 	{ ACT_MP_STAND_IDLE, ACT_MERC_STAND_FLAMETHROWER, false },
 	{ ACT_MP_CROUCH_IDLE, ACT_MERC_CROUCH_FLAMETHROWER, false },
@@ -1340,7 +1335,7 @@ acttable_t CTFFlameThrower::m_acttableFlameThrower[] =
 };
 
 //Act table remapping for Merc
-acttable_t *CTFFlameThrower::ActivityList(int &iActivityCount)
+acttable_t *CTFFlameThrowerPyro::ActivityList(int &iActivityCount)
 {
 	if (GetTFPlayerOwner()->GetPlayerClass()->GetClassIndex() == TF_CLASS_MERCENARY)
 	{
