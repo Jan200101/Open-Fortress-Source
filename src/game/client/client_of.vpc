@@ -509,8 +509,10 @@ $Project "Client (Open Fortress)"
 			$File	"of\gameui\VMainMenu.cpp"
 			$File	"of\gameui\VSliderControl.cpp"
 			$File	"of\gameui\vmenubackground.cpp"
-			$File	"of\gameui\dm_loadout.h"				
+			$File	"of\gameui\dm_loadout.h"
 			$File	"of\gameui\dm_loadout.cpp"
+			$File	"of\gameui\createserverpanel.h"
+			$File	"of\gameui\createserverpanel.cpp"
 		}
 	}
 	$Folder "Link Libraries"
