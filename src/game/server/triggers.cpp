@@ -2528,7 +2528,11 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 		
 		const Vector vNewVel( vForward.x * flSize, vForward.y * flSize, vForward.z * flSize );
 		
-		pVelocity = &vNewVel;
+		//From Fenteale:  The true statement is never reached, I have no idea why, because
+		//if IS_NAN is never called, it crashes.
+		pVelocity = IS_NAN(vNewVel) ? NULL : &vNewVel;
+		
+		
 	}
 
 	tmp += vecLandmarkOffset;
