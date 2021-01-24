@@ -4529,6 +4529,10 @@ void CTFPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 					bCritical = false;
 				}
 
+				if (pWpn->GetWeaponID() == TF_WEAPON_FLAMETHROWER_PYRO)
+				{
+					bCritical = false;
+				}
 		
 				if ( bCritical )
 				{
