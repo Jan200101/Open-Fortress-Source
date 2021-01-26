@@ -52,7 +52,149 @@ void CreateServerPanel::PaintBackground()
 		//pCreateServerPanelImage->SetPos();
 	}
 
-	//vgui::Panel *pMapList = FindChildByName("MapList");
+	vgui::Panel *pCreateServerTopTitle = FindChildByName("CreateServerTopTitle");
+	if (pCreateServerTopTitle)
+	{
+		int x, y;
+		pCreateServerTopTitle->GetPos(x, y);
+		pCreateServerTopTitle->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pMapList = FindChildByName("MapList");
+	if (pMapList)
+	{
+		int x, y;
+		pMapList->GetPos(x, y);
+		pMapList->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pBotQuotaLabel = FindChildByName("BotQuotaLabel");
+	if (pBotQuotaLabel)
+	{
+		int x, y;
+		pBotQuotaLabel->GetPos(x, y);
+		pBotQuotaLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pBotQuotaCombo = FindChildByName("BotQuotaCombo");
+	if (pBotQuotaCombo)
+	{
+		int x, y;
+		pBotQuotaCombo->GetPos(x, y);
+		pBotQuotaCombo->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pEnableBotsLabel = FindChildByName("EnableBotsLabel");
+	if (pEnableBotsLabel)
+	{
+		int x, y;
+		pEnableBotsLabel->GetPos(x, y);
+		pEnableBotsLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pEnableBotsCheck = FindChildByName("EnableBotsCheck");
+	if (pEnableBotsCheck)
+	{
+		int x, y;
+		pEnableBotsCheck->GetPos(x, y);
+		pEnableBotsCheck->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pHostnameLabel = FindChildByName("MaxPlayersLabel");
+	if (pHostnameLabel)
+	{
+		int x, y;
+		pHostnameLabel->GetPos(x, y);
+		pHostnameLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pHostnameCombo = FindChildByName("MaxPlayersCombo");
+	if (pHostnameCombo)
+	{
+		int x, y;
+		pHostnameCombo->GetPos(x, y);
+		pHostnameCombo->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pServerPasswordLabel = FindChildByName("ServerPasswordLabel");
+	if (pServerPasswordLabel)
+	{
+		int x, y;
+		pServerPasswordLabel->GetPos(x, y);
+		pServerPasswordLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pServerPasswordCombo = FindChildByName("ServerPasswordCombo");
+	if (pServerPasswordCombo)
+	{
+		int x, y;
+		pServerPasswordCombo->GetPos(x, y);
+		pServerPasswordCombo->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pWinLimitLabel = FindChildByName("WinLimitLabel");
+	if (pWinLimitLabel)
+	{
+		int x, y;
+		pWinLimitLabel->GetPos(x, y);
+		pWinLimitLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pWinLimitCombo = FindChildByName("WinLimitCombo");
+	if (pWinLimitCombo)
+	{
+		int x, y;
+		pWinLimitCombo->GetPos(x, y);
+		pWinLimitCombo->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pFragLimitLabel = FindChildByName("FragLimitLabel");
+	if (pFragLimitLabel)
+	{
+		int x, y;
+		pFragLimitLabel->GetPos(x, y);
+		pFragLimitLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pFragLimitCombo = FindChildByName("FragLimitCombo");
+	if (pFragLimitCombo)
+	{
+		int x, y;
+		pFragLimitCombo->GetPos(x, y);
+		pFragLimitCombo->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pTimePerMapLabel = FindChildByName("TimePerMapLabel");
+	if (pTimePerMapLabel)
+	{
+		int x, y;
+		pTimePerMapLabel->GetPos(x, y);
+		pTimePerMapLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pTimePerMapCombo = FindChildByName("TimePerMapCombo");
+	if (pTimePerMapCombo)
+	{
+		int x, y;
+		pTimePerMapCombo->GetPos(x, y);
+		pTimePerMapCombo->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pRountLimitLabel = FindChildByName("RountLimitLabel");
+	if (pRountLimitLabel)
+	{
+		int x, y;
+		pRountLimitLabel->GetPos(x, y);
+		pRountLimitLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pRountLimitCombo = FindChildByName("RountLimitCombo");
+	if (pRountLimitCombo)
+	{
+		int x, y;
+		pRountLimitCombo->GetPos(x, y);
+		pRountLimitCombo->SetPos(x + xchange, y);
+	}
 
 	// make background darker
 	vgui::Panel *pDarkenPanel = FindChildByName("DarkenPanel");

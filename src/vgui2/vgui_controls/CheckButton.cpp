@@ -22,24 +22,27 @@ using namespace vgui;
 
 void CheckImage::Paint()
 {
-	DrawSetTextFont(GetFont());
+	//DrawSetTextFont(GetFont());
 
 	// draw background
-	if (_CheckButton->IsEnabled() && _CheckButton->IsCheckButtonCheckable() )
-	{
-		DrawSetTextColor(_bgColor);
-	}
-	else
-	{
-		DrawSetTextColor(_CheckButton->GetDisabledBgColor());
-	}
-	DrawPrintChar(0, 1, 'g');
+	//if (_CheckButton->IsEnabled() && _CheckButton->IsCheckButtonCheckable() )
+	//{
+	//	DrawSetTextColor(_bgColor);
+	//}
+	//else
+	//{
+	//	DrawSetTextColor(_CheckButton->GetDisabledBgColor());
+	//}
+	//DrawPrintChar(0, 1, 'g');
 
 	// draw border box
-	DrawSetTextColor(_borderColor1);
-	DrawPrintChar(0, 1, 'e');
-	DrawSetTextColor(_borderColor2);
-	DrawPrintChar(0, 1, 'f');
+	//DrawSetTextColor(_borderColor1);
+	//DrawPrintChar(0, 1, 'e');
+	//DrawSetTextColor(_borderColor2);
+	//DrawPrintChar(0, 1, 'f');
+
+	DrawSetColor(Color(235, 226, 202, 255));
+	DrawOutlinedRect(-6, -6, 18, 18);
 
 	// draw selected check
 	if (_CheckButton->IsSelected())
@@ -109,7 +112,7 @@ void CheckButton::ApplySchemeSettings(IScheme *pScheme)
 	Color bgDepressedColor = GetSchemeColor( "CheckButton.DepressedBgColor", Color(62, 70, 55, 255), pScheme); 
 	SetDepressedColor( GetFgColor(), bgDepressedColor );
 
-	_highlightFgColor = GetSchemeColor( "CheckButton.HighlightFgColor", Color(62, 70, 55, 255), pScheme); 
+	_highlightFgColor = GetSchemeColor("CheckButton.HighlightFgColor", Color(235, 226, 202, 255), pScheme);
 
 	SetContentAlignment(Label::a_west);
 

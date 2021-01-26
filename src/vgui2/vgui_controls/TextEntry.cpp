@@ -37,7 +37,7 @@ enum
 
 using namespace vgui;
 
-static const int DRAW_OFFSET_X = 3,DRAW_OFFSET_Y = 1; 
+static const int DRAW_OFFSET_X = 10,DRAW_OFFSET_Y = 1; 
 
 DECLARE_BUILD_FACTORY( TextEntry );
 
@@ -141,7 +141,7 @@ void TextEntry::ApplySchemeSettings(IScheme *pScheme)
 	_defaultSelectionBG2Color = GetSchemeColor("TextEntry.OutOfFocusSelectedBgColor", pScheme);
 	_focusEdgeColor = GetSchemeColor("TextEntry.FocusEdgeColor", Color(0, 0, 0, 0), pScheme);
 
-	SetBorder( pScheme->GetBorder("ButtonDepressedBorder"));
+	SetBorder(pScheme->GetBorder("ComboBoxBorder"));
 
 	if ( _font == INVALID_FONT ) _font = pScheme->GetFont("Default", IsProportional() );
 	if ( _smallfont == INVALID_FONT ) _smallfont = pScheme->GetFont( "DefaultVerySmall", IsProportional() );
