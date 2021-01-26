@@ -2508,9 +2508,10 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 	Vector *pVelocity = NULL;
 #endif
 
-#ifdef HL1_DLL
-	Vector vecZero(0,0,0);		
-#endif
+// Not sure why we kept this in? -Bryson
+// #ifdef HL1_DLL
+// 	Vector vecZero(0,0,0);		
+// #endif
 
 #ifdef OF_DLL
 	if (!pentLandmark)
@@ -2526,13 +2527,15 @@ void CTriggerTeleport::Touch( CBaseEntity *pOther )
 		
 		VectorNormalize(vForward);
 		
-		const Vector vNewVel( vForward.x * flSize, vForward.y * flSize, vForward.z * flSize );
+		Vector vNewVel( vForward.x * flSize, vForward.y * flSize, vForward.z * flSize );
 		
 		//From Fenteale:  The true statement is never reached, I have no idea why, because
 		//if IS_NAN is never called, it crashes.
-		pVelocity = IS_NAN(vNewVel) ? NULL : &vNewVel;
-		
-		
+		//
+		// It looks as though NULL breaks it occasionally, so lets try making it a 0 vector.
+		// Also can't assign a const to a non-const :^) -Bryson
+		Vector setZeroVec(0,0,0);
+		pVelocity = IS_NAN(vNewVel) ? &setZeroVec : &vNewVel;
 	}
 
 	tmp += vecLandmarkOffset;
