@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve LLC, All rights reserved. ============
+//========= Copyright ï¿½ 1996-2005, Valve LLC, All rights reserved. ============
 //
 //=============================================================================
 #ifndef TF_PLAYER_H
@@ -326,6 +326,10 @@ public:
 	void DropAmmoPack( void );
 	void DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown = false, bool bDissolve = false, int Clip = -1, int Reserve = -1 );
 	
+	// Drop weapon cooldown
+	void setDropWeaponCooldown();
+	bool DropWeaponCooldownElapsed();
+
 	CTFWeaponBase *GetWeaponInSlot( int iSlot, int iSlotPos );
 	bool CanPickupWeapon( CTFWeaponBase *pCarriedWeapon, CTFWeaponBase *pWeapon );
 	
@@ -557,7 +561,6 @@ public:
 
 private:
 	int					m_iShieldDamage;
-
 public:
 	WeaponHandle m_hWeaponInSlot[10][20]; // 20 pos cuz melee my ass
 
@@ -596,6 +599,9 @@ private:
 	// Taunt.
 	EHANDLE				m_hTauntScene;
 	bool				m_bInitTaunt;
+
+	// Countdown For Drop
+	CountdownTimer DropTimer;
 
 	// Client commands.
 	void				HandleCommand_JoinTeam( const char *pTeamName, bool bNoKill = false );

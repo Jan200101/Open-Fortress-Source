@@ -6551,44 +6551,48 @@ void CTFPlayer::DropAmmoPack( void )
 //-----------------------------------------------------------------------------
 void CC_DropWeapon( void )
 {
-	if ( !of_dropweapons.GetBool() )
+	CTFPlayer *pPlayer = ToTFPlayer(UTIL_GetCommandClient());
+	if (!pPlayer)
 		return;
 
-	if( of_randomizer.GetBool() )
-		return;
-
-	CTFPlayer *pPlayer = ToTFPlayer( UTIL_GetCommandClient() );
-	if ( !pPlayer )
-		return;
-
-	CTFWeaponBase *pWeapon = pPlayer->m_Shared.GetActiveTFWeapon();
-	
-	if (!pWeapon || !pWeapon->CanDropManualy() || pPlayer->m_Shared.GetHook())
-		return;
-	
-	int Clip = pWeapon->m_iClip1;
-	int ReserveAmmo = pWeapon->m_iReserveAmmo;
-	
-	// akimbo pickups have NOT pewished
-	if (pWeapon->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
+	if (pPlayer->DropWeaponCooldownElapsed())
 	{
-		CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID( TF_WEAPON_PISTOL_MERCENARY );
-		pPlayer->DropWeapon( pTFPistol, true, false, (float)Clip / 2.0f, ReserveAmmo );
-		pTFPistol = NULL;
-		UTIL_Remove(pWeapon);
-	}
-	else
-	{
-		pPlayer->DropWeapon( pWeapon, true, false, Clip, ReserveAmmo );
-		UTIL_Remove( pWeapon );
-	}
+		if (!of_dropweapons.GetBool())
+			return;
 
-	CBaseCombatWeapon *pLastWeapon = pPlayer->GetLastWeapon();
+		if (of_randomizer.GetBool())
+			return;
 
-	if ( pLastWeapon )
-		pPlayer->Weapon_Switch( pLastWeapon );
-	else
-		pPlayer->SwitchToNextBestWeapon( pWeapon );
+		CTFWeaponBase *pWeapon = pPlayer->m_Shared.GetActiveTFWeapon();
+
+		if (!pWeapon || !pWeapon->CanDropManualy() || pPlayer->m_Shared.GetHook())
+			return;
+
+		int Clip = pWeapon->m_iClip1;
+		int ReserveAmmo = pWeapon->m_iReserveAmmo;
+
+		// akimbo pickups have NOT pewished
+		if (pWeapon->GetWeaponID() == TF_WEAPON_PISTOL_AKIMBO)
+		{
+			CTFWeaponBase *pTFPistol = (CTFWeaponBase *)pPlayer->Weapon_OwnsThisID(TF_WEAPON_PISTOL_MERCENARY);
+			pPlayer->DropWeapon(pTFPistol, true, false, (float)Clip / 2.0f, ReserveAmmo);
+			pTFPistol = NULL;
+			UTIL_Remove(pWeapon);
+		}
+		else
+		{
+			pPlayer->DropWeapon(pWeapon, true, false, Clip, ReserveAmmo);
+			UTIL_Remove(pWeapon);
+		}
+
+		CBaseCombatWeapon *pLastWeapon = pPlayer->GetLastWeapon();
+
+		if (pLastWeapon)
+			pPlayer->Weapon_Switch(pLastWeapon);
+		else
+			pPlayer->SwitchToNextBestWeapon(pWeapon);
+		pPlayer->setDropWeaponCooldown();
+	}
 }
 static ConCommand dropweapon("dropweapon", CC_DropWeapon, "Drop your weapon.");
 
@@ -6840,7 +6844,17 @@ void CTFPlayer::DropWeapon( CTFWeaponBase *pActiveWeapon, bool bThrown, bool bDi
 	}	
 	pWeapon->SetModel( pWeapon->GetViewModel() );
 }
-
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void CTFPlayer::setDropWeaponCooldown()
+{
+	DropTimer.Start(0.75f);
+}
+bool CTFPlayer::DropWeaponCooldownElapsed()
+{
+	return DropTimer.IsElapsed();
+}
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
