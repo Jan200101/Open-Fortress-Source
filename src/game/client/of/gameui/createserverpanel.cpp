@@ -100,7 +100,7 @@ void CreateServerPanel::PaintBackground()
 		pEnableBotsCheck->SetPos(x + xchange, y);
 	}
 
-	vgui::Panel *pHostnameLabel = FindChildByName("MaxPlayersLabel");
+	vgui::Panel *pHostnameLabel = FindChildByName("HostnameLabel");
 	if (pHostnameLabel)
 	{
 		int x, y;
@@ -108,12 +108,28 @@ void CreateServerPanel::PaintBackground()
 		pHostnameLabel->SetPos(x + xchange, y);
 	}
 
-	vgui::Panel *pHostnameCombo = FindChildByName("MaxPlayersCombo");
+	vgui::Panel *pHostnameCombo = FindChildByName("HostnameCombo");
 	if (pHostnameCombo)
 	{
 		int x, y;
 		pHostnameCombo->GetPos(x, y);
 		pHostnameCombo->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pMaxPlayersLabel = FindChildByName("MaxPlayersLabel");
+	if (pMaxPlayersLabel)
+	{
+		int x, y;
+		pMaxPlayersLabel->GetPos(x, y);
+		pMaxPlayersLabel->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pMaxPlayersCombo = FindChildByName("MaxPlayersCombo");
+	if (pMaxPlayersCombo)
+	{
+		int x, y;
+		pMaxPlayersCombo->GetPos(x, y);
+		pMaxPlayersCombo->SetPos(x + xchange, y);
 	}
 
 	vgui::Panel *pServerPasswordLabel = FindChildByName("ServerPasswordLabel");
@@ -180,15 +196,15 @@ void CreateServerPanel::PaintBackground()
 		pTimePerMapCombo->SetPos(x + xchange, y);
 	}
 
-	vgui::Panel *pRountLimitLabel = FindChildByName("RountLimitLabel");
-	if (pRountLimitLabel)
+	vgui::Panel *pRoundLimitLabel = FindChildByName("RoundLimitLabel");
+	if (pRoundLimitLabel)
 	{
 		int x, y;
-		pRountLimitLabel->GetPos(x, y);
-		pRountLimitLabel->SetPos(x + xchange, y);
+		pRoundLimitLabel->GetPos(x, y);
+		pRoundLimitLabel->SetPos(x + xchange, y);
 	}
 
-	vgui::Panel *pRountLimitCombo = FindChildByName("RountLimitCombo");
+	vgui::Panel *pRountLimitCombo = FindChildByName("RoundLimitCombo");
 	if (pRountLimitCombo)
 	{
 		int x, y;

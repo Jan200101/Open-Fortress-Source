@@ -74,8 +74,9 @@ public:
 
 	Color GetDisabledFgColor() { return _disabledFgColor; }
 	Color GetDisabledBgColor() { return _disabledBgColor; }
+	ImagePanel &GetCheckBoxImage() { return *_checkBoxImage; }
 
-	CheckImage *GetCheckImage() { return _checkBoxImage; }
+	//CheckImage *GetCheckImage() { return _checkBoxImage; }
 
 	virtual void SetHighlightColor(Color fgColor);
 
@@ -95,7 +96,7 @@ protected:
 private:
 	enum { CHECK_INSET = 6 };
 	bool m_bCheckButtonCheckable;
-	CheckImage *_checkBoxImage;
+	ImagePanel *_checkBoxImage;
 	Color _disabledFgColor;
 	Color _disabledBgColor;
 	Color _highlightFgColor;
