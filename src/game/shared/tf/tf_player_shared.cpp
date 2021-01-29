@@ -961,18 +961,19 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			}
 		}
 
-		// Reduce the duration of this burn
+		// Reduce the duration of this Burn
 		if ( InCond( TF_COND_BURNING ) )
 			m_flFlameRemoveTime -= 2.f * gpGlobals->frametime;  // ( flReduction + 1 ) x faster reduction
 
-		// Reduce the duration of this poison
+		// Reduce the duration of this Poison
 		if ( InCond( TF_COND_POISON ) )
 			m_flPoisonRemoveTime -= 2.f * gpGlobals->frametime;
 
-		// Reduce the duration of this poison
+		// Reduce the duration of this Tranq
 		if (InCond(TF_COND_TRANQ))
 			m_flTranqRemoveTime -= 2.f * gpGlobals->frametime;
 
+		// Reduce the duration of this Pieced Legs
 		if (InCond(TF_COND_FUCKEDUP_LEGS))
 			m_flFuckedUpLegsRemoveTime -= 2.f * gpGlobals->frametime;
 	}
@@ -1050,7 +1051,13 @@ void CTFPlayerShared::ConditionGameRulesThink( void )
 			m_flNextBurningSound = gpGlobals->curtime + 2.5;
 		}
 	}
-
+	if (InCond(TF_COND_BLASTJUMP))
+	{
+		if (m_pOuter->GetWaterLevel() >= WL_Feet)
+		{
+			RemoveCond(TF_COND_BLASTJUMP);
+		}
+	}
 
 	if ( InCond( TF_COND_POISON ) )
 	{

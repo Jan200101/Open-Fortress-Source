@@ -5893,11 +5893,17 @@ int C_TFPlayer::GetNumActivePipebombs( void )
 {
 	if ( IsPlayerClass( TF_CLASS_DEMOMAN ) )
 	{
-		CTFPipebombLauncher *pWeapon = dynamic_cast < CTFPipebombLauncher*>( Weapon_OwnsThisID( TF_WEAPON_PIPEBOMBLAUNCHER ) );
+		CTFPipebombLauncher *pWeapon = dynamic_cast < CTFPipebombLauncher*>(Weapon_OwnsThisID(TF_WEAPON_PIPEBOMBLAUNCHER));
+
+		CTFPipebombLauncher *pWeapon2 = dynamic_cast < CTFPipebombLauncher*>(Weapon_OwnsThisID(TFC_WEAPON_PIPEBOMBLAUNCHER));
 
 		if ( pWeapon )
 		{
 			return pWeapon->GetPipeBombCount();
+		}
+		else if (pWeapon2)
+		{
+			return pWeapon2->GetPipeBombCount();
 		}
 	}
 

@@ -13,10 +13,10 @@
 #ifdef CLIENT_DLL
 	#include "c_tf_projectile_rocket.h"
 
-	#define CTFFlameThrower C_TFFlameThrower
+	#define CTFFlameThrowerPyro C_TFFlameThrowerPyro
 	#define CTFFlameRocket C_TFFlameRocket
 	#define CTFCFlameThrower C_TFCFlameThrower
-	#define CTFFlameThrowerPyro C_TFFlameThrowerPyro
+	#define CTFFlameThrowerDM C_TFFlameThrowerDM
 #else
 	#include "tf_projectile_rocket.h"
 #endif
@@ -32,9 +32,9 @@ enum FlameThrowerState_t
 //=========================================================
 // Flamethrower Weapon
 //=========================================================
-class CTFFlameThrower : public CTFWeaponBaseGun
+class CTFFlameThrowerPyro : public CTFWeaponBaseGun
 {
-	DECLARE_CLASS( CTFFlameThrower, CTFWeaponBaseGun );
+	DECLARE_CLASS( CTFFlameThrowerPyro, CTFWeaponBaseGun );
 public:
 	DECLARE_DATADESC();
 	DECLARE_NETWORKCLASS(); 
@@ -43,13 +43,13 @@ public:
 	virtual acttable_t *ActivityList(int &iActivityCount);
 	static acttable_t m_acttableFlameThrower[];
 
-	CTFFlameThrower();
-	~CTFFlameThrower();
+	CTFFlameThrowerPyro();
+	~CTFFlameThrowerPyro();
 
 	virtual void	Spawn( void );
 	virtual void	Precache( void );
 
-	virtual int		GetWeaponID( void ) const { return TF_WEAPON_FLAMETHROWER; }
+	virtual int		GetWeaponID( void ) const { return TF_WEAPON_FLAMETHROWER_PYRO; }
 
 	virtual bool	Holster( CBaseCombatWeapon *pSwitchingTo );
 	virtual void	ItemPostFrame( void );
@@ -104,7 +104,7 @@ private:
 	CNewParticleEffect	*m_pFireParticle;
 #endif
 
-	CTFFlameThrower( const CTFFlameThrower & );
+	CTFFlameThrowerPyro( const CTFFlameThrowerPyro & );
 };
 
 //=============================================================================
@@ -163,22 +163,20 @@ private:
 
 #endif // GAME_DLL
 
-class CTFCFlameThrower : public CTFFlameThrower
+class CTFCFlameThrower : public CTFFlameThrowerPyro
 {
-	DECLARE_CLASS( CTFCFlameThrower, CTFFlameThrower );
+	DECLARE_CLASS( CTFCFlameThrower, CTFFlameThrowerPyro );
 public:
 	DECLARE_DATADESC();
 	DECLARE_NETWORKCLASS(); 
 };
 
-class CTFFlameThrowerPyro : public CTFFlameThrower
+class CTFFlameThrowerDM : public CTFFlameThrowerPyro
 {
-	DECLARE_CLASS( CTFFlameThrowerPyro, CTFFlameThrower );
+	DECLARE_CLASS( CTFFlameThrowerDM, CTFFlameThrowerPyro );
 public:
 	DECLARE_DATADESC();
 	DECLARE_NETWORKCLASS(); 
-
-	virtual void	Precache(void);
 };
 
 #endif // TF_WEAPON_FLAMETHROWER_H
