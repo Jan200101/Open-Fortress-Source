@@ -72,10 +72,10 @@ public:
 	virtual void SetCheckButtonCheckable(bool state);
 	virtual bool IsCheckButtonCheckable() const { return m_bCheckButtonCheckable; }
 
+	virtual int GetTextureID() { return texture; }
+
 	Color GetDisabledFgColor() { return _disabledFgColor; }
 	Color GetDisabledBgColor() { return _disabledBgColor; }
-
-	ImagePanel *GetCheckMarkBoxImage() { return _checkMarkImage; }
 
 	CheckImage *GetCheckImage() { return _checkBoxImage; }
 
@@ -97,8 +97,8 @@ protected:
 private:
 	enum { CHECK_INSET = 6 };
 	bool m_bCheckButtonCheckable;
+	int texture;
 	CheckImage *_checkBoxImage;
-	ImagePanel *_checkMarkImage;
 	Color _disabledFgColor;
 	Color _disabledBgColor;
 	Color _highlightFgColor;

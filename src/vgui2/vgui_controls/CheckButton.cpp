@@ -23,49 +23,16 @@ using namespace vgui;
 
 void CheckImage::Paint()
 {
-	//DrawSetTextFont(GetFont());
-
-	// draw background
-	//if (_CheckButton->IsEnabled() && _CheckButton->IsCheckButtonCheckable() )
-	//{
-	//	DrawSetTextColor(_bgColor);
-	//}
-	//else
-	//{
-	//	DrawSetTextColor(_CheckButton->GetDisabledBgColor());
-	//}
-	//DrawPrintChar(0, 1, 'g');
-
-	// draw border box
-	//DrawSetTextColor(_borderColor1);
-	//DrawPrintChar(0, 1, 'e');
-	//DrawSetTextColor(_borderColor2);
-	//DrawPrintChar(0, 1, 'f');
-
 	DrawSetColor(Color(235, 226, 202, 255));
 	DrawOutlinedRect(-6, -6, 18, 18);
 
-	ImagePanel *pCheckMarkImage = _CheckButton->GetCheckMarkBoxImage();
-	DevMsg("%s\n",pCheckMarkImage->GetName());
+	int pTexture = _CheckButton->GetTextureID();
+	surface()->DrawSetTextureFile(pTexture, "/vgui/vgui_checkmark", true, false);
 
 	// draw selected check
 	if (_CheckButton->IsSelected())
 	{
-		if ( !_CheckButton->IsEnabled() )
-		{
-			DrawSetTextColor( _CheckButton->GetDisabledFgColor() );
-		}
-		else
-		{
-			DrawSetTextColor(_checkColor);
-		}
-
-		pCheckMarkImage->SetVisible(true);
-		DrawPrintChar(0, 2, 'b');
-	}
-	else
-	{
-		pCheckMarkImage->SetVisible(false);
+		DrawTexturedRect(-3, 1, 27, 31);
 	}
 }
 
@@ -82,9 +49,7 @@ CheckButton::CheckButton(Panel *parent, const char *panelName, const char *text)
 	// create the image
 	_checkBoxImage = new CheckImage(this);
 
-	_checkMarkImage = new ImagePanel(this,"CheckmarkImage");
-	_checkMarkImage->SetImage("../vgui/vgui_checkmark");
-	_checkMarkImage->SetVisible(false);
+	texture = surface()->CreateNewTextureID();
 
 	SetTextImageIndex(1);
 	SetImageAtIndex(0, _checkBoxImage, CHECK_INSET);
