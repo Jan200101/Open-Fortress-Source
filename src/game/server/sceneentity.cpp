@@ -4848,20 +4848,24 @@ void PrecacheInstancedScene( char const *pszScene )
 	// verify existence, cache is pre-populated, should be there
 	if ( scenefilecache->GetSceneCachedData( pszScene, &sceneData ) )
 	{
-#ifdef OF_DLL	
-		for (int i = 0; i < sceneData.numSounds; ++i )
-		{
-			short stringId = scenefilecache->GetSceneCachedSound( sceneData.sceneId, i );
-			CBaseEntity::PrecacheScriptSound( scenefilecache->GetSceneString( stringId ) );
-		}
-#else
+
+/* HEY! FOUND THE SourceTV BUG -BRYSON
+ *
+ * #ifdef OF_DLL	
+ *		for (int i = 0; i < sceneData.numSounds; ++i )
+ *		{
+ *			short stringId = scenefilecache->GetSceneCachedSound( sceneData.sceneId, i );
+ *			CBaseEntity::PrecacheScriptSound( scenefilecache->GetSceneString( stringId ) );
+ *		}
+ * #else
+ */
 		// Scenes are sloppy and don't always exist.
 		// A scene that is not in the pre-built cache image, but on disk, is a true error.
 		if ( developer.GetInt() && ( IsX360() && ( g_pFullFileSystem->GetDVDMode() != DVDMODE_STRICT ) && g_pFullFileSystem->FileExists( pszScene, "GAME" ) ) )
 		{
 			Warning( "PrecacheInstancedScene: Missing scene '%s' from scene image cache.\nRebuild scene image cache!\n", pszScene );
 		}	
-#endif
+//#endif
 	}
 #ifdef OF_DLL
 	else if ( !scenefilecache->GetSceneCachedData( pszScene, &sceneData ) )
