@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: TF Base Rockets.
 //
@@ -371,7 +371,7 @@ void CTFBaseProjectile::ProjectileTouch( CBaseEntity *pOther )
 
 	CTFPlayer *pTFOther = ToTFPlayer(pOther);
 
-	if (pTFOther)
+	if (pTFOther && (pInflictor != NULL))
 	{
 		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot(pInflictor->GetClassname());
 		Assert(hWpnInfo != GetInvalidWeaponInfoHandle());
