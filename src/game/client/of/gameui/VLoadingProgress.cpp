@@ -148,6 +148,7 @@ void LoadingProgress::FireGameEvent(IGameEvent * event)
 			float fRatio = (float)width / (float)height;
 			bool bWidescreen = (fRatio < 1.5 ? false : true);
 
+			if (!engine->IsPlayingDemo())
 			SetMapBackgroundImage(bWidescreen, pMapName);
 		}
 	}
@@ -167,7 +168,12 @@ void LoadingProgress::SetMapBackgroundImage(bool bWidescreen, const char *pMapNa
 	sprintf(_temp, _checkFile, _formatImageB);
 	sprintf(_dirImage, _temp, MapName);
 
-	if (filesystem->FileExists(_dirImage)) m_pPoster->SetImage(_setImage);
+	// TODO: Someone fix this so it doesn't break demos. Here's my mini-workaround -Bryson
+
+	if (!engine->IsPlayingDemo())
+	{
+		if (filesystem->FileExists(_dirImage)) m_pPoster->SetImage(_setImage);
+	}
 }
 
 //=============================================================================
@@ -308,7 +314,7 @@ void LoadingProgress::SetProgress( float progress )
 
 void LoadingProgress::SetStatusText(const char * statusText)
 {
-	if (statusText)
+	if (statusText && !engine->IsPlayingDemo())
 	{
 		vgui::Label *pLoadingText = dynamic_cast<vgui::Label*>(FindChildByName("LoadingText"));
 		pLoadingText->SetText(statusText);
