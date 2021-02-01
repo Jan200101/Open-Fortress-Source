@@ -6559,11 +6559,11 @@ void CC_DropWeapon( void )
 	if (!pPlayer)
 		return;
 
+	if (!of_dropweapons.GetBool())
+		return;
+
 	if (pPlayer->DropWeaponCooldownElapsed())
 	{
-		if (!of_dropweapons.GetBool())
-			return;
-
 		if (of_randomizer.GetBool())
 			return;
 
@@ -6595,7 +6595,9 @@ void CC_DropWeapon( void )
 			pPlayer->Weapon_Switch(pLastWeapon);
 		else
 			pPlayer->SwitchToNextBestWeapon(pWeapon);
-		pPlayer->setDropWeaponCooldown();
+
+		if (of_dropweapons.GetInt() == 2)
+			pPlayer->setDropWeaponCooldown();
 	}
 }
 static ConCommand dropweapon("dropweapon", CC_DropWeapon, "Drop your weapon.");
