@@ -123,7 +123,7 @@ void InGameMainMenu::OnCommand( const char *command )
 	}
 	else if (!Q_strcmp(command, "showloadoutdialog"))
 	{
-		CBaseModPanel::GetSingleton().OpenWindow(WT_DM_LOADOUT, this, true);
+		CBaseModPanel::GetSingleton().OpenWindow(WT_DM_LOADOUT, this, false);
 	}
 	else if (!Q_strcmp(command, "Options"))
 	{

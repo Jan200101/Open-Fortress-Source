@@ -65,6 +65,7 @@ CheckButton::CheckButton(Panel *parent, const char *panelName, const char *text)
 CheckButton::~CheckButton()
 {
 	delete _checkBoxImage;
+	surface()->DestroyTextureID(texture);
 }
 
 //-----------------------------------------------------------------------------

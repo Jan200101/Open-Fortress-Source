@@ -16,23 +16,13 @@ using namespace BaseModUI;
 
 #define RANDOM_MAP "#GameUI_RandomMap"
 
-CreateServerPanel::CreateServerPanel(Panel *parent, const char *panelName) : BaseClass(parent, panelName)
-{
-	m_pMapList = new ComboBox(this, "MapList", 12, false);
-
-	LoadMapList();
-	//m_szMapName[0] = 0;
-
-}
-
 void CreateServerPanel::PaintBackground()
 {
-
 	int xchange = 0;
 
 	// move the background panel and other various elements
 	vgui::Panel *pCreateServerPanelImage = FindChildByName("CreateServerPanelImage");
-	if ( pCreateServerPanelImage )
+	if (pCreateServerPanelImage)
 	{
 		int x, y;
 		pCreateServerPanelImage->GetPos(x, y);
@@ -212,9 +202,17 @@ void CreateServerPanel::PaintBackground()
 		pRountLimitCombo->SetPos(x + xchange, y);
 	}
 
+	vgui::Panel *pBtnExit = FindChildByName("BtnExit");
+	if (pBtnExit)
+	{
+		int x, y;
+		pBtnExit->GetPos(x, y);
+		pBtnExit->SetPos(x + xchange, y);
+	}
+
 	// make background darker
 	vgui::Panel *pDarkenPanel = FindChildByName("DarkenPanel");
-	if ( pDarkenPanel )
+	if (pDarkenPanel)
 	{
 		int alpha;
 		alpha = pDarkenPanel->GetAlpha();
@@ -224,6 +222,32 @@ void CreateServerPanel::PaintBackground()
 			pDarkenPanel->SetAlpha(alpha + 2);
 		}
 	}
+}
+
+void CreateServerPanel::OnCommand(const char *command)
+{
+	if (!Q_strcmp(command, "Exit"))
+	{
+		engine->ClientCmd_Unrestricted("gameui_allowescape\n");
+		Close();
+	}
+}
+
+CreateServerPanel::CreateServerPanel(Panel *parent, const char *panelName) : BaseClass(parent, panelName)
+{
+	engine->ClientCmd_Unrestricted("gameui_preventescape\n");
+	m_pMapList = new ComboBox(this, "MapList", 12, false);
+
+	LoadMapList();
+	//m_szMapName[0] = 0;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Destructor
+//-----------------------------------------------------------------------------
+CreateServerPanel::~CreateServerPanel()
+{
+	delete m_pMapList;
 }
 
 //-----------------------------------------------------------------------------

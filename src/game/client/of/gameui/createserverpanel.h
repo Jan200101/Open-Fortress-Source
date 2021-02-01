@@ -22,9 +22,11 @@ namespace BaseModUI
 
 	public:
 		CreateServerPanel(Panel *parent, const char *panelName);
+		~CreateServerPanel();
 
 		virtual void ApplySchemeSettings(vgui::IScheme *pScheme);
 		virtual void PaintBackground();
+		void OnCommand(const char *command);
 
 		vgui::ComboBox *m_pMapList;
 

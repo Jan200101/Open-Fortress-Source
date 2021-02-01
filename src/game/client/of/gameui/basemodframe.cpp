@@ -233,6 +233,8 @@ void CBaseModFrame::OnKeyCodePressed(KeyCode keycode)
 #ifndef _X360
 void CBaseModFrame::OnKeyCodeTyped( vgui::KeyCode code )
 {
+	// why would you make every panel go to the previous ui element and never destroy it, and with xbox buttons, why? - Cherry
+	/*
 	// For PC, this maps space bar to OK and esc to cancel
 	switch ( code )
 	{
@@ -253,7 +255,9 @@ void CBaseModFrame::OnKeyCodeTyped( vgui::KeyCode code )
 
 	}
 
-	BaseClass::OnKeyTyped( code );}
+	BaseClass::OnKeyTyped( code );
+	*/
+}
 #endif
 
 
