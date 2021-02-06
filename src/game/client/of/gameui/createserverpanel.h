@@ -17,8 +17,7 @@ namespace BaseModUI
 
 	class CreateServerPanel : public CBaseModFrame
 	{
-	private:
-		DECLARE_CLASS_SIMPLE(CreateServerPanel, CBaseModFrame);
+	DECLARE_CLASS_SIMPLE(CreateServerPanel, CBaseModFrame);
 
 	public:
 		CreateServerPanel(Panel *parent, const char *panelName);
@@ -30,10 +29,26 @@ namespace BaseModUI
 
 		vgui::ComboBox *m_pMapList;
 
+		void StartServer();
 		void LoadMapList();
 		void LoadMaps(const char *pszPathID);
 		void SetMap(const char *name);
+		const char *GetMapName();
+		const char *GetHostName();
+		const char *GetPassword();
+		int GetMaxPlayers();
+		int GetBotAmount();
+		int GetWinLimit();
+		int GetFragLimit();
+		int GetTimePerMap();
+		int GetRoundLimit();
+		bool IsRandomMapSelected();
 
+	private:
+		bool beginClose;
+		KeyValues *m_pSavedData;
+	protected:
+		virtual void OnClose();
 	};
 
 }

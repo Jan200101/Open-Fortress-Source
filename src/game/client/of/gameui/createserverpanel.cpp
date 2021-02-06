@@ -6,7 +6,9 @@
 
 #include "cbase.h"
 #include "createserverpanel.h"
+
 #include <vgui_controls/ComboBox.h>
+#include <vgui_controls/CheckButton.h>
 #include "filesystem.h"
 
 #include "tier0/dbg.h"
@@ -20,27 +22,37 @@ void CreateServerPanel::PaintBackground()
 {
 	int xchange = 0;
 
-	// move the background panel and other various elements
+	// numbers for moving the panel and other various elements
 	vgui::Panel *pCreateServerPanelImage = FindChildByName("CreateServerPanelImage");
 	if (pCreateServerPanelImage)
 	{
 		int x, y;
 		pCreateServerPanelImage->GetPos(x, y);
-		//DevMsg("%i\n",x);
 
-		xchange = floor((505 - x) * 0.1);
-
-		if (x > 505 && (x + xchange >= 505))
+		// if false: come in, if true: get out!
+		if (!beginClose)
 		{
-			pCreateServerPanelImage->SetPos(x + xchange, y);
+			xchange = ( (505.0 - x) * 0.1 ) * gpGlobals->interpolation_amount;
 		}
 		else
 		{
-			pCreateServerPanelImage->SetPos(505, y);
+			xchange = ( (1500.0 - x) * 0.1 ) * gpGlobals->interpolation_amount;
 		}
 
-		//pCreateServerPanelImage->SetPos();
+		// move the panel image
+		pCreateServerPanelImage->SetPos(x + xchange, y);
+
+		//if (x > 505 && (x + xchange >= 505))
+		//{
+		//
+		//}
+		//else
+		//{
+		//	pCreateServerPanelImage->SetPos(505, y);
+		//}
 	}
+
+	// now move everything else
 
 	vgui::Panel *pCreateServerTopTitle = FindChildByName("CreateServerTopTitle");
 	if (pCreateServerTopTitle)
@@ -210,6 +222,22 @@ void CreateServerPanel::PaintBackground()
 		pBtnExit->SetPos(x + xchange, y);
 	}
 
+	vgui::Panel *pBtnStart = FindChildByName("BtnStart");
+	if (pBtnStart)
+	{
+		int x, y;
+		pBtnStart->GetPos(x, y);
+		pBtnStart->SetPos(x + xchange, y);
+	}
+
+	vgui::Panel *pBtnOldMenu = FindChildByName("BtnOldMenu");
+	if (pBtnOldMenu)
+	{
+		int x, y;
+		pBtnOldMenu->GetPos(x, y);
+		pBtnOldMenu->SetPos(x + xchange, y);
+	}
+
 	// make background darker
 	vgui::Panel *pDarkenPanel = FindChildByName("DarkenPanel");
 	if (pDarkenPanel)
@@ -217,9 +245,26 @@ void CreateServerPanel::PaintBackground()
 		int alpha;
 		alpha = pDarkenPanel->GetAlpha();
 
-		if (alpha < 200)
+		if (!beginClose)
 		{
-			pDarkenPanel->SetAlpha(alpha + 2);
+			// fade in if we're opening up
+			if (alpha < 200)
+			{
+				pDarkenPanel->SetAlpha( alpha + (5 * gpGlobals->interpolation_amount) );
+			}
+		}
+		else
+		{
+			// fade out when closing
+			if (alpha > 0.1)
+			{
+				pDarkenPanel->SetAlpha( alpha - (5 * gpGlobals->interpolation_amount) );
+			}
+			else
+			{
+				engine->ClientCmd_Unrestricted("gameui_allowescape\n");
+				Close();
+			}
 		}
 	}
 }
@@ -228,8 +273,20 @@ void CreateServerPanel::OnCommand(const char *command)
 {
 	if (!Q_strcmp(command, "Exit"))
 	{
-		engine->ClientCmd_Unrestricted("gameui_allowescape\n");
-		Close();
+		//engine->ClientCmd_Unrestricted("gameui_allowescape\n");
+		//Close();
+		beginClose = true;
+	}
+
+	if (!Q_strcmp(command, "Start"))
+	{
+		StartServer();
+	}
+
+	if (!Q_strcmp(command, "OldMenu"))
+	{
+		beginClose = true;
+		engine->ClientCmd_Unrestricted("gamemenucommand OpenCreateMultiplayerGameDialog");
 	}
 }
 
@@ -237,9 +294,25 @@ CreateServerPanel::CreateServerPanel(Panel *parent, const char *panelName) : Bas
 {
 	engine->ClientCmd_Unrestricted("gameui_preventescape\n");
 	m_pMapList = new ComboBox(this, "MapList", 12, false);
+	beginClose = false;
 
 	LoadMapList();
+
+	m_pSavedData = new KeyValues("ServerConfig");
+
+	// load the config data
+	if (m_pSavedData)
+	{
+		m_pSavedData->LoadFromFile(g_pFullFileSystem, "ServerConfig.vdf", "GAME"); // this is game-specific data, so it should live in GAME, not CONFIG
+	}
+
 	//m_szMapName[0] = 0;
+}
+
+void CreateServerPanel::OnClose()
+{
+	engine->ClientCmd_Unrestricted("gameui_allowescape\n");
+	BaseClass::OnClose();
 }
 
 //-----------------------------------------------------------------------------
@@ -248,6 +321,191 @@ CreateServerPanel::CreateServerPanel(Panel *parent, const char *panelName) : Bas
 CreateServerPanel::~CreateServerPanel()
 {
 	delete m_pMapList;
+}
+
+void CreateServerPanel::StartServer()
+{
+	// reset server enforced cvars
+	g_pCVar->RevertFlaggedConVars(FCVAR_REPLICATED);
+
+	// Cheats were disabled; revert all cheat cvars to their default values.
+	// This must be done heading into multiplayer games because people can play
+	// demos etc and set cheat cvars with sv_cheats 0.
+	g_pCVar->RevertFlaggedConVars(FCVAR_CHEAT);
+
+	DevMsg("FCVAR_CHEAT cvars reverted to defaults.\n");
+
+	// get these values from m_pServerPage and store them temporarily
+	char szMapName[64], szHostName[64], szPassword[64];
+	Q_strncpy(szMapName, GetMapName(), sizeof(szMapName));
+	Q_strncpy(szHostName, GetHostName(), sizeof(szHostName));
+	Q_strncpy(szPassword, GetPassword(), sizeof(szPassword));
+
+	// save the config data
+	if (m_pSavedData)
+	{
+		if (IsRandomMapSelected())
+		{
+			// it's set to random map, just save an
+			m_pSavedData->SetString("map", "");
+		}
+		else
+		{
+			m_pSavedData->SetString("map", szMapName);
+		}
+
+		// save config to a file
+		m_pSavedData->SaveToFile(g_pFullFileSystem, "ServerConfig.vdf", "GAME");
+	}
+
+	char szMapCommand[1024];
+
+	// create the command to execute
+	Q_snprintf(szMapCommand, sizeof(szMapCommand), "disconnect\nwait\nwait\nsv_lan 1\nsetmaster enable\nmaxplayers %i\nsv_password \"%s\"\nhostname \"%s\"\nprogress_enable\nmp_winlimit %i\nmp_fraglimit %i\nmp_timelimit %i\nmp_maxrounds %i\nmap %s\n",
+		GetMaxPlayers(),
+		szPassword,
+		szHostName,
+		GetWinLimit(),
+		GetFragLimit(),
+		GetTimePerMap(),
+		GetRoundLimit(),
+		szMapName
+		);
+
+	// exec
+	engine->ClientCmd_Unrestricted(szMapCommand);
+
+	// add bots
+	int m_iBotAmount = GetBotAmount();
+	char szBotAddCommand[64];
+
+	Q_snprintf(szBotAddCommand, sizeof(szBotAddCommand), "tf_bot_quota %i\n", m_iBotAmount);
+
+	engine->ClientCmd_Unrestricted(szBotAddCommand);
+}
+
+int CreateServerPanel::GetMaxPlayers()
+{
+	char strValue[256];
+	vgui::Panel *pMaxPlayersLabel = FindChildByName("MaxPlayersCombo");
+
+	vgui::TextEntry *pMaxPlayersText = dynamic_cast<vgui::TextEntry *>(pMaxPlayersLabel);
+	pMaxPlayersText->GetText(strValue, sizeof(strValue));
+
+	return atoi(strValue);
+}
+
+const char *CreateServerPanel::GetHostName()
+{
+	static char strValue[256];
+	vgui::Panel *pHostnamePanel = FindChildByName("HostnameCombo");
+	
+	vgui::TextEntry *pHostnameText = dynamic_cast<vgui::TextEntry *>(pHostnamePanel);
+	pHostnameText->GetText(strValue, sizeof(strValue));
+
+	return strValue;
+}
+
+const char *CreateServerPanel::GetPassword()
+{
+	static char strValue[256];
+	vgui::Panel *pServerPasswordLabel = FindChildByName("ServerPasswordCombo");
+
+	vgui::TextEntry *pServerPasswordText = dynamic_cast<vgui::TextEntry *>(pServerPasswordLabel);
+	pServerPasswordText->GetText(strValue, sizeof(strValue));
+
+	return strValue;
+}
+
+const char *CreateServerPanel::GetMapName()
+{
+	int count = m_pMapList->GetItemCount();
+
+	// if there is only one entry it's the special "select random map" entry
+	if (count <= 1)
+		return NULL;
+
+	const char *mapname = m_pMapList->GetActiveItemUserData()->GetString("mapname");
+	if (!strcmp(mapname, RANDOM_MAP))
+	{
+		int which = RandomInt(1, count - 1);
+		mapname = m_pMapList->GetItemUserData(which)->GetString("mapname");
+	}
+
+	return mapname;
+}
+
+bool CreateServerPanel::IsRandomMapSelected()
+{
+	const char *mapname = m_pMapList->GetActiveItemUserData()->GetString("mapname");
+	if (!stricmp(mapname, RANDOM_MAP))
+	{
+		return true;
+	}
+	return false;
+}
+
+int CreateServerPanel::GetBotAmount()
+{
+	char strValue[4];
+	vgui::Panel *pBotQuotaLabel = FindChildByName("BotQuotaCombo");
+
+	vgui::TextEntry *pBotQuotaText = dynamic_cast<vgui::TextEntry *>(pBotQuotaLabel);
+	pBotQuotaText->GetText(strValue, sizeof(strValue));
+
+	vgui::CheckButton *pEnableBotsCheck = dynamic_cast<vgui::CheckButton *>(FindChildByName("EnableBotsCheck"));
+	if (pEnableBotsCheck->IsSelected())
+	{
+		return atoi(strValue);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+int CreateServerPanel::GetWinLimit()
+{
+	char strValue[32];
+	vgui::Panel *pWinLimitLabel = FindChildByName("WinLimitCombo");
+
+	vgui::TextEntry *pWinLimitText = dynamic_cast<vgui::TextEntry *>(pWinLimitLabel);
+	pWinLimitText->GetText(strValue, sizeof(strValue));
+
+	return atoi(strValue);
+}
+
+int CreateServerPanel::GetFragLimit()
+{
+	char strValue[32];
+	vgui::Panel *pFragLimitLabel = FindChildByName("FragLimitCombo");
+
+	vgui::TextEntry *pFragLimitText = dynamic_cast<vgui::TextEntry *>(pFragLimitLabel);
+	pFragLimitText->GetText(strValue, sizeof(strValue));
+
+	return atoi(strValue);
+}
+
+int CreateServerPanel::GetTimePerMap()
+{
+	char strValue[32];
+	vgui::Panel *pTimePerMapLabel = FindChildByName("TimePerMapCombo");
+
+	vgui::TextEntry *pTimePerMapText = dynamic_cast<vgui::TextEntry *>(pTimePerMapLabel);
+	pTimePerMapText->GetText(strValue, sizeof(strValue));
+
+	return atoi(strValue);
+}
+
+int CreateServerPanel::GetRoundLimit()
+{
+	char strValue[32];
+	vgui::Panel *pRoundLimitLabel = FindChildByName("RoundLimitCombo");
+
+	vgui::TextEntry *pRoundLimitText = dynamic_cast<vgui::TextEntry *>(pRoundLimitLabel);
+	pRoundLimitText->GetText(strValue, sizeof(strValue));
+
+	return atoi(strValue);
 }
 
 //-----------------------------------------------------------------------------
