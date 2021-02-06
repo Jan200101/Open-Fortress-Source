@@ -46,6 +46,7 @@ namespace BaseModUI
 
 	private:
 		bool beginClose;
+		int m_iBackgroundXGotoPos;
 		KeyValues *m_pSavedData;
 	protected:
 		virtual void OnClose();
