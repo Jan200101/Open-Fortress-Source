@@ -32,27 +32,26 @@ void CreateServerPanel::PaintBackground()
 		// if false: come in, if true: get out!
 		if (!beginClose)
 		{
-			xchange = ( (505.0 - x) * 0.1 ) * gpGlobals->interpolation_amount;
+			xchange = ((m_iBackgroundXGotoPos - x) * 0.1) * gpGlobals->interpolation_amount;
 		}
 		else
 		{
-			xchange = ( (1500.0 - x) * 0.1 ) * gpGlobals->interpolation_amount;
+			xchange = ((m_iBackgroundXGotoPos + 800 - x) * 0.1) * gpGlobals->interpolation_amount;
 		}
 
 		// move the panel image
 		pCreateServerPanelImage->SetPos(x + xchange, y);
-
-		//if (x > 505 && (x + xchange >= 505))
-		//{
-		//
-		//}
-		//else
-		//{
-		//	pCreateServerPanelImage->SetPos(505, y);
-		//}
 	}
 
 	// now move everything else
+
+	vgui::Panel *pCreateServerPanelMapImage = FindChildByName("CreateServerPanelMapImage");
+	if (pCreateServerPanelMapImage)
+	{
+		int x, y;
+		pCreateServerPanelMapImage->GetPos(x, y);
+		pCreateServerPanelMapImage->SetPos(x + xchange, y);
+	}
 
 	vgui::Panel *pCreateServerTopTitle = FindChildByName("CreateServerTopTitle");
 	if (pCreateServerTopTitle)
@@ -295,6 +294,7 @@ CreateServerPanel::CreateServerPanel(Panel *parent, const char *panelName) : Bas
 	engine->ClientCmd_Unrestricted("gameui_preventescape\n");
 	m_pMapList = new ComboBox(this, "MapList", 12, false);
 	beginClose = false;
+	m_iBackgroundXGotoPos = 0;
 
 	LoadMapList();
 
@@ -611,4 +611,12 @@ void CreateServerPanel::ApplySchemeSettings(IScheme *pScheme)
 	BaseClass::ApplySchemeSettings(pScheme);
 	SetPaintBackgroundEnabled(true);
 	LoadControlSettings("resource/ui/basemodui/createserverpanel.res");
+
+	vgui::Panel *pCreateServerPanelImage = FindChildByName("CreateServerPanelImage");
+	if (pCreateServerPanelImage)
+	{
+		int x, y;
+		pCreateServerPanelImage->GetPos(x, y);
+		m_iBackgroundXGotoPos = x - 770;
+	}
 }
