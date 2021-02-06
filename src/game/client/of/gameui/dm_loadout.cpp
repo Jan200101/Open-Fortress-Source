@@ -28,6 +28,7 @@ extern ConVar of_announcer_override;
 //-----------------------------------------------------------------------------
 DMLoadout::DMLoadout(Panel *parent, const char *panelName) : BaseClass(parent, panelName) 
 {
+	engine->ClientCmd_Unrestricted("gameui_preventescape\n");
 	///
 	SetProportional(true);	
 	///
@@ -467,11 +468,15 @@ void DMLoadout::OnCommand(const char *command)
 	if (Q_stricmp("Back", command) == 0)
 	{
 		// OnApplyChanges();
-		OnKeyCodePressed(KEY_XBUTTON_B);
+		//OnKeyCodePressed(KEY_XBUTTON_B);
+		engine->ClientCmd_Unrestricted("gameui_allowescape\n");
+		Close();
 	}
 	else if (Q_stricmp("Cancel", command) == 0)
 	{
-		OnKeyCodePressed(KEY_XBUTTON_B);
+		//OnKeyCodePressed(KEY_XBUTTON_B);
+		engine->ClientCmd_Unrestricted("gameui_allowescape\n");
+		Close();
 	}
 	else if (Q_strncmp(command, "loadout_equip", strlen("loadout_equip")) == 0)
 	{

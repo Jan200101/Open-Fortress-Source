@@ -123,7 +123,7 @@ void InGameMainMenu::OnCommand( const char *command )
 	}
 	else if (!Q_strcmp(command, "showloadoutdialog"))
 	{
-		CBaseModPanel::GetSingleton().OpenWindow(WT_DM_LOADOUT, this, true);
+		CBaseModPanel::GetSingleton().OpenWindow(WT_DM_LOADOUT, this, false);
 	}
 	else if (!Q_strcmp(command, "Options"))
 	{
@@ -131,7 +131,8 @@ void InGameMainMenu::OnCommand( const char *command )
 	}
 	else if (!Q_strcmp(command, "CreateServer"))
 	{
-		engine->ClientCmd_Unrestricted("gamemenucommand OpenCreateMultiplayerGameDialog");
+		CBaseModPanel::GetSingleton().OpenWindow(WT_CREATESERVERPANEL, this, false);
+		//engine->ClientCmd_Unrestricted("gamemenucommand OpenCreateMultiplayerGameDialog");
 	}
 	else if (!Q_strcmp(command, "OpenPlayerListDialog"))
 	{

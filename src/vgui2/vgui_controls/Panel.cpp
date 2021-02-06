@@ -1375,7 +1375,7 @@ void Panel::PaintBackground()
 			break;
 		case 3:
 			{
-				DrawBoxFade( 0, 0, wide, tall, col, 1.0f, 255, 0, true );
+				//DrawBoxFade( 0, 0, wide, tall, col, 1.0f, 255, 0, true );
 			}
 			break;
 		}

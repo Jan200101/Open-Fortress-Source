@@ -18,6 +18,7 @@
 #include "VMainMenu.h"
 #include "VFooterPanel.h"
 #include "gameui/dm_loadout.h"
+#include "createserverpanel.h"
 #include "vgui/ISurface.h"
 #include "vgui_controls/AnimationController.h"
 #include "tier0/icommandline.h"
@@ -372,6 +373,10 @@ CBaseModFrame* CBaseModPanel::OpenWindow(const WINDOW_TYPE & wt, CBaseModFrame *
 
 		case WT_DM_LOADOUT:
 			m_Frames[wt] = new DMLoadout(this, "DMLoadout");
+			break;
+
+		case WT_CREATESERVERPANEL:
+			m_Frames[wt] = new CreateServerPanel(this, "CreateServerPanel");
 			break;
 
 		default:
