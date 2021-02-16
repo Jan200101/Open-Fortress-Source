@@ -15,6 +15,38 @@
 	#define CTFGrenadeMirvBomb C_TFGrenadeMirvBomb
 #endif
 
+#ifdef GAME_DLL
+// Bomblet Data is stored here
+struct bomblet_t
+{
+public:
+	bomblet_t()
+	{
+		m_iAmmount = 0;
+	};
+public:
+	CTFWeaponBase			*m_pLauncher;
+	CBaseCombatCharacter	*m_pOwner;
+
+	float m_flBombletDamage;
+	float m_flBombletTimer;
+	float m_flBombletDamageRadius;
+
+	int		m_iAmmount;
+	int		m_bCritical;
+	bool	m_bExplodeOnImpact;
+	
+	bool m_bBombletEffectTeamColored;
+	char m_szKillIcon[128];
+	char m_szBombletTrailParticle[128];
+	char m_szBombletModel[128];
+};
+
+extern void SpawnBomblets( bomblet_t *pInfo, trace_t *pTrace, int iTeam );
+extern void SetupBombletInfo( bomblet_t *m_pBombletInfo, CTFWeaponBase *pWeapon, int bCritical );
+extern void SetupBombletInfo( bomblet_t *m_pBombletInfo, bomblet_t *pBombletInfo );
+#endif
+
 class CTFGrenadeMirvBomb : public CTFGrenadePipebombProjectile
 {
 public:
@@ -29,7 +61,7 @@ public:
 #ifdef GAME_DLL
 	// Creation.
 	static CTFGrenadeMirvBomb *Create( const Vector &position, const QAngle &angles, const Vector &velocity, 
-		                               const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, CTFWeaponInfo *pWeaponInfo, int teamnumber );
+		                               const AngularImpulse &angVelocity, CBaseCombatCharacter *pOwner, bomblet_t *pInfo, int teamnumber );
 	virtual void	BounceSound( void );
 	virtual bool	ExplodeOnImpact( void );
 	KeyValues 		*pStatValues;

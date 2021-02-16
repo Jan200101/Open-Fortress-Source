@@ -76,6 +76,7 @@ CTFWeaponBaseGrenadeProj::CTFWeaponBaseGrenadeProj()
 #ifdef GAME_DLL
 	m_bUseImpactNormal = false;
 	m_vecImpactNormal.Init();
+	m_pBombletInfo = NULL;
 #endif
 }
 
@@ -352,39 +353,10 @@ void CTFWeaponBaseGrenadeProj::Explode( trace_t *pTrace, int bitsDamageType, int
 	}
 
 	// Get the Weapon info
-	
-	CTFWeaponBase *pWeapon = GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB && pTmpLauncher ? (CTFWeaponBase * )CreateEntityByName( WeaponIdToAlias( pTmpLauncher->GetWeaponID() ) ) : NULL;
-	if ( pWeapon )
-	{
-		WEAPON_FILE_INFO_HANDLE	hWpnInfo = LookupWeaponInfoSlot( pWeapon->GetClassname() );
-		Assert( hWpnInfo != GetInvalidWeaponInfoHandle() );
-		CTFWeaponInfo *pWeaponInfo = dynamic_cast<CTFWeaponInfo*>( GetFileWeaponInfoFromHandle( hWpnInfo ) );
-
 #ifdef GAME_DLL
-		// Create the bomblets.
-		if ( pWeapon && pWeaponInfo && pWeaponInfo->m_bDropBomblets && GetWeaponID() != TF_WEAPON_GRENADE_MIRVBOMB )
-		{
-			for ( int iBomb = 0; iBomb < pWeaponInfo->m_iBombletAmount; ++iBomb )
-			{
-				Vector vecSrc = pTrace->endpos + Vector( 0, 0, 1.0f ); 
-				Vector vecVelocity( random->RandomFloat( -75.0f, 75.0f ) * 3.0f,
-								random->RandomFloat( -75.0f, 75.0f ) * 3.0f,
-								random->RandomFloat( 30.0f, 70.0f ) * 5.0f );
-				Vector vecZero( 0,0,0 );
-				CTFPlayer *pPlayer = ToTFPlayer( GetThrower() );
-
-				CTFGrenadeMirvBomb *pBomb = CTFGrenadeMirvBomb::Create( vecSrc, GetAbsAngles(), vecVelocity, vecZero, pPlayer, pWeaponInfo, GetTeamNumber() );
-				pBomb->SetLauncher(GetOriginalLauncher());
-				pBomb->SetDamage( pWeaponInfo->m_flBombletDamage );
-				pBomb->SetDetonateTimerLength( pWeaponInfo->m_flBombletTimer + random->RandomFloat( 0.0f, 1.0f ) );
-				pBomb->SetDamageRadius( pWeaponInfo->m_flBombletDamageRadius );
-				pBomb->SetCritical( m_bCritical );
-				pBomb->SetKillIcon( UTIL_VarArgs( "%s_bomblet", GetKillIcon()[0] != '\0'  ? GetKillIcon() : GetClassname() ) );
-			}		
-		}
+	if( m_pBombletInfo )
+		SpawnBomblets( m_pBombletInfo, pTrace, GetTeamNumber() );
 #endif
-		UTIL_Remove( pWeapon );
-	}
 	SetThink( &CBaseGrenade::SUB_Remove );
 	SetTouch( NULL );
 

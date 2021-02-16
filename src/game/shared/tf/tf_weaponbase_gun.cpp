@@ -16,6 +16,7 @@
 #ifdef GAME_DLL
 	#include "tf_gamestats.h"
 	#include "of_projectile_tripmine.h"
+	#include "tf_projectile_bomblet.h"
 #endif
 
 //=============================================================================
@@ -608,6 +609,11 @@ CBaseEntity *CTFWeaponBaseGun::FireCoom( CTFPlayer *pPlayer )
 		pProjectile->SetDamage( GetProjectileDamage() );
 		pProjectile->SetLauncher( this );
 		pProjectile->SetKillIcon( GetClassname() );
+		if( GetTFWpnData().m_bDropBomblets )
+		{
+			pProjectile->m_pBombletInfo = new bomblet_t();
+			SetupBombletInfo(pProjectile->m_pBombletInfo, this, IsCurrentAttackACrit());
+		}
 	}
 	return pProjectile;
 
@@ -671,6 +677,11 @@ CBaseEntity *CTFWeaponBaseGun::FireRocket( CTFPlayer *pPlayer )
 		pProjectile->SetDamage( GetProjectileDamage() );
 		pProjectile->SetLauncher( this );
 		pProjectile->SetKillIcon( GetClassname() );
+		if( GetTFWpnData().m_bDropBomblets )
+		{
+			pProjectile->m_pBombletInfo = new bomblet_t();
+			SetupBombletInfo(pProjectile->m_pBombletInfo, this, IsCurrentAttackACrit());
+		}
 	}
 	
 	return pProjectile;
@@ -793,6 +804,11 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBomb( CTFPlayer *pPlayer, bool bRemoteDet
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetLauncher( this );
 		pProjectile->SetKillIcon( GetClassname() );
+		if( GetTFWpnData().m_bDropBomblets )
+		{
+			pProjectile->m_pBombletInfo = new bomblet_t();
+			SetupBombletInfo(pProjectile->m_pBombletInfo, this, IsCurrentAttackACrit());
+		}
 	}
 	return pProjectile;
 
@@ -851,6 +867,11 @@ CBaseEntity *CTFWeaponBaseGun::FirePipeBombDM( CTFPlayer *pPlayer, bool bRemoteD
 		pProjectile->SetCritical( IsCurrentAttackACrit() );
 		pProjectile->SetLauncher( this );
 		pProjectile->SetKillIcon( GetClassname() );
+		if( GetTFWpnData().m_bDropBomblets )
+		{
+			pProjectile->m_pBombletInfo = new bomblet_t();
+			SetupBombletInfo(pProjectile->m_pBombletInfo, this, IsCurrentAttackACrit());
+		}
 	}
 
 	return pProjectile;
@@ -943,6 +964,11 @@ CBaseEntity *CTFWeaponBaseGun::FireIncendRocket( CTFPlayer *pPlayer )
 		pProjectile->SetDamage( GetProjectileDamage() );
 		pProjectile->SetLauncher( this );
 		pProjectile->SetKillIcon( GetClassname() );
+		if( GetTFWpnData().m_bDropBomblets )
+		{
+			pProjectile->m_pBombletInfo = new bomblet_t();
+			SetupBombletInfo(pProjectile->m_pBombletInfo, this, IsCurrentAttackACrit());
+		}
 	}
 	return pProjectile;
 

@@ -410,6 +410,9 @@ void DMLoadout::ApplySettings( KeyValues *inResourceData )
 			
 			for( int y = 0; y < GetItemSchema()->GetWeaponCount(); y++ )
 			{
+				if( !GetItemSchema()->GetWeapon(y) )
+					continue;
+
 				if( !GetItemSchema()->GetWeapon(y)->GetBool( "ShowInArsenal", false ) )
 					continue;
 

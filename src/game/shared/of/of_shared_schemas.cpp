@@ -313,9 +313,16 @@ void ParseItemsGame( void )
 	KeyValues *pWeapons = GetItemsGame()->FindKey("Weapons");
 	if( pWeapons )
 	{
+		for( int i = 0; i < TF_WEAPON_COUNT; i++ )
+		{
+			GetItemSchema()->AddWeapon( g_aWeaponNames[i] );
+		}
+
 		FOR_EACH_SUBKEY( pWeapons, kvSubKey )
 		{
-			GetItemSchema()->AddWeapon( kvSubKey->GetName() );
+			// No duplicates in case they're already defined in shareddefs
+			if( GetItemSchema()->GetWeaponID( kvSubKey->GetName() ) == -1 )
+				GetItemSchema()->AddWeapon( kvSubKey->GetName() );
 		}
 	}	
 	
@@ -561,6 +568,9 @@ KeyValues *CTFItemSchema::GetWeapon( const char *szWeaponName )
 
 int CTFItemSchema::GetWeaponID( const char *szWeaponName )
 {
+	char szName[128];
+	Q_strncpy(szName, szWeaponName, sizeof(szName));
+	strlwr(szName);
 	int iMax = m_hWeaponNames.Count();
 	for( int i = 0; i < iMax; i++ )
 	{
@@ -568,7 +578,15 @@ int CTFItemSchema::GetWeaponID( const char *szWeaponName )
 			return i;
 	}
 
-	return 0;
+	return -1;
+}
+
+const char *CTFItemSchema::GetWeaponName( int iID )
+{
+	if( iID >= m_hWeaponNames.Count() )
+		return NULL;
+
+	return m_hWeaponNames[iID];
 }
 
 KeyValues* gMapData;

@@ -54,6 +54,7 @@ public:
 	KeyValues *GetWeapon( const char *szWeaponName );
 
 	int GetWeaponID( const char *szWeaponName );
+	const char *GetWeaponName( int iID );
 	
 	int GetWeaponCount( void ){ return m_hWeaponNames.Count();};
 public:

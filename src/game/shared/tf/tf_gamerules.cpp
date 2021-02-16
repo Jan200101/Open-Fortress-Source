@@ -44,6 +44,7 @@
 	#include "team_train_watcher.h"
 	#include "of_dropped_weapon.h"
 	#include "of_bot_spawner.h"
+	#include "of_shared_schemas.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -676,7 +677,7 @@ bool CTFLogicLoadout::KeyValue( const char *szKeyName, const char *szValue )
 {
 	if ( !Q_strncmp( szKeyName, "WeaponName", 10 ) )
 	{
-		hWeaponNames.AddToTail(AliasToWeaponID(szValue));
+		hWeaponNames.AddToTail(GetItemSchema()->GetWeaponID(szValue));
 	}
 	else
 		BaseClass::KeyValue( szKeyName, szValue );

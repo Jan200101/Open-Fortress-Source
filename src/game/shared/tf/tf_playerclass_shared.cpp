@@ -4,6 +4,7 @@
 
 #include "cbase.h"
 #include "tf_playerclass_shared.h"
+#include "of_shared_schemas.h"
 
 ConVar of_airdashcount("of_airdashcount", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED );
 
@@ -297,7 +298,7 @@ void TFPlayerClassData_t::ParseData( KeyValues *pKeyValuesData )
 	for ( i=0;i<TF_PLAYER_WEAPON_COUNT;i++ )
 	{
 		Q_snprintf( buf, sizeof(buf), "weapon%d", i+1 );
-		int iID = GetWeaponId(pKeyValuesData->GetString(buf));
+		int iID = GetItemSchema()->GetWeaponID(pKeyValuesData->GetString(buf));
 		m_aWeapons.GetForModify(i) = iID;
 	}
 

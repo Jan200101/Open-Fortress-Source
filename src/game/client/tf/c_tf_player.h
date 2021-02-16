@@ -232,6 +232,7 @@ public:
 	virtual	bool		Weapon_Switch( C_BaseCombatWeapon *pWeapon, int viewmodelindex = 0 );
 
 	CTFWeaponBase		*Weapon_OwnsThisID( int iWeaponID );
+	CTFWeaponBase		*WeaponSchema_OwnsThisID( int iWeaponID );
 	CTFWeaponBase		*Weapon_GetWeaponByType( int iType );
 
 	virtual void		GetStepSoundVelocities( float *velwalk, float *velrun );

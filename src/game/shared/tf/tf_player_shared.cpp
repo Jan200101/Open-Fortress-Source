@@ -13,6 +13,7 @@
 #include "fmtstr.h"
 #include "tf_viewmodel.h"
 #include "tf_weapon_fists.h"
+#include "of_shared_schemas.h"
 
 #ifdef CLIENT_DLL
 #include "c_tf_playerclass.h"
@@ -3955,6 +3956,24 @@ CTFWeaponBase *CTFPlayer::Weapon_OwnsThisID( int iWeaponID )
 			continue;
 
 		if ( pWpn->GetWeaponID() == iWeaponID )
+		{
+			return pWpn;
+		}
+	}
+
+	return NULL;
+}
+
+CTFWeaponBase *CTFPlayer::WeaponSchema_OwnsThisID( int iWeaponID )
+{
+	for (int i = 0; i < WeaponCount(); i++)
+	{
+		CTFWeaponBase *pWpn = (CTFWeaponBase *)GetWeapon(i);
+
+		if( pWpn == NULL )
+			continue;
+
+		if( GetItemSchema()->GetWeaponID( pWpn->GetSchemaName() ) == iWeaponID )
 		{
 			return pWpn;
 		}

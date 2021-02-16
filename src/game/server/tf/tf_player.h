@@ -518,6 +518,7 @@ public:
 	CBaseEntity			*MedicGetHealTarget( void );
 
 	CTFWeaponBase		*Weapon_OwnsThisID( int iWeaponID );
+	CTFWeaponBase		*WeaponSchema_OwnsThisID(int iWeaponID);
 	CTFWeaponBase		*Weapon_GetWeaponByType( int iType );
 
 	int					RestockClips( float PowerupSize );

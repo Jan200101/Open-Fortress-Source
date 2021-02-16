@@ -16,6 +16,8 @@
 // Client specific.
 #ifdef CLIENT_DLL
 #define CTFWeaponBaseGrenadeProj C_TFWeaponBaseGrenadeProj
+#else
+struct bomblet_t;
 #endif
 
 //=============================================================================
@@ -106,8 +108,10 @@ public:
 	bool					UseImpactNormal()							{ return m_bUseImpactNormal; }
 	const Vector			&GetImpactNormal( void ) const				{ return m_vecImpactNormal; }
 	
+public:
 	CTFWeaponBase		 	*pFuckThisShit; // Massive ass hack, this gets set in tf_weapon_grenade_pipebomb
 
+	bomblet_t				*m_pBombletInfo;
 protected:
 
 	void					DrawRadius( float flRadius );
@@ -126,7 +130,6 @@ private:
 
 	float					m_flCollideWithTeammatesTime;
 	bool					m_bCollideWithTeammates;
-
 #endif
 };
 

@@ -2034,10 +2034,11 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 			int iWeaponID = GetDesiredWeapon( iWeapon, pData );
 			if ( iWeaponID != TF_WEAPON_NONE )
 			{
-				const char *pszWeaponName = WeaponIdToClassname( iWeaponID );
+				const char *pszWeaponName = GetItemSchema()->GetWeaponName(iWeaponID);
 				if( !pszWeaponName )
 					continue;
-				pWeapon = (CTFWeaponBase *)Weapon_OwnsThisID( iWeaponID );
+
+				pWeapon = (CTFWeaponBase *)WeaponSchema_OwnsThisID( iWeaponID );
 				if ( pWeapon )
 				{
 					pWeapon->ChangeTeam( GetTeamNumber() );
@@ -2050,10 +2051,10 @@ void CTFPlayer::ManageRegularWeapons( TFPlayerClassData_t *pData )
 				}
 				else
 				{
-					if (!Q_stricmp(pszWeaponName, ""))
+					if( !Q_stricmp(pszWeaponName, "") )
 						continue;
 					pWeapon = (CTFWeaponBase *)GiveNamedItem( pszWeaponName );
-					if (!Q_stricmp(pszWeaponName, ""))
+					if( !Q_stricmp(pszWeaponName, "") )
 						continue;
 					if ( pWeapon )
 					{

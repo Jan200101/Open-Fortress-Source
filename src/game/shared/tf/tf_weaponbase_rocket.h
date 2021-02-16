@@ -21,6 +21,7 @@
 	#define CBaseSchemaEntity C_BaseSchemaEntity
 #else
 	#include "of_baseschemaitem.h"
+	struct bomblet_t;
 #endif
 
 //#define TF_ROCKET_RADIUS	(110.0f * 1.1f)	//radius * TF scale up factor
@@ -117,13 +118,15 @@ public:
 
 	void			SetHomingTarget( CBaseEntity *pHomingTarget );
 	void			SetHoming( bool bHoming );
+
+	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
 	
-	
+public:
 	int 	m_hWeaponID;
 	
 	CNetworkVar( int,	m_bCritical );
 
-	virtual void	Deflected( CBaseEntity *pDeflectedBy, Vector &vecDir );
+	bomblet_t *m_pBombletInfo;
 
 protected:
 
@@ -144,7 +147,6 @@ protected:
 	CHandle<CBaseEntity>	m_hHomingTarget;
 	
 	bool	m_bHoming;
-
 #endif
 };
 
