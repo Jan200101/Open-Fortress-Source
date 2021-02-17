@@ -1,0 +1,20 @@
+#test
+name: OFBuild
+
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: jimbly:steamrt-i386-gcc
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+       export STEAM_RUNTIME_PATH=/usr
+       cd $GITHUB_WORKSPACE/src/
+       ./vpc_game_linux
+       make -f game_linux.mak
